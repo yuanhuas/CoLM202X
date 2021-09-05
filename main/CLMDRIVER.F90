@@ -76,7 +76,7 @@ SUBROUTINE CLMDRIVER (idate,deltim,dolai,doalb,dosst,oro)
          htop(i),         hbot(i),         sqrtdi_p(7),     chil_p(7),       &
          effcon_p(7),     vmax25_p(7),     slti_p(7),       hlti_p(7),       &
          shti_p(7),       hhti_p(7),       trda_p(7),       trdm_p(7),       &
-         trop_p(7),       gradm_p(7),      binter_p(7),     extkn_p(m),      &
+         trop_p(7),       gradm_p(7),      binter_p(7),     extkn(m),        &
          rho_p(1:,1:,7),  tau_p(1:,1:,7),                                    &
 
        ! ATMOSPHERIC FORCING
