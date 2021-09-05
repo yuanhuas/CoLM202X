@@ -944,16 +944,18 @@ MODULE LEAF_temperature_PC
                
 ! note: calculate resistance for sunlit/shaded leaves
 !-----------------------------------------------------------------------
-                CALL stomata (vmax25(i)   ,effcon(i) ,slti(i)   ,hlti(i)   ,&
-                   shti(i)    ,hhti(i)    ,trda(i)   ,trdm(i)   ,trop(i)   ,&
-                   gradm(i)   ,binter(i)  ,thm       ,psrf      ,po2m      ,&
+! 09/03/2021, yuan: set the same vegetation parameters
+! i = 7 broadleaf deciduous temperate tree    
+                CALL stomata (vmax25(7)   ,effcon(7) ,slti(7)   ,hlti(7)   ,&
+                   shti(7)    ,hhti(7)    ,trda(7)   ,trdm(7)   ,trop(7)   ,&
+                   gradm(7)   ,binter(7)  ,thm       ,psrf      ,po2m      ,&
                    pco2m      ,pco2a      ,eah       ,ei(i)     ,tl(i)     ,&
                    parsun(i)  ,rbsun      ,raw       ,rstfac(i) ,cintsun(:,i),&
                    assimsun(i),respcsun(i),rssun(i)     )
 
-                CALL stomata (vmax25(i)   ,effcon(i) ,slti(i)   ,hlti(i)   ,&
-                   shti(i)    ,hhti(i)    ,trda(i)   ,trdm(i)   ,trop(i)   ,&
-                   gradm(i)   ,binter(i)  ,thm       ,psrf      ,po2m      ,&
+                CALL stomata (vmax25(7)   ,effcon(7) ,slti(7)   ,hlti(7)   ,&
+                   shti(7)    ,hhti(7)    ,trda(7)   ,trdm(7)   ,trop(7)   ,&
+                   gradm(7)   ,binter(7)  ,thm       ,psrf      ,po2m      ,&
                    pco2m      ,pco2a      ,eah       ,ei(i)     ,tl(i)     ,&
                    parsha(i)  ,rbsha      ,raw       ,rstfac(i) ,cintsha(:,i),&
                    assimsha(i),respcsha(i),rssha(i)     )

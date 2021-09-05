@@ -493,11 +493,13 @@ IF (patchtype == 0) THEN
             laisun_p(i) = lai_p(i)*fsun_p(i)
             laisha_p(i) = lai_p(i)*(1-fsun_p(i))
 
+! 09/03/2021, yuan: set the same vegetation parameters
+! p = 7 broadleaf deciduous temperate tree    
             CALL LeafTemp (ipatch,deltim,csoilc     ,dewmx      ,htvp       ,&
-                 lai_p(i)   ,sai_p(i)   ,htop_p(i)  ,hbot_p(i)  ,sqrtdi_p(p),&
-                 effcon_p(p),vmax25_p(p),slti_p(p)  ,hlti_p(p)  ,shti_p(p)  ,&
-                 hhti_p(p)  ,trda_p(p)  ,trdm_p(p)  ,trop_p(p)  ,gradm_p(p) ,&
-                 binter_p(p),extkn_p(p) ,extkb_p(i) ,extkd_p(i) ,forc_hgt_u ,&
+                 lai_p(i)   ,sai_p(i)   ,htop_p(i)  ,hbot_p(i)  ,sqrtdi_p(7),&
+                 effcon_p(7),vmax25_p(7),slti_p(7)  ,hlti_p(7)  ,shti_p(7)  ,&
+                 hhti_p(7)  ,trda_p(7)  ,trdm_p(7)  ,trop_p(7)  ,gradm_p(7) ,&
+                 binter_p(7),extkn_p(p) ,extkb_p(i) ,extkd_p(i) ,forc_hgt_u ,&
                  forc_hgt_t ,forc_hgt_q ,forc_us    ,forc_vs    ,thm        ,&
                  th         ,thv        ,forc_q     ,forc_psrf  ,forc_rhoair,&
                  parsun_p(i),parsha_p(i),sabv_p(i)  ,frl        ,fsun_p(i)  ,&

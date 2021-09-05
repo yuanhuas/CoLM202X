@@ -15,6 +15,7 @@ SUBROUTINE CLMDRIVER (idate,deltim,dolai,doalb,dosst,oro)
  use PhysicalConstants, only: tfrz, rgas, vonkar
  USE GlobalVars
  USE LC_Const
+ USE PFT_Const
  use MOD_TimeInvariants
  use MOD_TimeVariables
  use MOD_1D_Forcing
@@ -70,11 +71,13 @@ SUBROUTINE CLMDRIVER (idate,deltim,dolai,doalb,dosst,oro)
          lakedepth(i),    dz_lake(1:,i),                                     &  
 
        ! VEGETATION INFORMATION
-         htop(i),         hbot(i),         sqrtdi(m),       chil(m),         &
-         effcon(m),       vmax25(m),       slti(m),         hlti(m),         &
-         shti(m),         hhti(m),         trda(m),         trdm(m),         &
-         trop(m),         gradm(m),        binter(m),       extkn(m),        &
-         rho(1:,1:,m),    tau(1:,1:,m),                                      &
+! 09/03/2021, yuan: set the same vegetation parameters
+! m = 7 broadleaf deciduous temperate tree    
+         htop(i),         hbot(i),         sqrtdi_p(7),     chil_p(7),       &
+         effcon_p(7),     vmax25_p(7),     slti_p(7),       hlti_p(7),       &
+         shti_p(7),       hhti_p(7),       trda_p(7),       trdm_p(7),       &
+         trop_p(7),       gradm_p(7),      binter_p(7),     extkn_p(m),      &
+         rho_p(1:,1:,7),  tau_p(1:,1:,7),                                    &
 
        ! ATMOSPHERIC FORCING
          forc_pco2m(i),   forc_po2m(i),    forc_us(i),      forc_vs(i),      &

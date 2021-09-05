@@ -1005,7 +1005,10 @@ ENDIF
          p = pftclass(i)
          IF (lai_p(i)+sai_p(i) > 1.e-6) THEN
 ! 03/06/2020, yuan: TODO, not twostream_mod?
-            CALL twostream (chil_p(p),rho_p(:,:,p),tau_p(:,:,p),1.,lai_p(i),sai_p(i),&
+! 09/03/2021, yuan: set the same vegetation parameters
+! p = 7 broadleaf deciduous temperate tree    
+            !CALL twostream (chil_p(p),rho_p(:,:,p),tau_p(:,:,p),1.,lai_p(i),sai_p(i),&
+            CALL twostream (chil_p(7),rho_p(:,:,7),tau_p(:,:,7),1.,lai_p(i),sai_p(i),&
                coszen,albg,albv_p(:,:,i),tran_p(:,:,i),thermk_p(i),&
                extkb_p(i),extkd_p(i),ssun_p(:,:,i),ssha_p(:,:,i)) 
          ELSE

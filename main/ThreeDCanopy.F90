@@ -31,6 +31,8 @@ SUBROUTINE ThreeDCanopy_wrap (ipatch, czen, albg, albv, ssun, ssha)
    REAL(r8), dimension(0:N_PFT-1)    :: csiz, chgt, lsai 
    REAL(r8), dimension(0:N_PFT-1)    :: fsun_id, fsun_ii, psun
    REAL(r8), dimension(0:N_PFT-1)    :: phi1, phi2, gdir
+! 09/03/2021, yuan: set the same vegetation parameters
+   REAL(r8), dimension(0:N_PFT-1)    :: chil
 
    INTEGER p, pc
   
@@ -50,14 +52,20 @@ SUBROUTINE ThreeDCanopy_wrap (ipatch, czen, albg, albv, ssun, ssha)
    tau = 0.
    DO p = 0, N_PFT-1
       IF (lsai(p) > 0.) THEN
-         rho(p,:) = rho_p(:,1,p)*lai_c(p,pc)/lsai(p) &
-                  + rho_p(:,2,p)*sai_c(p,pc)/lsai(p) 
-         tau(p,:) = tau_p(:,1,p)*lai_c(p,pc)/lsai(p) &
-                  + tau_p(:,2,p)*sai_c(p,pc)/lsai(p) 
+! 09/03/2021, yuan: set the same vegetation parameters
+! p = 7 broadleaf deciduous temperate tree    
+         rho(p,:) = rho_p(:,1,7)*lai_c(p,pc)/lsai(p) &
+                  + rho_p(:,2,7)*sai_c(p,pc)/lsai(p) 
+         tau(p,:) = tau_p(:,1,7)*lai_c(p,pc)/lsai(p) &
+                  + tau_p(:,2,7)*sai_c(p,pc)/lsai(p) 
       ENDIF
    ENDDO 
    
-   CALL ThreeDCanopy(N_PFT, canlay(:), pcfrac(:,pc), csiz, chgt, chil_p(:), czen, &
+! 09/03/2021, yuan: set the same vegetation parameters
+! p = 7 broadleaf deciduous temperate tree    
+   chil(:) = chil_p(7)
+   !CALL ThreeDCanopy(N_PFT, canlay(:), pcfrac(:,pc), csiz, chgt, chil_p(:), czen, &
+   CALL ThreeDCanopy(N_PFT, canlay(:), pcfrac(:,pc), csiz, chgt, chil(:), czen, &
                      lsai, rho, tau, albg(:,1), albg(:,2), albd, albi, &
                      fabd, fabi, ftdd, ftid, ftii, sun_fadd, psun, &
                      thermk_c(:,pc), fshade_c(:,pc) )
@@ -67,7 +75,10 @@ SUBROUTINE ThreeDCanopy_wrap (ipatch, czen, albg, albv, ssun, ssha)
    extkd_c(:,pc) = 0.719 !used for scaling-up coefficients from leaf to canopy
 
    ! 11/07/2018: calculate gee FUNCTION consider LAD
-   phi1 = 0.5 - 0.633 * chil_p(:) - 0.33 * chil_p(:) * chil_p(:)
+! 09/03/2021, yuan: set the same vegetation parameters
+! p = 7 broadleaf deciduous temperate tree    
+   !phi1 = 0.5 - 0.633 * chil_p(:) - 0.33 * chil_p(:) * chil_p(:)
+   phi1 = 0.5 - 0.633 * chil(:) - 0.33 * chil(:) * chil(:)
    phi2 = 0.877 * ( 1. - 2. * phi1 )
 
    ! 11/07/2018: calculate gee FUNCTION consider LAD
