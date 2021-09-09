@@ -416,7 +416,7 @@ MODULE LEAF_temperature_PC
        lsai(:) = lai(:) + sai(:)
 
        DO i = 1, npft
-          IF (fcover(i) > 0 .and. lsai(i)>0) THEN
+          IF (fcover(i)>0 .and. lsai(i)>1.e-6) THEN
              CALL dewfraction (sigf(i),lai(i),sai(i),dewmx,ldew(i),fwet(i),fdry(i))
              CALL qsadv(tl(i),psrf,ei(i),deiDT(i),qsatl(i),qsatlDT(i))
           ENDIF
@@ -441,7 +441,7 @@ MODULE LEAF_temperature_PC
        fcover_lay(:) = 0
 
        DO i = 1, npft
-          IF (fcover(i)>0 .and. lsai(i)>0) THEN
+          IF (fcover(i)>0 .and. lsai(i)>1.e-6) THEN
              clev = canlev(i)
              htop_lay(clev) = htop_lay(clev) + htop(i) * fcover(i)
              hbot_lay(clev) = hbot_lay(clev) + hbot(i) * fcover(i)
@@ -901,7 +901,7 @@ MODULE LEAF_temperature_PC
           rb(:) = 0.
         
           DO i = 1, npft
-             IF (fcover(i)>0 .and. lsai(i)>0) THEN
+             IF (fcover(i)>0 .and. lsai(i)>1.e-6) THEN
                 clev = canlev(i)
                 cf = 0.01*sqrtdi(i)*sqrt(ueff_lay(clev))
                 rb(i) = 1./cf
@@ -977,7 +977,7 @@ MODULE LEAF_temperature_PC
           cfw(:) = 0.
  
           DO i = 1, npft
-             IF (fcover(i)>0 .and. lsai(i)>0) THEN
+             IF (fcover(i)>0 .and. lsai(i)>1.e-6) THEN
  
                 clev = canlev(i)
                 delta(i) = 0.0
@@ -1019,7 +1019,7 @@ MODULE LEAF_temperature_PC
           wtsqi(:) = caw(:) + cgw(:)
           
           DO i = 1, npft
-             IF (fcover(i)>0 .and. lsai(i)>0) THEN
+             IF (fcover(i)>0 .and. lsai(i)>1.e-6) THEN
                 clev = canlev(i)
                 wtshi(clev) = wtshi(clev) + fcover(i)*cfh(i)
                 wtsqi(clev) = wtsqi(clev) + fcover(i)*cfw(i)
@@ -1044,7 +1044,7 @@ MODULE LEAF_temperature_PC
           wtlql(:) = 0.
 
           DO i = 1, npft
-             IF (fcover(i)>0 .and. lsai(i)>0) THEN
+             IF (fcover(i)>0 .and. lsai(i)>1.e-6) THEN
                 clev = canlev(i)
 
                 wtl0(i)  = cfh(i) * wtshi(clev) * fcover(i)
@@ -1109,7 +1109,7 @@ MODULE LEAF_temperature_PC
 ! calculate L for each canopy layer
           L(:) = 0.
           DO i = 1, npft
-             IF (fcover(i)>0 .and. lsai(i)>0) THEN
+             IF (fcover(i)>0 .and. lsai(i)>1.e-6) THEN
                 clev = canlev(i)
                 ! according to absorption = emissivity, fcover -> fshade
                 L(clev) = L(clev) + fshade(i) * (1-thermk(i)) * stefnc * tl(i)**4
@@ -1176,7 +1176,7 @@ MODULE LEAF_temperature_PC
 
           DO i = 1, npft
             
-             IF (fcover(i)>0 .and. lsai(i)>0) THEN
+             IF (fcover(i)>0 .and. lsai(i)>1.e-6) THEN
 
                 clev = canlev(i)
                 fac(i) = 1. - thermk(i)
@@ -1319,7 +1319,7 @@ MODULE LEAF_temperature_PC
           wtlql(:) = 0.
 
           DO i = 1, npft
-             IF (fcover(i)>0 .and. lsai(i)>0) THEN
+             IF (fcover(i)>0 .and. lsai(i)>1.e-6) THEN
                 clev = canlev(i)
                 wtll(clev)  =  wtll(clev) +  wtl0(i)*tl(i)
                 wtlql(clev) = wtlql(clev) + wtlq0(i)*qsatl(i)
@@ -1444,7 +1444,7 @@ MODULE LEAF_temperature_PC
 ! canopy fluxes and total assimilation amd respiration
 
        DO i = 1, npft
-          IF (fcover(i)>0 .and. lsai(i)>0) THEN
+          IF (fcover(i)>0 .and. lsai(i)>1.e-6) THEN
              
              IF(lai(i) .gt. 0.001) THEN
                 rst(i) = 1./(laisun(i)/rssun(i) + laisha(i)/rssha(i))

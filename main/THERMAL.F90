@@ -651,9 +651,17 @@ IF (patchtype == 0) THEN
          ENDIF
 
       ENDDO 
-      
-      IF (lai+sai > 1e-6) THEN
 
+      ! initialization
+      tleaf_c (:,pc) = forc_t
+      rst_c   (:,pc) = 2.0e4
+      assim_c (:,pc) = 0.
+      respc_c (:,pc) = 0.
+      fsenl_c (:,pc) = 0.
+      fevpl_c (:,pc) = 0.
+      etr_c   (:,pc) = 0.
+    
+      IF (lai+sai > 1e-6) THEN
          !print *, "CALL LeafTempPC 表层温度t_grnd:", t_grnd  !fordebug
          CALL LeafTempPC (ipatch,N_PFT  ,deltim        ,csoilc        ,dewmx         ,&
            htvp          ,pcfrac(:,pc)  ,canlay(:)     ,htop_c(:,pc)  ,hbot_c(:,pc)  ,&
@@ -673,11 +681,12 @@ IF (patchtype == 0) THEN
            fsenl_c(:,pc) ,fevpl_c(:,pc) ,etr_c(:,pc)   ,dlrad         ,ulrad         ,&
            z0m           ,zol           ,rib           ,ustar         ,qstar         ,&
            tstar         ,fm            ,fh            ,fq                            )
+
       ELSE 
          laisun_c(:)    = 0.
          laisha_c(:)    = 0.
-         tleaf_c (:,pc) = forc_t
          ldew_c  (:,pc) = 0.
+         tleaf_c (:,pc) = forc_t
          rst_c   (:,pc) = 2.0e4
          assim_c (:,pc) = 0.
          respc_c (:,pc) = 0.
