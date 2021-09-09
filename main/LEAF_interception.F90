@@ -61,7 +61,7 @@
 
 !-----------------------End Variable List-------------------------------
 
- IF (lai+sai >= 1e-6) THEN
+ IF (lai+sai > 1.e-6) THEN
 
     pcoefs(1,1) = 20.
     pcoefs(1,2) = 0.206e-8
