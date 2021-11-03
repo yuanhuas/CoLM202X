@@ -132,13 +132,13 @@ IMPLICIT NONE
 #endif
 
 #ifdef USGS_CLASSIFICATION
-      nrow30s_start = nrow_Start
+      nrow30s_start = nrow_start
       nrow30s_end   = nrow_end
       ncol30s_start = ncol_start
       ncol30s_end   = ncol_end
       suffix        = ''
 #else
-      nrow30s_start = int((nrow_Start+1)/2)
+      nrow30s_start = int((nrow_start+1)/2)
       nrow30s_end   = int((nrow_end+1)/2)
       ncol30s_start = int((ncol_start+1)/2)
       ncol30s_end   = int((ncol_end+1)/2)
