@@ -7,7 +7,6 @@ SUBROUTINE CLMMAIN ( &
            patchlonr,    patchlatr,    patchclass,   patchtype,     &
            doalb,        dolai,        dosst,        oro,           &
 
-
          ! soil information and lake depth
            soil_s_v_alb, soil_d_v_alb, soil_s_n_alb, soil_d_n_alb,  &
            porsl,        psi0,         bsw,          hksati,        &
@@ -30,7 +29,7 @@ SUBROUTINE CLMMAIN ( &
            forc_rhoair,                                             &
 
          ! land surface variables required for restart
-           z_soisno,     dz_soisno,    t_soisno,     wliq_soisno,   &
+           z_sno,        dz_sno,       t_soisno,     wliq_soisno,   &
            wice_soisno,  t_grnd,       tleaf,        ldew,          &
            sag,          scv,          snowdp,       fveg,          &
            fsno,         sigf,         green,        lai,           &
@@ -105,6 +104,7 @@ SUBROUTINE CLMMAIN ( &
 
   USE precision
   USE PhysicalConstants, only: tfrz, denh2o, denice
+  USE GlobalVars
   USE MOD_TimeInvariants, only: gridlond
   USE MOD_TimeVariables, only: tlai, tsai
   USE MOD_PFTimeInvars
@@ -224,9 +224,9 @@ SUBROUTINE CLMMAIN ( &
 
   REAL(r8), intent(inout) :: oro  ! ocean(0)/seaice(2)/ flag
   REAL(r8), intent(inout) :: &
-        z_soisno(maxsnl+1:nl_soil)    ,&! layer depth (m)
-        dz_soisno(maxsnl+1:nl_soil)   ,&! layer thickness (m)
-        t_soisno(maxsnl+1:nl_soil)    ,&! soil + snow layer temperature [K]
+        z_sno      (maxsnl+1:nl_soil) ,&! layer depth (m)
+        dz_sno     (maxsnl+1:nl_soil) ,&! layer thickness (m)
+        t_soisno   (maxsnl+1:nl_soil) ,&! soil + snow layer temperature [K]
         wliq_soisno(maxsnl+1:nl_soil) ,&! liquid water (kg/m2)
         wice_soisno(maxsnl+1:nl_soil) ,&! ice lens (kg/m2)
 
@@ -357,7 +357,9 @@ SUBROUTINE CLMMAIN ( &
         tssea       ,&! sea surface temperature [K]
         totwb       ,&! water mass at the begining of time step
         wt          ,&! fraction of vegetation buried (covered) by snow [-]
-        zi_soisno(maxsnl:nl_soil) ! interface level below a "z" level (m)
+        z_soisno (maxsnl:nl_soil), &! layer depth (m)
+        dz_soisno(maxsnl:nl_soil), &! layer thickness (m)
+        zi_soisno(maxsnl:nl_soil)   ! interface level below a "z" level (m)
 
    REAL(r8) :: &
         prc_rain    ,&! convective rainfall [kg/(m2 s)]
@@ -397,6 +399,12 @@ SUBROUTINE CLMMAIN ( &
 
 !======================================================================
 
+      z_soisno (maxsnl+1:0) = z_sno (maxsnl+1:0)
+      z_soisno (1:nl_soil ) = z_soi (1:nl_soil)
+      dz_soisno(maxsnl+1:0) = dz_sno(maxsnl+1:0)
+      dz_soisno(1:nl_soil ) = dz_soi(1:nl_soil)
+
+!======================================================================
                          !         / SOIL GROUND          (patchtype = 0)
 IF (patchtype <= 2) THEN ! <=== is - URBAN and BUILT-UP   (patchtype = 1)
                          !         \ WETLAND              (patchtype = 2)
@@ -917,6 +925,10 @@ ENDIF
       
     h2osoi = wliq_soisno(1:)/(dz_soisno(1:)*denh2o) + wice_soisno(1:)/(dz_soisno(1:)*denice)
     wat = sum(wice_soisno(1:)+wliq_soisno(1:))+ldew+scv + wa
+
+    z_sno (maxsnl+1:0) = z_soisno (maxsnl+1:0)
+    dz_sno(maxsnl+1:0) = dz_soisno(maxsnl+1:0)
+
 !----------------------------------------------------------------------
 
 END SUBROUTINE CLMMAIN

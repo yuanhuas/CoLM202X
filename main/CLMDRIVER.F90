@@ -11,53 +11,40 @@ SUBROUTINE CLMDRIVER (idate,deltim,dolai,doalb,dosst,oro)
 !
 !=======================================================================
 
- use precision
- use PhysicalConstants, only: tfrz, rgas, vonkar
+ USE precision
+ USE PhysicalConstants, only: tfrz, rgas, vonkar
  USE GlobalVars
  USE LC_Const
  USE PFT_Const
- use MOD_TimeInvariants
- use MOD_TimeVariables
- use MOD_1D_Forcing
- use MOD_1D_Fluxes
- use omp_lib
+ USE MOD_TimeInvariants
+ USE MOD_TimeVariables
+ USE MOD_1D_Forcing
+ USE MOD_1D_Fluxes
+ USE omp_lib
 
  IMPLICIT NONE
 
-  integer,  INTENT(in) :: idate(3) ! model calendar for next time step (year, julian day, seconds)
-  real(r8), INTENT(in) :: deltim   ! seconds in a time-step
+  INTEGER,  intent(in) :: idate(3) ! model calendar for next time step (year, julian day, seconds)
+  REAL(r8), intent(in) :: deltim   ! seconds in a time-step
 
-  logical,  INTENT(in) :: dolai    ! true if time for time-varying vegetation paramter
-  logical,  INTENT(in) :: doalb    ! true if time for surface albedo calculation
-  logical,  INTENT(in) :: dosst    ! true if time for update sst/ice/snow
+  LOGICAL,  intent(in) :: dolai    ! true if time for time-varying vegetation paramter
+  LOGICAL,  intent(in) :: doalb    ! true if time for surface albedo calculation
+  LOGICAL,  intent(in) :: dosst    ! true if time for update sst/ice/snow
 
-  real(r8), INTENT(inout) :: oro(numpatch)  ! ocean(0)/seaice(2)/ flag
+  REAL(r8), intent(inout) :: oro(numpatch)  ! ocean(0)/seaice(2)/ flag
 
-! -------------- Local varaibles -------------------
-  real(r8), allocatable :: z_soisno (:,:)
-  real(r8), allocatable :: dz_soisno(:,:)
-
-  integer :: i, m
+  INTEGER :: i, m
 
 ! ======================================================================
 
-  !TODO: can be removed below
-  allocate ( z_soisno  (maxsnl+1:nl_soil,numpatch) )
-  allocate ( dz_soisno (maxsnl+1:nl_soil,numpatch) )
-
 #ifdef OPENMP
 !$OMP PARALLEL DO NUM_THREADS(OPENMP) &
-!$OMP PRIVATE(i,m) &
+!$OMP PRIVATE(i, m) &
 !$OMP SCHEDULE(STATIC, 1)
 #endif
       DO i = 1, numpatch
          
          m = patchclass(i)
-         !TODO: can be removed
-         z_soisno (maxsnl+1:0,i) = z_sno (maxsnl+1:0,i)
-         z_soisno (1:nl_soil ,i) = z_soi (1:nl_soil)
-         dz_soisno(maxsnl+1:0,i) = dz_sno(maxsnl+1:0,i)
-         dz_soisno(1:nl_soil ,i) = dz_soi(1:nl_soil)
 
          !TODO: 整理变量次序
          CALL CLMMAIN (i, idate,           coszen(i),       deltim,          &
@@ -88,7 +75,7 @@ SUBROUTINE CLMDRIVER (idate,deltim,dolai,doalb,dosst,oro)
          forc_rhoair(i),                                                     &
 
        ! LAND SURFACE VARIABLES REQUIRED FOR RESTART
-         z_soisno(maxsnl+1:,i),            dz_soisno(maxsnl+1:,i),           &
+         z_sno(maxsnl+1:,i),               dz_sno(maxsnl+1:,i),              &
          t_soisno(maxsnl+1:,i),            wliq_soisno(maxsnl+1:,i),         &
          wice_soisno(maxsnl+1:,i),                                           &
 
@@ -130,17 +117,10 @@ SUBROUTINE CLMDRIVER (idate,deltim,dolai,doalb,dosst,oro)
          ustar(i),        qstar(i),        tstar(i),                         &
          fm(i),           fh(i),           fq(i) )
 
-
-         z_sno (maxsnl+1:0,i) = z_soisno (maxsnl+1:0,i)
-         dz_sno(maxsnl+1:0,i) = dz_soisno(maxsnl+1:0,i)
-
       ENDDO
 #ifdef OPENMP
 !$OMP END PARALLEL DO
 #endif
-
-  deallocate ( z_soisno  )
-  deallocate ( dz_soisno )
 
 END SUBROUTINE CLMDRIVER
 ! ---------- EOP ------------
