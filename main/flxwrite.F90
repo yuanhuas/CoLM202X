@@ -12,6 +12,7 @@
   use MOD_2D_Fluxes
   use MOD_TimeInvariants, only: gridlond, gridlatd 
   use timemanager
+  use omp_lib
   IMPLICIT NONE
 
   integer, INTENT(in) :: idate(3)
@@ -46,7 +47,8 @@
      a = float(nac)
 
 #ifdef OPENMP
-!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j,l)
+!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j,l) &
+!$OMP SCHEDULE(STATIC, 1)
 #endif
      do j = 1, lat_points
         do i = 1, lon_points

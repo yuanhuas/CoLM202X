@@ -357,9 +357,9 @@ SUBROUTINE CLMMAIN ( &
         tssea       ,&! sea surface temperature [K]
         totwb       ,&! water mass at the begining of time step
         wt          ,&! fraction of vegetation buried (covered) by snow [-]
-        z_soisno (maxsnl:nl_soil), &! layer depth (m)
-        dz_soisno(maxsnl:nl_soil), &! layer thickness (m)
-        zi_soisno(maxsnl:nl_soil)   ! interface level below a "z" level (m)
+        z_soisno (maxsnl+1:nl_soil), &! layer depth (m)
+        dz_soisno(maxsnl+1:nl_soil), &! layer thickness (m)
+        zi_soisno(maxsnl  :nl_soil)   ! interface level below a "z" level (m)
 
    REAL(r8) :: &
         prc_rain    ,&! convective rainfall [kg/(m2 s)]
@@ -400,9 +400,9 @@ SUBROUTINE CLMMAIN ( &
 !======================================================================
 
       z_soisno (maxsnl+1:0) = z_sno (maxsnl+1:0)
-      z_soisno (1:nl_soil ) = z_soi (1:nl_soil)
+      z_soisno (1:nl_soil ) = z_soi (1:nl_soil )
       dz_soisno(maxsnl+1:0) = dz_sno(maxsnl+1:0)
-      dz_soisno(1:nl_soil ) = dz_soi(1:nl_soil)
+      dz_soisno(1:nl_soil ) = dz_soi(1:nl_soil )
 
 !======================================================================
                          !         / SOIL GROUND          (patchtype = 0)

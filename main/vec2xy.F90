@@ -232,7 +232,8 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
       a_srniln (:,:) = spval
 
 #ifdef OPENMP
-!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j,np)
+!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j,np) &
+!$OMP SCHEDULE(STATIC, 1)
 #endif
       DO j = 1, lat_points
          do i = 1, lon_points
@@ -323,7 +324,8 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
 #endif
 
 #ifdef OPENMP
-!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j)
+!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j) &
+!$OMP SCHEDULE(STATIC, 1)
 #endif
       DO j = 1, lat_points
          do i = 1, lon_points
@@ -501,7 +503,8 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
       a_wice_soisno(:,:,:) = 0.
 
 #ifdef OPENMP
-!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j,np)
+!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j,np) &
+!$OMP SCHEDULE(STATIC, 1)
 #endif
       DO j = 1, lat_points
          do i = 1, lon_points
@@ -526,7 +529,8 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
 #endif
 
 #ifdef OPENMP
-!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j,l)
+!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j,l) &
+!$OMP SCHEDULE(STATIC, 1)
 #endif
       DO j = 1, lat_points
          DO i = 1, lon_points
@@ -563,7 +567,8 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
       a_wa     (:,:)   = 0.
 
 #ifdef OPENMP
-!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j,np)
+!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j,np) &
+!$OMP SCHEDULE(STATIC, 1)
 #endif
       DO j = 1, lat_points
          do i = 1, lon_points
@@ -587,7 +592,8 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
 #endif
 
 #ifdef OPENMP
-!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j,l)
+!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j,l) &
+!$OMP SCHEDULE(STATIC, 1)
 #endif
       DO j = 1, lat_points
          DO i = 1, lon_points
@@ -623,7 +629,8 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
       a_lake_icefrac(:,:,:) = 0.
 
 #ifdef OPENMP
-!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j,np)
+!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j,np) &
+!$OMP SCHEDULE(STATIC, 1)
 #endif
       DO j = 1, lat_points
          do i = 1, lon_points
@@ -644,7 +651,8 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
 #endif
 
 #ifdef OPENMP
-!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j,l)
+!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j,l) &
+!$OMP SCHEDULE(STATIC, 1)
 #endif
       DO j = 1, lat_points
          DO i = 1, lon_points
@@ -674,7 +682,8 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
       sumwt(:,:) = 0.
 
 #ifdef OPENMP
-!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j,np)
+!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j,np) &
+!$OMP SCHEDULE(STATIC, 1)
 #endif
       DO j = 1, lat_points
          do i = 1, lon_points
@@ -696,7 +705,8 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
 !$OMP PRIVATE(rhoair,thm,th,thv,ur,displa_av,zldis,hgt_u,hgt_t,hgt_q) &
 !$OMP PRIVATE(z0m_av,z0h_av,z0q_av,us,vs,tm,qm,psrf) &
 !$OMP PRIVATE(obu,fh2m,fq2m) &
-!$OMP PRIVATE(um,thvstar,beta,zii,wc,wc2)
+!$OMP PRIVATE(um,thvstar,beta,zii,wc,wc2) &
+!$OMP SCHEDULE(STATIC, 1)
 #endif
       DO j = 1, lat_points
          DO i = 1, lon_points
@@ -789,7 +799,8 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
 ! ---------------------------------------------------
       nac = nac + 1
 #ifdef OPENMP
-!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j,l)
+!$OMP PARALLEL DO NUM_THREADS(OPENMP) PRIVATE(i,j,l) &
+!$OMP SCHEDULE(STATIC, 1)
 #endif
       do j = 1, lat_points
          do i = 1, lon_points
