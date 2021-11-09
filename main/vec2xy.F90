@@ -483,7 +483,6 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
                mask(i,j) = 0
                frac(i,j) = 0.
 
-
             endif
 
          enddo
@@ -719,14 +718,12 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
                psrf = forc_xy_psrf(i,j)
                rhoair = (psrf - 0.378*qm*psrf/(0.622+0.378*qm)) / (rgas*tm)
 
-
                a_ustar(i,j) = sqrt(max(1.e-6,sqrt(a_taux(i,j)**2+a_tauy(i,j)**2))/rhoair)
-
                a_tstar(i,j) = -a_fsena(i,j)/(rhoair*a_ustar(i,j))/cpair
                a_qstar(i,j) = -a_fevpa(i,j)/(rhoair*a_ustar(i,j))
    
                thm = tm + 0.0098*hgt_t
-               th = tm*(100000./psrf)**(rgas/cpair)
+               th  = tm*(100000./psrf)**(rgas/cpair)
                thv = th*(1.+0.61*qm)
 
                a_zol(i,j) = zldis*vonkar*grav &

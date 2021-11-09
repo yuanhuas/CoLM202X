@@ -367,7 +367,7 @@ MODULE MOD_TimeVariables
            fh,              &! integral of profile function for heat
            fq                ! integral of profile function for moisture
 
-      ! PFT/PC time variabls
+     ! PFT/PC time variabls
 #ifdef PFT_CLASSIFICATION
      write(lhistTimeVar)    &!
            tleaf_p,         &! shaded leaf temperature [K]

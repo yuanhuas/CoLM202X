@@ -224,8 +224,8 @@ SUBROUTINE CLMMAIN ( &
 
   REAL(r8), intent(inout) :: oro  ! ocean(0)/seaice(2)/ flag
   REAL(r8), intent(inout) :: &
-        z_sno      (maxsnl+1:nl_soil) ,&! layer depth (m)
-        dz_sno     (maxsnl+1:nl_soil) ,&! layer thickness (m)
+        z_sno      (maxsnl+1:0)       ,&! layer depth (m)
+        dz_sno     (maxsnl+1:0)       ,&! layer thickness (m)
         t_soisno   (maxsnl+1:nl_soil) ,&! soil + snow layer temperature [K]
         wliq_soisno(maxsnl+1:nl_soil) ,&! liquid water (kg/m2)
         wice_soisno(maxsnl+1:nl_soil) ,&! ice lens (kg/m2)
