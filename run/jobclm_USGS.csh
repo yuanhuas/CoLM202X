@@ -7,7 +7,7 @@
 set RUN_CLM_SRF="NO"     	# "YES" = MAKE CoLM surface characteristic data
                                 # "NO"  = NOT make CoLM surface characteristic data
 
-set RUN_CLM_INI="NO"    	# "YES' = MAKE CoLM initial data
+set RUN_CLM_INI="YES"    	# "YES' = MAKE CoLM initial data
                                 # "NO"  = Restart run
 
 set RUN_CaMa="NO"       	# "YES" = OPEN CaMa-Flood
@@ -25,7 +25,7 @@ set START_YEAR  = 2000          	# model start year                             
 set START_MONTH = 1             	# model start Month
 set START_DAY   = 1             	# model start Julian day
 set START_SEC   = 0             	# model start secs of day
-set END_YEAR    = 2004          	# model end year
+set END_YEAR    = 2001          	# model end year
 set END_MONTH   = 1             	# model end month, 10
 set END_DAY     = 1             	# model end Julian day
 set END_SEC     = 0               	# model end secs of day
@@ -60,7 +60,7 @@ set HEIGHT_Q    =  50.
 
 # clm src directory
 #-------------------------------------------------------
-setenv CLM_ROOT   $HOME/CoLM202X                                     # <MARK #3>
+setenv CLM_ROOT   $HOME/github/CoLM202X                                     # <MARK #3>
 setenv CLM_INCDIR $CLM_ROOT/include
 setenv CLM_SRFDIR $CLM_ROOT/mksrfdata
 setenv CLM_INIDIR $CLM_ROOT/mkinidata
@@ -168,7 +168,7 @@ EOF
 # Executing CoLM initialization'
 #ln -snf $CLM_SRFDIR/srf.x $CAS_RUNDIR/
 cp -vf $CLM_SRFDIR/srf.x $CAS_RUNDIR/
-#$CLM_SRFDIR/srf.x < $CAS_RUNDIR/mksrf.stdin > $CAS_RUNDIR/exe.mksrf.log || exit 4
+$CLM_SRFDIR/srf.x < $CAS_RUNDIR/mksrf.stdin > $CAS_RUNDIR/exe.mksrf.log || exit 4
 
 echo 'Making the CoLM surface data completed'
 
@@ -208,7 +208,7 @@ make >& $CAS_RUNDIR/compile.mkini.log || exit 5
 
 #ln -snf $CLM_INIDIR/initial.x $CAS_RUNDIR/.
 cp -vf $CLM_INIDIR/initial.x $CAS_RUNDIR/.
-#$CLM_INIDIR/initial.x < $CAS_RUNDIR/mkini.stdin > $CAS_RUNDIR/exe.mkini.log || exit 4
+$CLM_INIDIR/initial.x < $CAS_RUNDIR/mkini.stdin > $CAS_RUNDIR/exe.mkini.log || exit 4
 echo 'CoLM initialization completed'
 
 else if ( $RUN_CLM == "YES" ) then
@@ -326,7 +326,7 @@ rm -f $CAS_RUNDIR/exe.timeloop.log
 #ln -snf $CLM_SRCDIR/clm.x $CAS_RUNDIR/.
 cp -vf $CLM_SRCDIR/clm.x $CAS_RUNDIR/.
 
-#/usr/bin/time ./clm.x < $CAS_RUNDIR/timeloop.stdin > $CAS_RUNDIR/exe.timeloop.log || exit 4
+/usr/bin/time ./clm.x < $CAS_RUNDIR/timeloop.stdin > $CAS_RUNDIR/exe.timeloop.log || exit 4
 
 #if ( $use_mpi == "YES" ) then
 #    /usr/bin/time -p /usr/bin/mpirun -np $nproc ./clm.x < $CAS_RUNDIR/timeloop.stdin 
