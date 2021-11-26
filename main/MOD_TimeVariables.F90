@@ -276,7 +276,7 @@ MODULE MOD_TimeVariables
            IF (id(1) /= idate(1) .or. id(2) /= idate(2) .or. id(3) /= idate(3)) THEN
               print*, 'id = ', id, 'idate = ', idate
               print*, 'The date of initial data is NOT IDENTICAL TO initial set-up'
-              CALL abort
+              !CALL abort
            ENDIF
 
      close(lhistTimeVar)

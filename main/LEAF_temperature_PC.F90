@@ -1058,7 +1058,7 @@ MODULE LEAF_temperature_PC
           ! to solve taf(:) and qaf(:)
           IF (numlay .eq. 1) THEN 
 
-             taf(toplay) = wta0(toplay)*thm + wtg0(toplay)*tg + wtll(toplay)
+             taf(toplay) = wta0(toplay)*thm +  wtg0(toplay)*tg +  wtll(toplay)
              qaf(toplay) = wtaq0(toplay)*qm + wtgq0(toplay)*qg + wtlql(toplay)
              fact = 1.
              facq = 1.
@@ -1075,7 +1075,7 @@ MODULE LEAF_temperature_PC
              facq  = 1. - wtgq0(toplay)*wtaq0(botlay)
              qaf(toplay) = ( wtaq0(toplay)*qm + wtgq0(toplay)*tmpw1 + wtlql(toplay) ) / facq
              
-             taf(botlay) = wta0(botlay)*taf(toplay) + wtg0(botlay)*tg + wtll(botlay)
+             taf(botlay) =  wta0(botlay)*taf(toplay) +  wtg0(botlay)*tg +  wtll(botlay)
              qaf(botlay) = wtaq0(botlay)*qaf(toplay) + wtgq0(botlay)*qg + wtlql(botlay)
 
           ENDIF
@@ -1083,7 +1083,7 @@ MODULE LEAF_temperature_PC
           IF (numlay .eq. 3) THEN 
 
              tmpw1 = wta0(3)*thm + wtll(3)
-             tmpw2 = wtg0(1)*tg + wtll(1)
+             tmpw2 = wtg0(1)*tg  + wtll(1)
              fact  = 1. - wta0(2)*wtg0(3) - wtg0(2)*wta0(1) 
              taf(2) = ( wta0(2)*tmpw1 + wtg0(2)*tmpw2 + wtll(2) ) / fact
 
@@ -1092,10 +1092,10 @@ MODULE LEAF_temperature_PC
              facq  = 1. - wtaq0(2)*wtgq0(3) - wtgq0(2)*wtaq0(1)
              qaf(2) = ( wtaq0(2)*tmpw1 + wtgq0(2)*tmpw2 + wtlql(2) ) / facq
 
-             taf(1) = wta0(1)*taf(2) + wtg0(1)*tg + wtll(1)
+             taf(1) =  wta0(1)*taf(2) +  wtg0(1)*tg +  wtll(1)
              qaf(1) = wtaq0(1)*qaf(2) + wtgq0(1)*qg + wtlql(1)
              
-             taf(3) = wta0(3)*thm + wtg0(3)*taf(2) + wtll(3)
+             taf(3) = wta0(3)*thm +  wtg0(3)*taf(2) +  wtll(3)
              qaf(3) = wtaq0(3)*qm + wtgq0(3)*qaf(2) + wtlql(3)
 
           ENDIF
@@ -1186,16 +1186,18 @@ MODULE LEAF_temperature_PC
                 
                 ! 09/24/2017: why fact/facq here? bugs? YES
                 ! 09/25/2017: re-written, check it clearfully 
+                !NOTE: 当numlay<3时，无论如何计算求解，fact一致
+                !      当clev==2时,taf(clev)倒数直接计算为wtl0(i)/fact
                 IF (numlay < 3 .or. clev == 2) THEN
-                   fsenl_dtl(i) = rhoair * cpair * cfh(i) * (1 - wtl0(i)/fact)
+                   fsenl_dtl(i) = rhoair * cpair * cfh(i) * (1. - wtl0(i)/fact)
                 ELSE
                    IF (clev == 1) THEN
                       fsenl_dtl(i) = rhoair * cpair * cfh(i) * &
-                         (1 - (1-wta0(2)*wtg0(3))*wtl0(i)/fact)
+                         (1. - (1-wta0(1)*wtg0(2))*wtl0(i)/fact - wtl0(i))
                    ENDIF
                    IF (clev == 3) THEN
                       fsenl_dtl(i) = rhoair * cpair * cfh(i) * &
-                         (1 - (1-wtg0(2)*wta0(1))*wtl0(i)/fact)
+                         (1. - (1-wtg0(3)*wta0(2))*wtl0(i)/fact - wtl0(i))
                    ENDIF
                 ENDIF
 
@@ -1203,22 +1205,22 @@ MODULE LEAF_temperature_PC
                 etr(i) = rhoair * (1.-fwet(i)) * delta(i) &
                        * ( laisun(i)/(rb(i)+rssun(i)) + laisha(i)/(rb(i)+rssha(i)) ) &
                        * ( qsatl(i) - qaf(clev) )
-                
-                ! 09/25/2017: re-written 
+               
+                ! 09/25/2017: re-written
                 IF (numlay < 3 .or. clev == 2) THEN
                    etr_dtl(i) = rhoair * (1.-fwet(i)) * delta(i) &
                       * ( laisun(i)/(rb(i)+rssun(i)) + laisha(i)/(rb(i)+rssha(i)) ) &
-                      * (1 - wtlq0(i)/facq)*qsatlDT(i) 
+                      * (1. - wtlq0(i)/facq)*qsatlDT(i)
                 ELSE
                    IF (clev == 1) THEN
                       etr_dtl(i) = rhoair * (1.-fwet(i)) * delta(i) &
                          * ( laisun(i)/(rb(i)+rssun(i)) + laisha(i)/(rb(i)+rssha(i)) ) &
-                         * (1 - (1-wtaq0(2)*wtgq0(3))*wtlq0(i)/facq)*qsatlDT(i) 
+                         * (1. - (1-wtaq0(1)*wtgq0(2))*wtlq0(i)/facq - wtlq0(i))*qsatlDT(i)
                    ENDIF
                    IF (clev == 3) THEN
                       etr_dtl(i) = rhoair * (1.-fwet(i)) * delta(i) &
                          * ( laisun(i)/(rb(i)+rssun(i)) + laisha(i)/(rb(i)+rssha(i)) ) &
-                         * (1 - (1-wtgq0(2)*wtaq0(1))*wtlq0(i)/facq)*qsatlDT(i) 
+                         * (1. - (1-wtgq0(3)*wtaq0(2))*wtlq0(i)/facq - wtlq0(i))*qsatlDT(i)
                    ENDIF
                 ENDIF
 
@@ -1226,25 +1228,25 @@ MODULE LEAF_temperature_PC
                    etr(i) = etrc(i)
                    etr_dtl(i) = 0.
                 ENDIF
- 
+
                 evplwet(i) = rhoair * (1.-delta(i)*(1.-fwet(i))) * lsai(i)/rb(i) &
                            * ( qsatl(i) - qaf(clev) )
 
-                ! 09/25/2017: re-written 
+                ! 09/25/2017: re-written
                 IF (numlay < 3 .or. clev == 2) THEN
                    evplwet_dtl(i) = rhoair * (1.-delta(i)*(1.-fwet(i))) * lsai(i)/rb(i) &
-                      * (1 - wtlq0(i)/facq)*qsatlDT(i) 
+                      * (1. - wtlq0(i)/facq)*qsatlDT(i)
                 ELSE
                    IF (clev == 1) THEN
                       evplwet_dtl(i) = rhoair * (1.-delta(i)*(1.-fwet(i))) * lsai(i)/rb(i) &
-                         * (1 - (1-wtaq0(2)*wtgq0(3))*wtlq0(i)/facq)*qsatlDT(i) 
+                         * (1. - (1-wtaq0(1)*wtgq0(2))*wtlq0(i)/facq)*qsatlDT(i)
                    ENDIF
                    IF (clev == 3) THEN
                       evplwet_dtl(i) = rhoair * (1.-delta(i)*(1.-fwet(i))) * lsai(i)/rb(i) &
-                         * (1 - (1-wtgq0(2)*wtaq0(1))*wtlq0(i)/facq)*qsatlDT(i) 
+                         * (1. - (1-wtgq0(3)*wtaq0(2))*wtlq0(i)/facq)*qsatlDT(i)
                    ENDIF
                 ENDIF
- 
+
                 ! 03/02/2018: convert evplwet from fc to whole area
                 ! because ldew right now is for the whole area
                 ! 09/05/2019: back to fc area
@@ -1253,17 +1255,17 @@ MODULE LEAF_temperature_PC
 ! 01/07/2020, yuan: bug? 不会产生计算的错误
                    evplwet_dtl(i) = 0.
                 ENDIF
-  
+
                 fevpl(i) = etr(i) + evplwet(i)
                 fevpl_dtl(i) = etr_dtl(i) + evplwet_dtl(i)
- 
+
                 erre(i) = 0.
                 fevpl_noadj(i) = fevpl(i)
-                IF ( fevpl(i)*fevpl_bef(i) < 0. ) THEN 
+                IF ( fevpl(i)*fevpl_bef(i) < 0. ) THEN
                    erre(i)  = -0.9*fevpl(i)
                    fevpl(i) =  0.1*fevpl(i)
                 ENDIF
- 
+
 !-----------------------------------------------------------------------
 ! difference of temperatures by quasi-newton-raphson method for the non-linear system equations
 !-----------------------------------------------------------------------
@@ -1524,15 +1526,6 @@ MODULE LEAF_temperature_PC
 ! fluxes from ground to canopy space
 !-----------------------------------------------------------------------
 
-! for check purpose ONLY
-! taf = wta0*thm + wtg0*tg + wtl0*tl 
-! taf(1) = wta0(1)*taf(2) + wtg0(1)*tg + wtll(1)
-! qaf(1) = wtaq0(1)*qaf(2) + wtgq0(1)*qg + wtlql(1)
-! taf(botlay) = wta0(botlay)*taf(toplay) + wtg0(botlay)*tg + wtll(botlay)
-! qaf(botlay) = wtaq0(botlay)*qaf(toplay) + wtgq0(botlay)*qg + wtlql(botlay)
-! taf(toplay) = wta0(toplay)*thm +  wtg0(toplay)*tg + wtll(toplay)
-! qaf(toplay) = wtaq0(toplay)*qm + wtgq0(toplay)*qg + wtlql(toplay)
-       
        fseng = cpair*rhoair*cgh(botlay)*(tg-taf(botlay))
        fevpg = rhoair*cgw(botlay)*(qg-qaf(botlay))
 
@@ -1540,8 +1533,14 @@ MODULE LEAF_temperature_PC
 ! Derivative of soil energy flux with respect to soil temperature (cgrnd)
 !-----------------------------------------------------------------------
 
-       cgrnds = cpair*rhoair*cgh(botlay)*(1.-wtg0(botlay))
-       cgrndl = rhoair*cgw(botlay)*(1.-wtgq0(botlay))*dqgdT
+       !NOTE: 当numlay<3时，无论如何计算求解，/fact一致
+       IF (numlay < 3) THEN
+          cgrnds = cpair*rhoair*cgh(botlay)*(1.-wtg0(botlay)/fact)
+          cgrndl = rhoair*cgw(botlay)*(1.-wtgq0(botlay)/fact)*dqgdT
+       ELSE
+          cgrnds = cpair*rhoair*cgh(botlay)*(1.-wta0(1)*wtg0(2)*wtg0(1)/fact-wtg0(1))
+          cgrndl = rhoair*cgw(botlay)*(1.-wtaq0(1)*wtgq0(2)*wtgq0(1)/facq-wtgq0(1))*dqgdT
+       ENDIF
        cgrnd  = cgrnds + cgrndl*htvp
 
 !-----------------------------------------------------------------------
