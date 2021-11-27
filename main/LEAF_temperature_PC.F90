@@ -1193,11 +1193,13 @@ MODULE LEAF_temperature_PC
                 ELSE
                    IF (clev == 1) THEN
                       fsenl_dtl(i) = rhoair * cpair * cfh(i) * &
-                         (1. - (1-wta0(1)*wtg0(2))*wtl0(i)/fact - wtl0(i))
+                         !(1. - (1.-wta0(2)*wtg0(3))*wtl0(i)/fact) or
+                         (1. - wta0(1)*wtg0(2)*wtl0(i)/fact - wtl0(i))
                    ENDIF
                    IF (clev == 3) THEN
                       fsenl_dtl(i) = rhoair * cpair * cfh(i) * &
-                         (1. - (1-wtg0(3)*wta0(2))*wtl0(i)/fact - wtl0(i))
+                         !(1. - (1.-wtg0(2)*wta0(1))*wtl0(i)/fact) or
+                         (1. - wtg0(3)*wta0(2)*wtl0(i)/fact - wtl0(i))
                    ENDIF
                 ENDIF
 
@@ -1215,12 +1217,14 @@ MODULE LEAF_temperature_PC
                    IF (clev == 1) THEN
                       etr_dtl(i) = rhoair * (1.-fwet(i)) * delta(i) &
                          * ( laisun(i)/(rb(i)+rssun(i)) + laisha(i)/(rb(i)+rssha(i)) ) &
-                         * (1. - (1-wtaq0(1)*wtgq0(2))*wtlq0(i)/facq - wtlq0(i))*qsatlDT(i)
+                         !* (1. - (1.-wtaq0(2)*wtgq0(3))*wtlq0(i)/facq)*qsatlDT(i) or
+                         * (1. - wtaq0(1)*wtgq0(2)*wtlq0(i)/facq - wtlq0(i))*qsatlDT(i)
                    ENDIF
                    IF (clev == 3) THEN
                       etr_dtl(i) = rhoair * (1.-fwet(i)) * delta(i) &
                          * ( laisun(i)/(rb(i)+rssun(i)) + laisha(i)/(rb(i)+rssha(i)) ) &
-                         * (1. - (1-wtgq0(3)*wtaq0(2))*wtlq0(i)/facq - wtlq0(i))*qsatlDT(i)
+                         !* (1. - (1.-wtgq0(2)*wtaq0(1))*wtlq0(i)/facq)*qsatlDT(i) or
+                         * (1. - wtgq0(3)*wtaq0(2)*wtlq0(i)/facq - wtlq0(i))*qsatlDT(i)
                    ENDIF
                 ENDIF
 
@@ -1239,11 +1243,13 @@ MODULE LEAF_temperature_PC
                 ELSE
                    IF (clev == 1) THEN
                       evplwet_dtl(i) = rhoair * (1.-delta(i)*(1.-fwet(i))) * lsai(i)/rb(i) &
-                         * (1. - (1-wtaq0(1)*wtgq0(2))*wtlq0(i)/facq)*qsatlDT(i)
+                         !* (1. - (1-wtaq0(2)*wtgq0(3))*wtlq0(i)/facq)*qsatlDT(i) or
+                         * (1. - wtaq0(1)*wtgq0(2)*wtlq0(i)/facq - wtlq0(i))*qsatlDT(i)
                    ENDIF
                    IF (clev == 3) THEN
                       evplwet_dtl(i) = rhoair * (1.-delta(i)*(1.-fwet(i))) * lsai(i)/rb(i) &
-                         * (1. - (1-wtgq0(3)*wtaq0(2))*wtlq0(i)/facq)*qsatlDT(i)
+                         !* (1. - (1.-wtgq0(2)*wtaq0(1))*wtlq0(i)/facq)*qsatlDT(i)
+                         * (1. - wtgq0(3)*wtaq0(2)*wtlq0(i)/facq - wtlq0(i))*qsatlDT(i)
                    ENDIF
                 ENDIF
 
@@ -1330,8 +1336,10 @@ MODULE LEAF_temperature_PC
  
           IF (numlay .eq. 1) THEN 
 
-             taf(toplay) =  wta0(toplay)*thm + wtg0(toplay)*tg + wtll(toplay)
+             taf(toplay) = wta0(toplay)*thm +  wtg0(toplay)*tg + wtll(toplay)
              qaf(toplay) = wtaq0(toplay)*qm + wtgq0(toplay)*qg + wtlql(toplay)
+             fact = 1.
+             facq = 1.
 
           ENDIF
           
