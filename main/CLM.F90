@@ -2,8 +2,8 @@
 
   PROGRAM CLM
 ! ======================================================================
-! Reference: 
-!     [1] Dai et al., 2003: The Common Land Model (CoLM). 
+! Reference:
+!     [1] Dai et al., 2003: The Common Land Model (CoLM).
 !         Bull. of Amer. Meter. Soc., 84: 1013-1023
 !     [2] Dai et al., 2004: A two-big-leaf model for canopy temperature,
 !         photosynthesis and stomatal conductance. J. Climate, 17: 2281-2299.
@@ -54,20 +54,22 @@
       character(len=256) :: dir_forcing
       character(len=256) :: dir_output
       character(len=256) :: dir_restart_hist
-      
+
       logical :: doalb            ! true => start up the surface albedo calculation
       logical :: dolai            ! true => start up the time-varying vegetation paramter
       logical :: dosst            ! true => update sst/ice/snow
       logical :: lwrite           ! true: write output  file frequency
       logical :: rwrite           ! true: write restart file frequency
-      
+
       integer :: istep            ! looping step
       integer :: nac              ! number of accumulation
       integer,  allocatable :: nac_ln(:,:)      ! number of accumulation for local noon time virable
+      INTEGER,  allocatable :: nac_dt(:,:)      !number of accumulation for daytime virable
+      INTEGER,  allocatable :: nac_nt(:,:)      !number of accumulation for night-time virable
       real(r8), allocatable :: oro(:)           ! ocean(0)/seaice(2)/ flag
       real(r8), allocatable :: a_rnof(:,:)      ! total runoff [mm/s]
-      integer :: Julian_1day_p, Julian_1day 
-      integer :: Julian_8day_p, Julian_8day 
+      integer :: Julian_1day_p, Julian_1day
+      integer :: Julian_8day_p, Julian_8day
       integer :: s_year, s_julian, s_seconds
       integer :: e_year, e_julian, e_seconds
       integer :: p_year, p_julian, p_seconds
@@ -116,7 +118,7 @@
 ! ======================================================================
 !     define the run and open files (for off-line use)
 
-      read(5,clmexp) 
+      read(5,clmexp)
 
       CALL Init_GlovalVars
       CALL Init_LC_Const
@@ -130,27 +132,29 @@
       call monthday2julian(s_year,s_month,s_day,idate(2))
       call monthday2julian(e_year,e_month,e_day,edate(2))
       call monthday2julian(p_year,p_month,p_day,pdate(2))
-      
+
       s_julian = idate(2); e_julian = edate(2); p_julian = pdate(2)
 
       call adj2end(edate)
       call adj2end(pdate)
-      
+
       itstamp = idate
       etstamp = edate
       ptstamp = pdate
 
       call allocate_TimeInvariants(lon_points,lat_points)
-      call allocate_TimeVariables 
-      call allocate_1D_Forcing    
+      call allocate_TimeVariables
+      call allocate_1D_Forcing
       call allocate_2D_Forcing(lon_points,lat_points)
-      call allocate_1D_Fluxes     
+      call allocate_1D_Fluxes
       call allocate_2D_Fluxes(lon_points,lat_points)
- 
+
       call FLUSH_2D_Fluxes
 
-      allocate (oro(numpatch)) 
+      allocate (oro(numpatch))
       allocate (nac_ln(lon_points,lat_points))
+      allocate (nac_dt(lon_points,lat_points))
+      allocate (nac_nt(lon_points,lat_points))
 ! ----------------------------------------------------------------------
     ! Read in the model time invariant constant data
       CALL READ_TimeInvariants(dir_restart_hist,casename)
@@ -170,8 +174,8 @@
 #endif
       !! regional output for mpi run
       !! change suffix of output file for each calculation node
-      if (regionall>=2 )then                            
-        write(csufbin,'(a5,i2.2)') '.bin-', regionthis  
+      if (regionall>=2 )then
+        write(csufbin,'(a5,i2.2)') '.bin-', regionthis
         write(csufvec,'(a5,i2.2)') '.vec-', regionthis
         write(csufcdf,'(a4,i2.2)') '.nc-',  regionthis
       endif
@@ -203,6 +207,7 @@
 ! ======================================================================
 
       nac = 0; nac_ln(:,:) = 0
+      nac_dt(:,:) = 0; nac_nt(:,:) = 0
       istep = 1
 
       TIMELOOP : DO while (itstamp < etstamp)
@@ -229,7 +234,7 @@ print*, 'TIMELOOP = ', istep
        ! ----------------------------------------------------------------------
 #if(!defined DYN_PHENOLOGY)
        ! READ in Leaf area index and stem area index
-       ! Update every 8 days (time interval of the MODIS LAI data) 
+       ! Update every 8 days (time interval of the MODIS LAI data)
        ! ----------------------------------------------------------------------
 #ifdef USGS_CLASSIFICATION
        ! READ in Leaf area index and stem area index
@@ -242,7 +247,7 @@ print*, 'TIMELOOP = ', istep
 #else
 ! 08/03/2019, yuan: read global LAI/SAI data
          CALL julian2monthday (idate(1), idate(2), month, mday)
-         IF (month /= month_p) THEN 
+         IF (month /= month_p) THEN
             CALL LAI_readin_nc (lon_points, lat_points, month, dir_model_landdata)
          END IF
 #endif
@@ -256,10 +261,10 @@ print*, 'TIMELOOP = ', istep
          endif
 #endif
 
-       ! Mapping subgrid patch [numpatch] vector of subgrid points to 
+       ! Mapping subgrid patch [numpatch] vector of subgrid points to
        !     -> [lon_points]x[lat_points] grid average
        ! ----------------------------------------------------------------------
-         CALL vec2xy (lon_points,lat_points,nac,nac_ln,a_rnof)
+         CALL vec2xy (lon_points,lat_points,nac,nac_ln,nac_dt,nac_nt,a_rnof)
 
          do j = 1, lat_points
             do i = 1, lon_points
@@ -292,13 +297,15 @@ print*, 'TIMELOOP = ', istep
          if ( lwrite ) then
 
             if ( .NOT. (itstamp<=ptstamp) ) then
-               CALL flxwrite (idate,nac,nac_ln,lon_points,lat_points,dir_output,casename)
+               CALL flxwrite (idate,nac,nac_ln,nac_dt,nac_nt,&
+                              lon_points,lat_points,dir_output,casename)
             endif
 
-          ! Setting for next time step 
+          ! Setting for next time step
           ! ----------------------------------------------------------------------
             call FLUSH_2D_Fluxes
             nac = 0; nac_ln(:,:) = 0
+            nac_dt(:,:) = 0; nac_nt(:,:) = 0
          endif
 
          if ( rwrite ) then
@@ -313,17 +320,19 @@ print*, 'TIMELOOP = ', istep
       END DO TIMELOOP
 
       call deallocate_TimeInvariants
-      call deallocate_TimeVariables 
-      call deallocate_1D_Forcing 
-      call deallocate_2D_Forcing 
-      call deallocate_1D_Fluxes     
-      call deallocate_2D_Fluxes     
- 
+      call deallocate_TimeVariables
+      call deallocate_1D_Forcing
+      call deallocate_2D_Forcing
+      call deallocate_1D_Fluxes
+      call deallocate_2D_Fluxes
+
       call GETMETFINAL
 
-      deallocate (a_rnof) 
+      deallocate (a_rnof)
       deallocate (oro)
       deallocate (nac_ln)
+      deallocate (nac_dt)
+      deallocate (nac_nt)
 #if(defined CaMa_Flood)
       deallocate (r2roffin)
       if (regionall>=2 )then

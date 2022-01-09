@@ -1,8 +1,8 @@
 #include <define.h>
 
-SUBROUTINE vec2xy (lon_points,lat_points,nac,nac_ln,a_rnof)
+SUBROUTINE vec2xy (lon_points,lat_points,nac,nac_ln,nac_dt,nac_nt,a_rnof)
 ! ----------------------------------------------------------------------
-! perfrom the grid average mapping: average a subgrid input 1d vector 
+! perfrom the grid average mapping: average a subgrid input 1d vector
 ! of length numpatch to a output 2d array of length [lon_points,lat_points]
 !
 ! Created by Yongjiu Dai, 03/2014
@@ -10,7 +10,7 @@ SUBROUTINE vec2xy (lon_points,lat_points,nac,nac_ln,a_rnof)
 
 use precision
 USE GlobalVars
-use PhysicalConstants, only: vonkar, stefnc, cpair, rgas, grav 
+use PhysicalConstants, only: vonkar, stefnc, cpair, rgas, grav
 use MOD_TimeInvariants
 use MOD_TimeVariables
 use MOD_1D_Forcing
@@ -22,11 +22,13 @@ use omp_lib
 
 IMPLICIT NONE
 
-integer, INTENT(in) :: lon_points
-integer, INTENT(in) :: lat_points
-integer, INTENT(inout) :: nac
-integer, INTENT(inout) :: nac_ln(lon_points,lat_points)
-      
+INTEGER, intent(in) :: lon_points
+INTEGER, intent(in) :: lat_points
+INTEGER, intent(inout) :: nac
+INTEGER, intent(inout) :: nac_ln(lon_points,lat_points)
+INTEGER, intent(inout) :: nac_dt(lon_points,lat_points)
+INTEGER, intent(inout) :: nac_nt(lon_points,lat_points)
+
 !---------------------------------------------------------------------
 real(r8) a_xy_us  (lon_points,lat_points)  ! wind in eastward direction [m/s]
 real(r8) a_xy_vs  (lon_points,lat_points)  ! wind in northward direction [m/s]
@@ -67,7 +69,7 @@ real(r8) a_qdrip  (lon_points,lat_points)  ! throughfall [mm/s]
 
 real(r8) a_assim  (lon_points,lat_points)  ! canopy assimilation rate [mol m-2 s-1]
 real(r8) a_respc  (lon_points,lat_points)  ! respiration (plant+soil) [mol m-2 s-1]
-real(r8) a_qcharge(lon_points,lat_points)  ! groundwater recharge rate [mm/s] 
+real(r8) a_qcharge(lon_points,lat_points)  ! groundwater recharge rate [mm/s]
 
 !---------------------------------------------------------------------
 real(r8) a_t_grnd (lon_points,lat_points)  ! ground surface temperature [K]
@@ -89,12 +91,34 @@ real(r8) a_trad   (lon_points,lat_points)  ! radiative temperature of surface [K
 real(r8) a_tref   (lon_points,lat_points)  ! 2 m height air temperature [kelvin]
 real(r8) a_qref   (lon_points,lat_points)  ! 2 m height air specific humidity [kg/kg]
 
+REAL(r8) a_sabvdt  (lon_points,lat_points) ! solar absorbed by sunlit canopy [W/m2]
+REAL(r8) a_sabgdt  (lon_points,lat_points) ! solar absorbed by ground [W/m2]
+REAL(r8) a_srdt    (lon_points,lat_points) ! total reflected solar radiation (W/m2)
+REAL(r8) a_fsenadt (lon_points,lat_points) ! sensible heat from canopy height to atmosphere [W/m2]
+REAL(r8) a_lfevpadt(lon_points,lat_points) ! latent heat flux from canopy height to atmosphere [W/m2]
+REAL(r8) a_fgrnddt (lon_points,lat_points) ! ground heat flux [W/m2]
+REAL(r8) a_olrgdt  (lon_points,lat_points) ! outgoing long-wave radiation from ground+canopy [W/m2]
+REAL(r8) a_rnetdt  (lon_points,lat_points) ! net radiation [W/m2]
+REAL(r8) a_t_grnddt(lon_points,lat_points) ! ground surface temperature [K]
+REAL(r8) a_traddt  (lon_points,lat_points) ! radiative temperature of surface [K]
+REAL(r8) a_trefdt  (lon_points,lat_points) ! 2 m height air temperature [kelvin]
+
+REAL(r8) a_fsenant (lon_points,lat_points) ! sensible heat from canopy height to atmosphere [W/m2]
+REAL(r8) a_lfevpant(lon_points,lat_points) ! latent heat flux from canopy height to atmosphere [W/m2]
+REAL(r8) a_fgrndnt (lon_points,lat_points) ! ground heat flux [W/m2]
+REAL(r8) a_olrgnt  (lon_points,lat_points) ! outgoing long-wave radiation from ground+canopy [W/m2]
+REAL(r8) a_rnetnt  (lon_points,lat_points) ! net radiation [W/m2]
+REAL(r8) a_t_grndnt(lon_points,lat_points) ! ground surface temperature [K]
+REAL(r8) a_tradnt  (lon_points,lat_points) ! radiative temperature of surface [K]
+REAL(r8) a_trefnt  (lon_points,lat_points) ! 2 m height air temperature [kelvin]
+
+
 !---------------------------------------------------------------------
 real(r8) a_t_soisno   (maxsnl+1:nl_soil,lon_points,lat_points)  ! soil temperature [K]
 real(r8) a_wliq_soisno(maxsnl+1:nl_soil,lon_points,lat_points)  ! liquid water in soil layers [kg/m2]
 real(r8) a_wice_soisno(maxsnl+1:nl_soil,lon_points,lat_points)  ! ice lens in soil layers [kg/m2]
 real(r8) a_h2osoi            (1:nl_soil,lon_points,lat_points)  ! volumetric soil water in layers [m3/m3]
-real(r8) a_rstfac                      (lon_points,lat_points)  ! factor of soil water stress 
+real(r8) a_rstfac                      (lon_points,lat_points)  ! factor of soil water stress
 real(r8) a_zwt                         (lon_points,lat_points)  ! the depth to water table [m]
 real(r8) a_wa                          (lon_points,lat_points)  ! water storage in aquifer [mm]
 real(r8) a_wat                         (lon_points,lat_points)  ! total water storage [mm]
@@ -213,6 +237,27 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
       a_xy_rain(:,:) = 0.
       a_xy_snow(:,:) = 0.
 
+      a_sabvdt  (:,:) = spval
+      a_sabgdt  (:,:) = spval
+      a_srdt    (:,:) = spval
+      a_fsenadt (:,:) = spval
+      a_lfevpadt(:,:) = spval
+      a_fgrnddt (:,:) = spval
+      a_olrgdt  (:,:) = spval
+      a_rnetdt  (:,:) = spval
+      a_t_grnddt(:,:) = spval
+      a_traddt  (:,:) = spval
+      a_trefdt  (:,:) = spval
+
+      a_fsenant (:,:) = spval
+      a_lfevpant(:,:) = spval
+      a_fgrndnt (:,:) = spval
+      a_olrgnt  (:,:) = spval
+      a_rnetnt  (:,:) = spval
+      a_t_grndnt(:,:) = spval
+      a_tradnt  (:,:) = spval
+      a_trefnt  (:,:) = spval
+
       a_sr     (:,:) = spval
       a_solvd  (:,:) = spval
       a_solvi  (:,:) = spval
@@ -240,7 +285,7 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
 
             if (grid_patch_s(i,j) .le. 0) cycle
             DO np = grid_patch_s(i,j), grid_patch_e(i,j)
-               
+
                sumwt(i,j) = sumwt(i,j) + patchfrac(np)
 ! Fluxes
                a_taux   (i,j) = a_taux   (i,j) + patchfrac(np)*taux   (np)
@@ -296,6 +341,40 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
                a_xy_rain(i,j) = a_xy_rain(i,j) + patchfrac(np)*forc_rain(np)
                a_xy_snow(i,j) = a_xy_snow(i,j) + patchfrac(np)*forc_snow(np)
 
+               !TODO: 根据coszen(np)的正负->daytime or nighttime
+               IF (coszen(np) > 0.) THEN
+                  CALL acc(sabvsun(np), patchfrac(np), a_sabvdt  (i,j))
+                  CALL acc(sabg   (np), patchfrac(np), a_sabgdt  (i,j))
+                  CALL acc(sr     (np), patchfrac(np), a_srdt    (i,j))
+                  CALL acc(fsena  (np), patchfrac(np), a_fsenadt (i,j))
+                  CALL acc(lfevpa (np), patchfrac(np), a_lfevpadt(i,j))
+                  CALL acc(fgrnd  (np), patchfrac(np), a_fgrnddt (i,j))
+                  CALL acc(olrg   (np), patchfrac(np), a_olrgdt  (i,j))
+                  CALL acc(t_grnd (np), patchfrac(np), a_t_grnddt(i,j))
+                  CALL acc(tref   (np), patchfrac(np), a_trefdt  (i,j))
+
+                  IF (a_rnetdt(i,j) /= spval) THEN
+                     a_rnetdt(i,j) = a_rnetdt  (i,j) + patchfrac(np)*(sabg(np)+sabvsun(np)+sabvsha(np)-olrg(np))
+                  ELSE
+                     a_rnetdt(i,j) = patchfrac(np)*(sabg(np)+sabvsun(np)+sabvsha(np)-olrg(np))
+                  ENDIF
+
+               ELSE
+                  CALL acc(fsena  (np), patchfrac(np), a_fsenant (i,j))
+                  CALL acc(lfevpa (np), patchfrac(np), a_lfevpant(i,j))
+                  CALL acc(fgrnd  (np), patchfrac(np), a_fgrndnt (i,j))
+                  CALL acc(olrg   (np), patchfrac(np), a_olrgnt  (i,j))
+                  CALL acc(t_grnd (np), patchfrac(np), a_t_grndnt(i,j))
+                  CALL acc(tref   (np), patchfrac(np), a_trefnt  (i,j))
+
+                  IF (a_rnetnt(i,j) /= spval) THEN
+                     a_rnetnt(i,j) = a_rnetnt(i,j) + patchfrac(np)*(sabg(np)+sabvsun(np)+sabvsha(np)-olrg(np))
+                  ELSE
+                     a_rnetnt(i,j) = patchfrac(np)*(sabg(np)+sabvsun(np)+sabvsha(np)-olrg(np))
+                  ENDIF
+
+               ENDIF
+
                ! radiation fluxes
                call acc(sr     (np), patchfrac(np), a_sr     (i,j))
                call acc(solvd  (np), patchfrac(np), a_solvd  (i,j))
@@ -306,7 +385,7 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
                call acc(srvi   (np), patchfrac(np), a_srvi   (i,j))
                call acc(srnd   (np), patchfrac(np), a_srnd   (i,j))
                call acc(srni   (np), patchfrac(np), a_srni   (i,j))
-               ! local noon fluxes 
+               ! local noon fluxes
                call acc(solvdln(np), patchfrac(np), a_solvdln(i,j))
                call acc(solviln(np), patchfrac(np), a_solviln(i,j))
                call acc(solndln(np), patchfrac(np), a_solndln(i,j))
@@ -318,7 +397,7 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
             ENDDO
             area(i,j) = gridarea(i,j)
          enddo
-      ENDDO 
+      ENDDO
 #ifdef OPENMP
 !$OMP END PARALLEL DO
 #endif
@@ -352,7 +431,7 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
                a_rnet   (i,j) = a_rnet   (i,j) / sumwt(i,j) + a_xy_frl(i,j)
                a_xerr   (i,j) = a_xerr   (i,j) / sumwt(i,j)
                a_zerr   (i,j) = a_zerr   (i,j) / sumwt(i,j)
-            
+
                a_rsur   (i,j) = a_rsur   (i,j) / sumwt(i,j)
                a_rnof   (i,j) = a_rnof   (i,j) / sumwt(i,j)
                a_qintr  (i,j) = a_qintr  (i,j) / sumwt(i,j)
@@ -387,7 +466,28 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
                a_qref   (i,j) = a_qref   (i,j) / sumwt(i,j)
                a_xy_rain(i,j) = a_xy_rain(i,j) / sumwt(i,j)
                a_xy_snow(i,j) = a_xy_snow(i,j) / sumwt(i,j)
-               
+
+               IF (a_sabvdt  (i,j) /= spval) a_sabvdt  (i,j) = a_sabvdt  (i,j) / sumwt(i,j)
+               IF (a_sabgdt  (i,j) /= spval) a_sabgdt  (i,j) = a_sabgdt  (i,j) / sumwt(i,j)
+               IF (a_srdt    (i,j) /= spval) a_srdt    (i,j) = a_srdt    (i,j) / sumwt(i,j)
+               IF (a_fsenadt (i,j) /= spval) a_fsenadt (i,j) = a_fsenadt (i,j) / sumwt(i,j)
+               IF (a_lfevpadt(i,j) /= spval) a_lfevpadt(i,j) = a_lfevpadt(i,j) / sumwt(i,j)
+               IF (a_fgrnddt (i,j) /= spval) a_fgrnddt (i,j) = a_fgrnddt (i,j) / sumwt(i,j)
+               IF (a_olrgdt  (i,j) /= spval) a_olrgdt  (i,j) = a_olrgdt  (i,j) / sumwt(i,j)
+               IF (a_olrgdt  (i,j) /= spval) a_traddt  (i,j) =(a_olrgdt  (i,j) / stefnc)**0.25
+               IF (a_rnetdt  (i,j) /= spval) a_rnetdt  (i,j) = a_rnetdt  (i,j) / sumwt(i,j) + a_xy_frl(i,j)
+               IF (a_t_grnddt(i,j) /= spval) a_t_grnddt(i,j) = a_t_grnddt(i,j) / sumwt(i,j)
+               IF (a_trefdt  (i,j) /= spval) a_trefdt  (i,j) = a_trefdt  (i,j) / sumwt(i,j)
+
+               IF (a_fsenant (i,j) /= spval) a_fsenant (i,j) = a_fsenant (i,j) / sumwt(i,j)
+               IF (a_lfevpant(i,j) /= spval) a_lfevpant(i,j) = a_lfevpant(i,j) / sumwt(i,j)
+               IF (a_fgrndnt (i,j) /= spval) a_fgrndnt (i,j) = a_fgrndnt (i,j) / sumwt(i,j)
+               IF (a_olrgnt  (i,j) /= spval) a_olrgnt  (i,j) = a_olrgnt  (i,j) / sumwt(i,j)
+               IF (a_olrgnt  (i,j) /= spval) a_tradnt  (i,j) =(a_olrgnt  (i,j) / stefnc)**0.25
+               IF (a_rnetnt  (i,j) /= spval) a_rnetnt  (i,j) = a_rnetnt  (i,j) / sumwt(i,j) + a_xy_frl(i,j)
+               IF (a_t_grndnt(i,j) /= spval) a_t_grndnt(i,j) = a_t_grndnt(i,j) / sumwt(i,j)
+               IF (a_trefnt  (i,j) /= spval) a_trefnt  (i,j) = a_trefnt  (i,j) / sumwt(i,j)
+
                if (a_sr     (i,j) /= spval) a_sr     (i,j) = a_sr     (i,j) / sumwt(i,j)
                if (a_solvd  (i,j) /= spval) a_solvd  (i,j) = a_solvd  (i,j) / sumwt(i,j)
                if (a_solvi  (i,j) /= spval) a_solvi  (i,j) = a_solvi  (i,j) / sumwt(i,j)
@@ -405,64 +505,85 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
                if (a_srviln (i,j) /= spval) a_srviln (i,j) = a_srviln (i,j) / sumwt(i,j)
                if (a_srndln (i,j) /= spval) a_srndln (i,j) = a_srndln (i,j) / sumwt(i,j)
                if (a_srniln (i,j) /= spval) a_srniln (i,j) = a_srniln (i,j) / sumwt(i,j)
-               
+
                mask(i,j) = 1
                frac(i,j) = sumwt(i,j)
 
             else
-               a_taux   (i,j) = spval 
-               a_tauy   (i,j) = spval 
-               a_fsena  (i,j) = spval 
-               a_lfevpa (i,j) = spval 
-               a_fevpa  (i,j) = spval 
-               a_fsenl  (i,j) = spval 
-               a_fevpl  (i,j) = spval 
-               a_etr    (i,j) = spval 
-               a_fseng  (i,j) = spval 
-               a_fevpg  (i,j) = spval 
-               a_fgrnd  (i,j) = spval 
-               a_sabvsun(i,j) = spval 
-               a_sabvsha(i,j) = spval 
-               a_sabg   (i,j) = spval 
-               a_olrg   (i,j) = spval 
-               a_rnet   (i,j) = spval 
-               a_xerr   (i,j) = spval 
-               a_zerr   (i,j) = spval 
+               a_taux   (i,j) = spval
+               a_tauy   (i,j) = spval
+               a_fsena  (i,j) = spval
+               a_lfevpa (i,j) = spval
+               a_fevpa  (i,j) = spval
+               a_fsenl  (i,j) = spval
+               a_fevpl  (i,j) = spval
+               a_etr    (i,j) = spval
+               a_fseng  (i,j) = spval
+               a_fevpg  (i,j) = spval
+               a_fgrnd  (i,j) = spval
+               a_sabvsun(i,j) = spval
+               a_sabvsha(i,j) = spval
+               a_sabg   (i,j) = spval
+               a_olrg   (i,j) = spval
+               a_rnet   (i,j) = spval
+               a_xerr   (i,j) = spval
+               a_zerr   (i,j) = spval
 
-               a_rsur   (i,j) = spval 
-               a_rnof   (i,j) = spval 
-               a_qintr  (i,j) = spval 
-               a_qinfl  (i,j) = spval 
-               a_qdrip  (i,j) = spval 
-               a_wat    (i,j) = spval 
-               a_assim  (i,j) = spval 
-               a_respc  (i,j) = spval 
+               a_rsur   (i,j) = spval
+               a_rnof   (i,j) = spval
+               a_qintr  (i,j) = spval
+               a_qinfl  (i,j) = spval
+               a_qdrip  (i,j) = spval
+               a_wat    (i,j) = spval
+               a_assim  (i,j) = spval
+               a_respc  (i,j) = spval
 
-               a_qcharge(i,j) = spval 
+               a_qcharge(i,j) = spval
 
-               a_t_grnd (i,j) = spval 
-               a_tleaf  (i,j) = spval 
-               a_ldew   (i,j) = spval 
-               a_scv    (i,j) = spval 
-               a_snowdp (i,j) = spval 
-               a_fsno   (i,j) = spval 
-               a_sigf   (i,j) = spval 
-               a_green  (i,j) = spval 
-               a_lai    (i,j) = spval 
-               a_laisun (i,j) = spval 
-               a_laisha (i,j) = spval 
-               a_sai    (i,j) = spval 
-               a_alb(1,1,i,j) = spval 
-               a_alb(1,2,i,j) = spval 
-               a_alb(2,1,i,j) = spval 
-               a_alb(2,2,i,j) = spval 
-               a_emis   (i,j) = spval 
+               a_t_grnd (i,j) = spval
+               a_tleaf  (i,j) = spval
+               a_ldew   (i,j) = spval
+               a_scv    (i,j) = spval
+               a_snowdp (i,j) = spval
+               a_fsno   (i,j) = spval
+               a_sigf   (i,j) = spval
+               a_green  (i,j) = spval
+               a_lai    (i,j) = spval
+               a_laisun (i,j) = spval
+               a_laisha (i,j) = spval
+               a_sai    (i,j) = spval
+               a_alb(1,1,i,j) = spval
+               a_alb(1,2,i,j) = spval
+               a_alb(2,1,i,j) = spval
+               a_alb(2,2,i,j) = spval
+               a_emis   (i,j) = spval
                a_z0m    (i,j) = spval
                a_trad   (i,j) = spval
                a_tref   (i,j) = spval
                a_qref   (i,j) = spval
                a_xy_rain(i,j) = spval
                a_xy_snow(i,j) = spval
+
+               a_sabvdt  (i,j) = spval
+               a_sabgdt  (i,j) = spval
+               a_srdt    (i,j) = spval
+               a_fsenadt (i,j) = spval
+               a_lfevpadt(i,j) = spval
+               a_fgrnddt (i,j) = spval
+               a_olrgdt  (i,j) = spval
+               a_rnetdt  (i,j) = spval
+               a_t_grnddt(i,j) = spval
+               a_traddt  (i,j) = spval
+               a_trefdt  (i,j) = spval
+
+               a_fsenant (i,j) = spval
+               a_lfevpant(i,j) = spval
+               a_fgrndnt (i,j) = spval
+               a_olrgnt  (i,j) = spval
+               a_rnetnt  (i,j) = spval
+               a_t_grndnt(i,j) = spval
+               a_tradnt  (i,j) = spval
+               a_trefnt  (i,j) = spval
 
                a_sr     (i,j) = spval
                a_solvd  (i,j) = spval
@@ -545,9 +666,9 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
                   a_wice_soisno(l,i,j) = a_wice_soisno(l,i,j) / sumwt(i,j)
                enddo
             else
-               a_t_soisno   (maxsnl+1:nl_soil,i,j) = spval 
-               a_wliq_soisno(maxsnl+1:nl_soil,i,j) = spval 
-               a_wice_soisno(maxsnl+1:nl_soil,i,j) = spval 
+               a_t_soisno   (maxsnl+1:nl_soil,i,j) = spval
+               a_wliq_soisno(maxsnl+1:nl_soil,i,j) = spval
+               a_wice_soisno(maxsnl+1:nl_soil,i,j) = spval
             endif
 
          ENDDO
@@ -711,7 +832,7 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
       DO j = 1, lat_points
          DO i = 1, lon_points
             if(sumwt(i,j) > 0.00001)then
-               z0m_av = a_z0m (i,j) 
+               z0m_av = a_z0m (i,j)
                z0h_av = a_z0m (i,j)
                z0q_av = a_z0m (i,j)
                displa_av = 2./3.*z0m_av/0.07
@@ -731,7 +852,7 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
                a_ustar(i,j) = sqrt(max(1.e-6,sqrt(a_taux(i,j)**2+a_tauy(i,j)**2))/rhoair)
                a_tstar(i,j) = -a_fsena(i,j)/(rhoair*a_ustar(i,j))/cpair
                a_qstar(i,j) = -a_fevpa(i,j)/(rhoair*a_ustar(i,j))
-   
+
                thm = tm + 0.0098*hgt_t
                th  = tm*(100000./psrf)**(rgas/cpair)
                thv = th*(1.+0.61*qm)
@@ -758,13 +879,13 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
                endif
 
                obu = zldis/a_zol(i,j)
-               
+
 !NOTE: for single point debug [注释下面]
                call moninobuk(hgt_u,hgt_t,hgt_q,displa_av,z0m_av,z0h_av,z0q_av,& ! fordebug
                     obu,um,a_ustar(i,j),fh2m,fq2m,&
                     a_fm10m(i,j),a_fm(i,j),a_fh(i,j),a_fq(i,j))
 
-! bug found by chen qiying 2013/07/01 
+! bug found by chen qiying 2013/07/01
                a_rib(i,j) = a_zol(i,j)/vonkar*a_ustar(i,j)**2/(vonkar/a_fh(i,j)*um**2)
                a_rib(i,j) = min(5.,a_rib(i,j))
 
@@ -871,12 +992,35 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
             call acc(a_xy_rain(i,j), 1., f_xy_rain(i,j))
             call acc(a_xy_snow(i,j), 1., f_xy_snow(i,j))
 
+            CALL acc(a_sabvdt  (i,j), 1., f_sabvdt  (i,j))
+            CALL acc(a_sabgdt  (i,j), 1., f_sabgdt  (i,j))
+            CALL acc(a_srdt    (i,j), 1., f_srdt    (i,j))
+            CALL acc(a_fsenadt (i,j), 1., f_fsenadt (i,j))
+            CALL acc(a_lfevpadt(i,j), 1., f_lfevpadt(i,j))
+            CALL acc(a_fgrnddt (i,j), 1., f_fgrnddt (i,j))
+            CALL acc(a_olrgdt  (i,j), 1., f_olrgdt  (i,j))
+            CALL acc(a_rnetdt  (i,j), 1., f_rnetdt  (i,j))
+            CALL acc(a_t_grnddt(i,j), 1., f_t_grnddt(i,j))
+            CALL acc(a_traddt  (i,j), 1., f_traddt  (i,j))
+            CALL acc(a_trefdt  (i,j), 1., f_trefdt  (i,j))
+
+            CALL acc(a_fsenant (i,j), 1., f_fsenant (i,j))
+            CALL acc(a_lfevpant(i,j), 1., f_lfevpant(i,j))
+            CALL acc(a_fgrndnt (i,j), 1., f_fgrndnt (i,j))
+            CALL acc(a_olrgnt  (i,j), 1., f_olrgnt  (i,j))
+            CALL acc(a_rnetnt  (i,j), 1., f_rnetnt  (i,j))
+            CALL acc(a_t_grndnt(i,j), 1., f_t_grndnt(i,j))
+            CALL acc(a_tradnt  (i,j), 1., f_tradnt  (i,j))
+            CALL acc(a_trefnt  (i,j), 1., f_trefnt  (i,j))
+
+
+
             do l = maxsnl+1, nl_soil
                call acc(a_t_soisno   (l,i,j), 1., f_t_soisno   (l,i,j))
                call acc(a_wliq_soisno(l,i,j), 1., f_wliq_soisno(l,i,j))
                call acc(a_wice_soisno(l,i,j), 1., f_wice_soisno(l,i,j))
             end do
-            
+
             do l = 1, nl_soil
                call acc(a_h2osoi     (l,i,j), 1., f_h2osoi     (l,i,j))
             end do
@@ -918,6 +1062,8 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
             call acc(a_srniln (i,j), 1., f_srniln (i,j))
 
             if (a_solvdln(i,j) /= spval) nac_ln(i,j) = nac_ln(i,j) + 1
+            IF (a_trefdt (i,j) /= spval) nac_dt(i,j) = nac_dt(i,j) + 1
+            IF (a_trefnt (i,j) /= spval) nac_nt(i,j) = nac_nt(i,j) + 1
 
          end do
       end do
@@ -928,7 +1074,7 @@ real(r8) a_srniln (lon_points,lat_points)  ! reflected diffuse beam nir solar ra
 END SUBROUTINE vec2xy
 
 SUBROUTINE acc(var, wgt, s)
-   
+
    use precision
    USE GlobalVars
 

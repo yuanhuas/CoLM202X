@@ -8,7 +8,7 @@
 ! Original author : Yongjiu Dai, /09/1999/, /03/2014/
 !
 ! calculation of the phase change within snow and soil layers:
-! 
+!
 ! (1) check the conditions which the phase change may take place,
 !     i.e., the layer temperature is great than the freezing point
 !     and the ice mass is not equal to zero (i.e., melting),
@@ -30,7 +30,7 @@
    integer, INTENT(in) :: lb                  ! lower bound of array (i.e., snl +1)
   real(r8), INTENT(in) :: deltim              ! time step [second]
   real(r8), INTENT(in) :: t_soisno_bef(lb:nl_soil)  ! temperature at previous time step [K]
-  real(r8), INTENT(in) :: brr (lb:nl_soil)    ! 
+  real(r8), INTENT(in) :: brr (lb:nl_soil)    !
   real(r8), INTENT(in) :: fact(lb:nl_soil)    ! temporary variables
   real(r8), INTENT(in) :: hs                  ! net ground heat flux into the surface
   real(r8), INTENT(in) :: dhsdT               ! temperature derivative of "hs"
@@ -45,7 +45,7 @@
   real(r8), INTENT(out) :: xmf                ! total latent heat of phase change
    integer, INTENT(out) :: imelt(lb:nl_soil)  ! flag for melting or freezing [-]
 
-! Local 
+! Local
   real(r8) :: hm(lb:nl_soil)                  ! energy residual [W/m2]
   real(r8) :: xm(lb:nl_soil)                  ! metling or freezing within a time step [kg/m2]
   real(r8) :: heatr                           ! energy residual or loss after melting or freezing
@@ -53,7 +53,7 @@
   real(r8) :: temp2                           ! temporary variables [kg/m2]
 
   real(r8), dimension(lb:nl_soil) :: wmass0, wice0, wliq0
-  real(r8) :: propor, tinc, we, scvold  
+  real(r8) :: propor, tinc, we, scvold
   integer j
 
 !-----------------------------------------------------------------------
@@ -102,9 +102,9 @@
      if(imelt(j) > 0)then
         tinc = t_soisno(j)-t_soisno_bef(j)
         if(j > lb)then
-           hm(j) = brr(j) - tinc/fact(j) 
+           hm(j) = brr(j) - tinc/fact(j)
         else
-           hm(j) = hs + dhsdT*tinc + brr(j) - tinc/fact(j) 
+           hm(j) = hs + dhsdT*tinc + brr(j) - tinc/fact(j)
         endif
      endif
   enddo
@@ -152,7 +152,7 @@
            heatr = hm(j) - hfus*(wice0(j)-wice_soisno(j))/deltim
         else
            wice_soisno(j) = min(wmass0(j), wice0(j)-xm(j))
-           heatr = hm(j) - hfus*(wice0(j)-wice_soisno(j))/deltim  
+           heatr = hm(j) - hfus*(wice0(j)-wice_soisno(j))/deltim
         endif
 
         wliq_soisno(j) = max(0.,wmass0(j)-wice_soisno(j))
@@ -169,7 +169,7 @@
         xmf = xmf + hfus * (wice0(j)-wice_soisno(j))/deltim
 
         if(imelt(j) == 1 .and. j < 1) &
-        sm = sm + max(0.,(wice0(j)-wice_soisno(j)))/deltim  
+        sm = sm + max(0.,(wice0(j)-wice_soisno(j)))/deltim
 
      endif
   enddo

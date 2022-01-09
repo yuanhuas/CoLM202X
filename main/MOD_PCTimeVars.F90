@@ -1,4 +1,4 @@
-#include <define.h> 
+#include <define.h>
 
 MODULE MOD_PCTimeVars
 ! -------------------------------
@@ -64,10 +64,10 @@ CONTAINS
       allocate (extkd_c    (0:N_PFT-1,numpc)) !diffuse and scattered diffuse PAR extinction coefficient
       allocate (rst_c      (0:N_PFT-1,numpc)) !canopy stomatal resistance (s/m)
       allocate (z0m_c      (0:N_PFT-1,numpc)) !effective roughness [m]
- 
+
    END SUBROUTINE allocate_PCTimeVars
-  
-  
+
+
    SUBROUTINE deallocate_PCTimeVars
 ! --------------------------------------------------
 ! Deallocates memory for CLM Plant Community (PC) 1D [numpc] variables
@@ -86,7 +86,7 @@ CONTAINS
       deallocate (extkb_c  ) !(k, g(mu)/mu) direct solar extinction coefficient
       deallocate (extkd_c  ) !diffuse and scattered diffuse PAR extinction coefficient
       deallocate (rst_c    ) !canopy stomatal resistance (s/m)
-      deallocate (z0m_c    ) !effective roughness [m]                                 
+      deallocate (z0m_c    ) !effective roughness [m]
    END SUBROUTINE deallocate_PCTimeVars
 
 END MODULE MOD_PCTimeVars

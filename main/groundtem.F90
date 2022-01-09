@@ -25,7 +25,7 @@
 !   method and resulted in a tridiagonal system equation.
 !
 ! Phase change (see meltf.F90)
-! 
+!
 ! Original author : Yongjiu Dai, 09/15/1999; 08/30/2002
 !=======================================================================
 
@@ -98,7 +98,7 @@
   integer i,j
 
 !=======================================================================
-! heat capacity 
+! heat capacity
       call hCapacity (patchtype,lb,nl_soil,csol,porsl,wice_soisno,wliq_soisno,scv,dz_soisno,cv)
 
 ! thermal conductivity
@@ -106,7 +106,7 @@
          print*,'[groundtem],zi_soisno(0)',zi_soisno(0)
          stop
       endif
-      
+
       call hConductivity (patchtype,lb,nl_soil,&
                           dkdry,dksatu,porsl,dz_soisno,z_soisno,zi_soisno,&
                           t_soisno,wice_soisno,wliq_soisno,tk)
@@ -116,7 +116,7 @@
 ! 08/19/2021, yuan: remove sigf, LAI->100% cover
          !+ (1.-sigf)*emg*frl - emg*stefnc*t_soisno(lb)**4 &
          - emg*stefnc*t_soisno(lb)**4 &
-         - (fseng+fevpg*htvp) 
+         - (fseng+fevpg*htvp)
 
       dhsdT = - cgrnd - 4.*emg * stefnc * t_soisno(lb)**3
       t_soisno_bef(lb:) = t_soisno(lb:)
@@ -161,10 +161,10 @@
 
 ! solve for t_soisno
       i = size(at)
-      call tridia (i ,at ,bt ,ct ,rt ,t_soisno) 
+      call tridia (i ,at ,bt ,ct ,rt ,t_soisno)
 
 !=======================================================================
-! melting or freezing 
+! melting or freezing
 !=======================================================================
 
       do j = lb, nl_soil - 1

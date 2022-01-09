@@ -2,7 +2,7 @@
 
 MODULE MOD_2D_Fluxes
 ! ----------------------------------------------------------------------
-! perfrom the grid average mapping: average a subgrid input 1d vector 
+! perfrom the grid average mapping: average a subgrid input 1d vector
 ! of length numpatch to a output 2d array of length [lon_points,lat_points]
 !
 ! Created by Yongjiu Dai, 03/2014
@@ -31,7 +31,7 @@ real(r8), allocatable :: f_fevpg  (:,:)  ! evaporation heat flux from ground [mm
 real(r8), allocatable :: f_fgrnd  (:,:)  ! ground heat flux [W/m2]
 real(r8), allocatable :: f_sabvsun(:,:)  ! solar absorbed by sunlit canopy [W/m2]
 real(r8), allocatable :: f_sabvsha(:,:)  ! solar absorbed by shaded [W/m2]
-real(r8), allocatable :: f_sabg   (:,:)  ! solar absorbed by ground  [W/m2]
+real(r8), allocatable :: f_sabg   (:,:)  ! solar absorbed by ground [W/m2]
 real(r8), allocatable :: f_sr     (:,:)  ! total reflected solar radiation (W/m2)
 real(r8), allocatable :: f_solvd  (:,:)  ! incident direct beam vis solar radiation (W/m2)
 real(r8), allocatable :: f_solvi  (:,:)  ! incident diffuse beam vis solar radiation (W/m2)
@@ -60,7 +60,7 @@ real(r8), allocatable :: f_qinfl  (:,:)  ! inflitration [mm/s]
 real(r8), allocatable :: f_qdrip  (:,:)  ! throughfall [mm/s]
 real(r8), allocatable :: f_assim  (:,:)  ! canopy assimilation rate [mol m-2 s-1]
 real(r8), allocatable :: f_respc  (:,:)  ! respiration (plant+soil) [mol m-2 s-1]
-real(r8), allocatable :: f_qcharge(:,:)  ! groundwater recharge rate [mm/s] 
+real(r8), allocatable :: f_qcharge(:,:)  ! groundwater recharge rate [mm/s]
 
 !---------------------------------------------------------------------
 real(r8), allocatable :: f_t_grnd (:,:)  ! ground surface temperature [K]
@@ -83,11 +83,39 @@ real(r8), allocatable :: f_tref   (:,:)  ! 2 m height air temperature [kelvin]
 real(r8), allocatable :: f_qref   (:,:)  ! 2 m height air specific humidity [kg/kg]
 
 !---------------------------------------------------------------------
+real(r8), allocatable :: f_t_room (:,:)  ! temperature of inner building [K]
+real(r8), allocatable :: f_fhac   (:,:)  ! sensible flux from heat or cool AC [W/m2]
+real(r8), allocatable :: f_fwst   (:,:)  ! waste heat flux from heat or cool AC [W/m2]
+real(r8), allocatable :: f_fach   (:,:)  ! flux from inner and outter air exchange [W/m2]
+
+!TODO: 分daytime(dt) and nighttime(nt)
+real(r8), allocatable :: f_sabvdt  (:,:) ! solar absorbed by sunlit canopy [W/m2]
+real(r8), allocatable :: f_sabgdt  (:,:) ! solar absorbed by ground [W/m2]
+real(r8), allocatable :: f_srdt    (:,:) ! total reflected solar radiation (W/m2)
+real(r8), allocatable :: f_fsenadt (:,:) ! sensible heat from canopy height to atmosphere [W/m2]
+real(r8), allocatable :: f_lfevpadt(:,:) ! latent heat flux from canopy height to atmosphere [W/m2]
+real(r8), allocatable :: f_fgrnddt (:,:) ! ground heat flux [W/m2]
+real(r8), allocatable :: f_olrgdt  (:,:) ! outgoing long-wave radiation from ground+canopy [W/m2]
+real(r8), allocatable :: f_rnetdt  (:,:) ! net radiation [W/m2]
+real(r8), allocatable :: f_t_grnddt(:,:) ! ground surface temperature [K]
+real(r8), allocatable :: f_traddt  (:,:) ! radiative temperature of surface [K]
+real(r8), allocatable :: f_trefdt  (:,:) ! 2 m height air temperature [kelvin]
+
+real(r8), allocatable :: f_fsenant (:,:) ! sensible heat from canopy height to atmosphere [W/m2]
+real(r8), allocatable :: f_lfevpant(:,:) ! latent heat flux from canopy height to atmosphere [W/m2]
+real(r8), allocatable :: f_fgrndnt (:,:) ! ground heat flux [W/m2]
+real(r8), allocatable :: f_olrgnt  (:,:) ! outgoing long-wave radiation from ground+canopy [W/m2]
+real(r8), allocatable :: f_rnetnt  (:,:) ! net radiation [W/m2]
+real(r8), allocatable :: f_t_grndnt(:,:) ! ground surface temperature [K]
+real(r8), allocatable :: f_tradnt  (:,:) ! radiative temperature of surface [K]
+real(r8), allocatable :: f_trefnt  (:,:) ! 2 m height air temperature [kelvin]
+
+!---------------------------------------------------------------------
 real(r8), allocatable :: f_t_soisno   (:,:,:)  ! soil temperature [K]
 real(r8), allocatable :: f_wliq_soisno(:,:,:)  ! liquid water in soil layers [kg/m2]
 real(r8), allocatable :: f_wice_soisno(:,:,:)  ! ice lens in soil layers [kg/m2]
 real(r8), allocatable :: f_h2osoi     (:,:,:)  ! volumetric soil water in layers [m3/m3]
-real(r8), allocatable :: f_rstfac     (:,:)    ! factor of soil water stress 
+real(r8), allocatable :: f_rstfac     (:,:)    ! factor of soil water stress
 real(r8), allocatable :: f_zwt        (:,:)    ! the depth to water table [m]
 real(r8), allocatable :: f_wa         (:,:)    ! water storage in aquifer [mm]
 real(r8), allocatable :: f_wat        (:,:)    ! total water storage [mm]
@@ -192,7 +220,7 @@ allocate ( f_qinfl  (lon_points,lat_points) )  ! inflitration [mm/s]
 allocate ( f_qdrip  (lon_points,lat_points) )  ! throughfall [mm/s]
 allocate ( f_assim  (lon_points,lat_points) )  ! canopy assimilation rate [mol m-2 s-1]
 allocate ( f_respc  (lon_points,lat_points) )  ! respiration (plant+soil) [mol m-2 s-1]
-allocate ( f_qcharge(lon_points,lat_points) )  ! groundwater recharge rate [mm/s] 
+allocate ( f_qcharge(lon_points,lat_points) )  ! groundwater recharge rate [mm/s]
 
 !---------------------------------------------------------------------
 allocate ( f_t_grnd (lon_points,lat_points) )  ! ground surface temperature [K]
@@ -215,11 +243,38 @@ allocate ( f_tref   (lon_points,lat_points) )  ! 2 m height air temperature [kel
 allocate ( f_qref   (lon_points,lat_points) )  ! 2 m height air specific humidity [kg/kg]
 
 !---------------------------------------------------------------------
+allocate ( f_t_room (lon_points,lat_points) )  ! temperature of inner building [K]
+allocate ( f_fhac   (lon_points,lat_points) )  ! sensible flux from heat or cool AC [W/m2]
+allocate ( f_fwst   (lon_points,lat_points) )  ! waste heat flux from heat or cool AC [W/m2]
+allocate ( f_fach   (lon_points,lat_points) )  ! flux from inner and outter air exchange [W/m2]
+
+allocate ( f_sabvdt  (lon_points,lat_points) ) ! solar absorbed by sunlit canopy [W/m2]
+allocate ( f_sabgdt  (lon_points,lat_points) ) ! solar absorbed by ground [W/m2]
+allocate ( f_srdt    (lon_points,lat_points) ) ! total reflected solar radiation (W/m2)
+allocate ( f_fsenadt (lon_points,lat_points) ) ! sensible heat from canopy height to atmosphere [W/m2]
+allocate ( f_lfevpadt(lon_points,lat_points) ) ! latent heat flux from canopy height to atmosphere [W/m2]
+allocate ( f_fgrnddt (lon_points,lat_points) ) ! ground heat flux [W/m2]
+allocate ( f_olrgdt  (lon_points,lat_points) ) ! outgoing long-wave radiation from ground+canopy [W/m2]
+allocate ( f_rnetdt  (lon_points,lat_points) ) ! net radiation [W/m2]
+allocate ( f_t_grnddt(lon_points,lat_points) ) ! ground surface temperature [K]
+allocate ( f_traddt  (lon_points,lat_points) ) ! radiative temperature of surface [K]
+allocate ( f_trefdt  (lon_points,lat_points) ) ! 2 m height air temperature [kelvin]
+
+allocate ( f_fsenant (lon_points,lat_points) ) ! sensible heat from canopy height to atmosphere [W/m2]
+allocate ( f_lfevpant(lon_points,lat_points) ) ! latent heat flux from canopy height to atmosphere [W/m2]
+allocate ( f_fgrndnt (lon_points,lat_points) ) ! ground heat flux [W/m2]
+allocate ( f_olrgnt  (lon_points,lat_points) ) ! outgoing long-wave radiation from ground+canopy [W/m2]
+allocate ( f_rnetnt  (lon_points,lat_points) ) ! net radiation [W/m2]
+allocate ( f_t_grndnt(lon_points,lat_points) ) ! ground surface temperature [K]
+allocate ( f_tradnt  (lon_points,lat_points) ) ! radiative temperature of surface [K]
+allocate ( f_trefnt  (lon_points,lat_points) ) ! 2 m height air temperature [kelvin]
+
+!---------------------------------------------------------------------
 allocate ( f_t_soisno   (maxsnl+1:nl_soil,lon_points,lat_points) )  ! soil temperature [K]
 allocate ( f_wliq_soisno(maxsnl+1:nl_soil,lon_points,lat_points) )  ! liquid water in soil layers [kg/m2]
 allocate ( f_wice_soisno(maxsnl+1:nl_soil,lon_points,lat_points) )  ! ice lens in soil layers [kg/m2]
 allocate ( f_h2osoi            (1:nl_soil,lon_points,lat_points) )  ! volumetric soil water in layers [m3/m3]
-allocate ( f_rstfac                      (lon_points,lat_points) )  ! factor of soil water stress 
+allocate ( f_rstfac                      (lon_points,lat_points) )  ! factor of soil water stress
 allocate ( f_zwt                         (lon_points,lat_points) )  ! the depth to water table [m]
 allocate ( f_wa                          (lon_points,lat_points) )  ! water storage in aquifer [mm]
 allocate ( f_wat                         (lon_points,lat_points) )  ! total water storage [mm]
@@ -341,6 +396,32 @@ f_trad      (:,:) = spval
 f_tref      (:,:) = spval
 f_qref      (:,:) = spval
 
+f_t_room    (:,:) = spval
+f_fhac      (:,:) = spval
+f_fwst      (:,:) = spval
+f_fach      (:,:) = spval
+
+f_sabvdt    (:,:) = spval
+f_sabgdt    (:,:) = spval
+f_srdt      (:,:) = spval
+f_fsenadt   (:,:) = spval
+f_lfevpadt  (:,:) = spval
+f_fgrnddt   (:,:) = spval
+f_olrgdt    (:,:) = spval
+f_rnetdt    (:,:) = spval
+f_t_grnddt  (:,:) = spval
+f_traddt    (:,:) = spval
+f_trefdt    (:,:) = spval
+
+f_fsenant   (:,:) = spval
+f_lfevpant  (:,:) = spval
+f_fgrndnt   (:,:) = spval
+f_olrgnt    (:,:) = spval
+f_rnetnt    (:,:) = spval
+f_t_grndnt  (:,:) = spval
+f_tradnt    (:,:) = spval
+f_trefnt    (:,:) = spval
+
 f_t_soisno    (:,:,:) = spval
 f_wliq_soisno (:,:,:) = spval
 f_wice_soisno (:,:,:) = spval
@@ -420,7 +501,7 @@ deallocate ( f_qinfl  )  ! inflitration [mm/s]
 deallocate ( f_qdrip  )  ! throughfall [mm/s]
 deallocate ( f_assim  )  ! canopy assimilation rate [mol m-2 s-1]
 deallocate ( f_respc  )  ! respiration (plant+soil) [mol m-2 s-1]
-deallocate ( f_qcharge)  ! groundwater recharge rate [mm/s] 
+deallocate ( f_qcharge)  ! groundwater recharge rate [mm/s]
 
 !---------------------------------------------------------------------
 deallocate ( f_t_grnd )  ! ground surface temperature [K]
@@ -443,11 +524,38 @@ deallocate ( f_tref   )  ! 2 m height air temperature [kelvin]
 deallocate ( f_qref   )  ! 2 m height air specific humidity [kg/kg]
 
 !---------------------------------------------------------------------
+deallocate ( f_t_room )  ! temperature of inner building [K]
+deallocate ( f_fhac   )  ! sensible flux from heat or cool AC [W/m2]
+deallocate ( f_fwst   )  ! waste heat flux from heat or cool AC [W/m2]
+deallocate ( f_fach   )  ! flux from inner and outter air exchange [W/m2]
+
+deallocate ( f_sabvdt   )! solar absorbed by sunlit canopy [W/m2]
+deallocate ( f_sabgdt   )! solar absorbed by ground [W/m2]
+deallocate ( f_srdt     )! total reflected solar radiation (W/m2)
+deallocate ( f_fsenadt  )! sensible heat from canopy height to atmosphere [W/m2]
+deallocate ( f_lfevpadt )! latent heat flux from canopy height to atmosphere [W/m2]
+deallocate ( f_fgrnddt  )! ground heat flux [W/m2]
+deallocate ( f_olrgdt   )! outgoing long-wave radiation from ground+canopy [W/m2]
+deallocate ( f_rnetdt   )! net radiation [W/m2]
+deallocate ( f_t_grnddt )! ground surface temperature [K]
+deallocate ( f_traddt   )! radiative temperature of surface [K]
+deallocate ( f_trefdt   )! 2 m height air temperature [kelvin]
+
+deallocate ( f_fsenant  )! sensible heat from canopy height to atmosphere [W/m2]
+deallocate ( f_lfevpant )! latent heat flux from canopy height to atmosphere [W/m2]
+deallocate ( f_fgrndnt  )! ground heat flux [W/m2]
+deallocate ( f_olrgnt   )! outgoing long-wave radiation from ground+canopy [W/m2]
+deallocate ( f_rnetnt   )! net radiation [W/m2]
+deallocate ( f_t_grndnt )! ground surface temperature [K]
+deallocate ( f_tradnt   )! radiative temperature of surface [K]
+deallocate ( f_trefnt   )! 2 m height air temperature [kelvin]
+
+!---------------------------------------------------------------------
 deallocate ( f_t_soisno    )  ! soil temperature [K]
 deallocate ( f_wliq_soisno )  ! liquid water in soil layers [kg/m2]
 deallocate ( f_wice_soisno )  ! ice lens in soil layers [kg/m2]
 deallocate ( f_h2osoi      )  ! ice lens in soil layers [kg/m2]
-deallocate ( f_rstfac      )  ! factor of soil water stress 
+deallocate ( f_rstfac      )  ! factor of soil water stress
 deallocate ( f_zwt         )  ! the depth to water table [m]
 deallocate ( f_wa          )  ! water storage in aquifer [mm]
 deallocate ( f_wat         )  ! total water storage [mm]

@@ -27,16 +27,16 @@
   INTEGER,  intent(in) :: ipatch     !patch index
   INTEGER,  intent(in) :: idate(3)   !model time
   INTEGER,  intent(in) :: patchtype  !land water TYPE (99-sea)
-  
+
   REAL(r8), intent(in) :: dlon       !logitude in radians
   REAL(r8), intent(in) :: deltim     !seconds in a time step [second]
- 
+
   REAL(r8), intent(in) :: &
         forc_sols,  &! atm vis direct beam solar rad onto srf [W/m2]
         forc_soll,  &! atm nir direct beam solar rad onto srf [W/m2]
         forc_solsd, &! atm vis diffuse solar rad onto srf [W/m2]
         forc_solld   ! atm nir diffuse solar rad onto srf [W/m2]
-  
+
   REAL(r8), dimension(1:2,1:2), intent(in) :: &
         alb,      &! averaged albedo [-]
         ssun,     &! sunlit canopy absorption for solar radiation
@@ -79,7 +79,7 @@
 
    INTEGER ps, pe, pc
 !=======================================================================
-       
+
         sabvsun = 0.
         sabvsha = 0.
         parsun  = 0.
@@ -91,7 +91,7 @@
 IF (patchtype == 0) THEN
 
 #ifdef PFT_CLASSIFICATION
-        ps = patch_pft_s(ipatch)      
+        ps = patch_pft_s(ipatch)
         pe = patch_pft_e(ipatch)
         sabvsun_p(ps:pe) = 0.
         sabvsha_p(ps:pe) = 0.
@@ -144,9 +144,9 @@ IF (patchtype == 0) THEN
               parsun_c(:,pc)  = forc_sols*ssun_c(1,1,:,pc) + forc_solsd*ssun_c(1,2,:,pc)
               parsha_c(:,pc)  = forc_sols*ssha_c(1,1,:,pc) + forc_solsd*ssha_c(1,2,:,pc)
               sabvsun_c(:,pc) = forc_sols*ssun_c(1,1,:,pc) + forc_solsd*ssun_c(1,2,:,pc) &
-                              + forc_soll*ssun_c(2,1,:,pc) + forc_solld*ssun_c(2,2,:,pc) 
+                              + forc_soll*ssun_c(2,1,:,pc) + forc_solld*ssun_c(2,2,:,pc)
               sabvsha_c(:,pc) = forc_sols*ssha_c(1,1,:,pc) + forc_solsd*ssha_c(1,2,:,pc) &
-                              + forc_soll*ssha_c(2,1,:,pc) + forc_solld*ssha_c(2,2,:,pc) 
+                              + forc_soll*ssha_c(2,1,:,pc) + forc_solld*ssha_c(2,2,:,pc)
 #endif
 
 ENDIF
@@ -175,10 +175,10 @@ ENDIF
         IF ( isgreenwich ) THEN
            local_secs = idate(3) + nint((dlon/radpsec)/deltim)*deltim
            local_secs = mod(local_secs,86400)
-        ELSE 
+        ELSE
            local_secs = idate(3)
         ENDIF
-        
+
         IF (local_secs == 86400/2) THEN
            solvdln = forc_sols
            solviln = forc_solsd

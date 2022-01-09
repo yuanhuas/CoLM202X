@@ -1,4 +1,4 @@
-#include <define.h> 
+#include <define.h>
 
 MODULE MOD_PFTimeVars
 ! -------------------------------
@@ -20,7 +20,7 @@ MODULE MOD_PFTimeVars
   REAL(r8), allocatable :: tlai_p    (:) !leaf area index
   REAL(r8), allocatable :: lai_p     (:) !leaf area index
   REAL(r8), allocatable :: tsai_p    (:) !stem area index
-  REAL(r8), allocatable :: sai_p     (:) !stem area index                                      
+  REAL(r8), allocatable :: sai_p     (:) !stem area index
   REAL(r8), allocatable :: ssun_p(:,:,:) !sunlit canopy absorption for solar radiation (0-1)
   REAL(r8), allocatable :: ssha_p(:,:,:) !shaded canopy absorption for solar radiation (0-1)
   REAL(r8), allocatable :: thermk_p  (:) !canopy gap fraction for tir radiation
@@ -69,8 +69,8 @@ CONTAINS
       allocate (z0m_p        (numpft)) !effective roughness [m]
 
    END SUBROUTINE allocate_PFTimeVars
-  
-  
+
+
    SUBROUTINE deallocate_PFTimeVars
 ! --------------------------------------------------
 ! Deallocates memory for CLM 1d [numpft/numpc] variables
@@ -81,7 +81,7 @@ CONTAINS
       deallocate (tlai_p   ) !leaf area index
       deallocate (lai_p    ) !leaf area index
       deallocate (tsai_p   ) !stem area index
-      deallocate (sai_p    ) !stem area index                                   
+      deallocate (sai_p    ) !stem area index
       deallocate (ssun_p   ) !sunlit canopy absorption for solar radiation (0-1)
       deallocate (ssha_p   ) !shaded canopy absorption for solar radiation (0-1)
       deallocate (thermk_p ) !canopy gap fraction for tir radiation
@@ -90,7 +90,7 @@ CONTAINS
       deallocate (tref_p   ) !2 m height air temperature [kelvin]
       deallocate (qref_p   ) !2 m height air specific humidity
       deallocate (rst_p    ) !canopy stomatal resistance (s/m)
-      deallocate (z0m_p    ) !effective roughness [m]                                 
+      deallocate (z0m_p    ) !effective roughness [m]
    END SUBROUTINE deallocate_PFTimeVars
 
 END MODULE MOD_PFTimeVars

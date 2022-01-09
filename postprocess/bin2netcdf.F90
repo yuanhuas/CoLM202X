@@ -6,13 +6,13 @@ PROGRAM bin2netcdf
 ! ================================================================
 !  PURPOSE:
 !     post process for CoLM output file. convert binary data to NetCDF
-!  format. 
+!  format.
 !
-!  USAGE: 
+!  USAGE:
 !     1) for CoLM output format
 !        ./bin2netcdf [casename]_2D_Fluxes_YYYY-MM
 !
-!     2) for NCAR CLM output format (can be used as input for Land 
+!     2) for NCAR CLM output format (can be used as input for Land
 !        Model Diagnostics Package)
 !        ./bin2netcdf [casename]_2D_Fluxes_YYYY-MM ncar
 ! ================================================================
@@ -23,7 +23,7 @@ PROGRAM bin2netcdf
    use PhysicalConstants, only: hvap
    use MOD_2D_Fluxes
    use netcdf
-   
+
    implicit none
 
    !integer,  parameter :: nl_soil    = 10      ! number of soil layers
@@ -34,13 +34,13 @@ PROGRAM bin2netcdf
 
    real(r8) :: lons_r8(lon_points)
    real(r8) :: lats_r8(lat_points)
-   
+
    character(len=256)  :: filename
    character(len=256)  :: outtype
 
  ! read in the file name
    CALL getarg(1, filename)
-  
+
  ! allocate memory
    print *, 'allocate memory...'
    CALL allocate_2D_Fluxes(lon_points,lat_points)
@@ -60,15 +60,15 @@ PROGRAM bin2netcdf
 
  ! free memory
    print *, 'free memory. done.'
-   CALL deallocate_2D_Fluxes     
-   
+   CALL deallocate_2D_Fluxes
+
 
 CONTAINS
 
    SUBROUTINE readfluxes
-      
+
       implicit none
-      
+
       open(unit=11, file=trim(filename), access='sequential', form='unformatted', status='old')
       print *, 'open file: ', trim(filename)
 
@@ -102,7 +102,7 @@ CONTAINS
       read(11) f_qdrip  (:,:)   ! throughfall [mm/s]
       read(11) f_assim  (:,:)   ! canopy assimilation rate [mol m-2 s-1]
       read(11) f_respc  (:,:)   ! respiration (plant+soil) [mol m-2 s-1]
-      read(11) f_qcharge(:,:)   ! groundwater recharge rate [mm/s] 
+      read(11) f_qcharge(:,:)   ! groundwater recharge rate [mm/s]
 
 !---------------------------------------------------------------------
       read(11) f_t_grnd (:,:)   ! ground surface temperature [K]
@@ -127,12 +127,33 @@ CONTAINS
       read(11) f_xy_rain(:,:)   ! rain [mm/s]
       read(11) f_xy_snow(:,:)   ! snow[mm/s]
 
+      read(11) f_sabvdt  (:,:)  ! solar absorbed by sunlit canopy [w/m2]
+      read(11) f_sabgdt  (:,:)  ! solar absorbed by ground [w/m2]
+      read(11) f_srdt    (:,:)  ! total reflected solar radiation (w/m2)
+      read(11) f_fsenadt (:,:)  ! sensible heat from canopy height to atmosphere [w/m2]
+      read(11) f_lfevpadt(:,:)  ! latent heat flux from canopy height to atmosphere [w/m2]
+      read(11) f_fgrnddt (:,:)  ! ground heat flux [w/m2]
+      read(11) f_olrgdt  (:,:)  ! outgoing long-wave radiation from ground+canopy [w/m2]
+      read(11) f_rnetdt  (:,:)  ! net radiation [w/m2]
+      read(11) f_t_grnddt(:,:)  ! ground surface temperature [k]
+      read(11) f_traddt  (:,:)  ! radiative temperature of surface [k]
+      read(11) f_trefdt  (:,:)  ! 2 m height air temperature [kelvin]
+
+      read(11) f_fsenant (:,:)  ! sensible heat from canopy height to atmosphere [w/m2]
+      read(11) f_lfevpant(:,:)  ! latent heat flux from canopy height to atmosphere [w/m2]
+      read(11) f_fgrndnt (:,:)  ! ground heat flux [w/m2]
+      read(11) f_olrgnt  (:,:)  ! outgoing long-wave radiation from ground+canopy [w/m2]
+      read(11) f_rnetnt  (:,:)  ! net radiation [w/m2]
+      read(11) f_t_grndnt(:,:)  ! ground surface temperature [k]
+      read(11) f_tradnt  (:,:)  ! radiative temperature of surface [k]
+      read(11) f_trefnt  (:,:)  ! 2 m height air temperature [kelvin]
+
 !---------------------------------------------------------------------
       read(11) f_t_soisno   (:,:,:)   ! soil temperature [K]
       read(11) f_wliq_soisno(:,:,:)   ! liquid water in soil layers [kg/m2]
       read(11) f_wice_soisno(:,:,:)   ! ice lens in soil layers [kg/m2]
       read(11) f_h2osoi     (:,:,:)  ! volumetric soil water in layers [m3/m3]
-      read(11) f_rstfac     (:,:)    ! factor of soil water stress 
+      read(11) f_rstfac     (:,:)    ! factor of soil water stress
       read(11) f_zwt        (:,:)    ! the depth to water table [m]
       read(11) f_wa         (:,:)    ! water storage in aquifer [mm]
       read(11) f_wat        (:,:)    ! total water storage [mm]
@@ -183,9 +204,9 @@ CONTAINS
       close(11)
 
    END SUBROUTINE readfluxes
-   
+
    SUBROUTINE writenetcdf
-   
+
       implicit none
 
       integer  :: ix,iy,ilev,i
@@ -195,7 +216,7 @@ CONTAINS
       real(r8) :: tmp(lon_points, lat_points, 2)
       real(r8) :: tmp1(lon_points, lat_points, maxsnl+1:nl_soil)
       real(r8) :: tmp2(lon_points, lat_points, nl_lake)
-      
+
     ! create netcdf and define dimensions
       call sanity( nf90_create(trim(filename)//'.nc', nf90_64bit_offset, ncid) )
 
@@ -208,7 +229,7 @@ CONTAINS
 
     ! global attr
       call sanity( nf90_put_att(ncid, NF90_GLOBAL, 'title','CLM SIMULATED SURFACE FLUXES') )
-      
+
     ! variables
     ! dimension variables
       call sanity( nf90_def_var(ncid, 'lon', nf90_float, (/xid/), varid) )
@@ -221,13 +242,13 @@ CONTAINS
 
       call sanity( nf90_def_var(ncid, 'soil_snow_lev', nf90_int, (/sslevid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name',"soil plus snow level") )
-      
+
       call sanity( nf90_def_var(ncid, 'lake_lev', nf90_int, (/lakelevid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name',"lake level") )
-      
+
       call sanity( nf90_def_var(ncid, 'band', nf90_int, (/bandid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name',"band (vis/nir)") )
- 
+
       ! grid mask
       call sanity( nf90_def_var(ncid, 'landmask', nf90_int, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','grid mask') )
@@ -241,14 +262,14 @@ CONTAINS
       call sanity( nf90_put_att(ncid, varid, 'units','fraction') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
-       
+
       ! grid cell area [km2]
       call sanity( nf90_def_var(ncid, 'area', nf90_double, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','grid cell area [km2]') )
       call sanity( nf90_put_att(ncid, varid, 'units','fraction') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
-     
+
       ! wind stress: E-W [kg/m/s2]
       call sanity( nf90_def_var(ncid, 'f_taux', nf90_double, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','wind stress: E-W [kg/m/s2]') )
@@ -403,7 +424,7 @@ CONTAINS
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
 
-      ! groundwater recharge rate [mm/s] 
+      ! groundwater recharge rate [mm/s]
       call sanity( nf90_def_var(ncid, 'f_qcharge', nf90_double, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','groundwater recharge rate [mm/s] ') )
       call sanity( nf90_put_att(ncid, varid, 'units','mm/s') )
@@ -536,21 +557,154 @@ CONTAINS
       call sanity( nf90_put_att(ncid, varid, 'units','kg/kg') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
-       
+
       ! rain [mm/s]
       call sanity( nf90_def_var(ncid, 'f_xy_rain', nf90_double, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','rain [mm/s]') )
       call sanity( nf90_put_att(ncid, varid, 'units','mm/s') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
- 
+
       ! snow [mm/s]
       call sanity( nf90_def_var(ncid, 'f_xy_snow', nf90_double, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','snow [mm/s]') )
       call sanity( nf90_put_att(ncid, varid, 'units','mm/s') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
- 
+
+      ! solar absorbed by sunlit canopy in daytime [W/m2]
+      CALL sanity( nf90_def_var(ncid, 'f_sabvdt', nf90_double, (/xid,yid/), varid) )
+      CALL sanity( nf90_put_att(ncid, varid, 'long_name','solar absorbed by sunlit canopy in daytime [W/m2]') )
+      CALL sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
+      CALL sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
+      CALL sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
+
+      ! solar absorbed by ground in daytime [W/m2]
+      CALL sanity( nf90_def_var(ncid, 'f_sabgdt', nf90_double, (/xid,yid/), varid) )
+      CALL sanity( nf90_put_att(ncid, varid, 'long_name','solar absorbed by ground in daytime [W/m2]') )
+      CALL sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
+      CALL sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
+      CALL sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
+
+      ! reflected solar radiation at surface in daytime [W/m2]
+      CALL sanity( nf90_def_var(ncid, 'f_srdt', nf90_double, (/xid,yid/), varid) )
+      CALL sanity( nf90_put_att(ncid, varid, 'long_name','reflected solar radiation at surface in daytime [W/m2]') )
+      CALL sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
+      CALL sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
+      CALL sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
+
+      ! sensible heat from canopy height to atmosphere in daytime [W/m2]
+      CALL sanity( nf90_def_var(ncid, 'f_fsenadt', nf90_double, (/xid,yid/), varid) )
+      CALL sanity( nf90_put_att(ncid, varid, 'long_name','sensible heat from canopy height to atmosphere in daytime [W/m2]') )
+      CALL sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
+      CALL sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
+      CALL sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
+
+      ! latent heat flux from canopy height to atmosphere in daytime [W/m2]
+      CALL sanity( nf90_def_var(ncid, 'f_lfevpadt', nf90_double, (/xid,yid/), varid) )
+      CALL sanity( nf90_put_att(ncid, varid, 'long_name','latent heat flux from canopy height to atmosphere in daytime [W/m2]') )
+      CALL sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
+      CALL sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
+      CALL sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
+
+      ! ground heat flux in daytime [W/m2]
+      CALL sanity( nf90_def_var(ncid, 'f_fgrnddt', nf90_double, (/xid,yid/), varid) )
+      CALL sanity( nf90_put_att(ncid, varid, 'long_name','ground heat flux in daytime [W/m2]') )
+      CALL sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
+      CALL sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
+      CALL sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
+
+      ! outgoing long-wave radiation from ground+canopy in daytime [W/m2]
+      CALL sanity( nf90_def_var(ncid, 'f_olrgdt', nf90_double, (/xid,yid/), varid) )
+      CALL sanity( nf90_put_att(ncid, varid, 'long_name','outgoing long-wave radiation from ground+canopy in daytime [W/m2]') )
+      CALL sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
+      CALL sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
+      CALL sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
+
+      ! net radiation in daytime [W/m2]
+      CALL sanity( nf90_def_var(ncid, 'f_rnetdt', nf90_double, (/xid,yid/), varid) )
+      CALL sanity( nf90_put_att(ncid, varid, 'long_name','net radiation in daytime [W/m2]') )
+      CALL sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
+      CALL sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
+      CALL sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
+
+      ! ground surface temperature in daytime [K]
+      CALL sanity( nf90_def_var(ncid, 'f_t_grnddt', nf90_double, (/xid,yid/), varid) )
+      CALL sanity( nf90_put_att(ncid, varid, 'long_name','ground surface temperature in daytime [K]') )
+      CALL sanity( nf90_put_att(ncid, varid, 'units','K') )
+      CALL sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
+      CALL sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
+
+      ! radiative temperature of surface in daytime [K]
+      CALL sanity( nf90_def_var(ncid, 'f_traddt', nf90_double, (/xid,yid/), varid) )
+      CALL sanity( nf90_put_att(ncid, varid, 'long_name','radiative temperature of surface in daytime [K]') )
+      CALL sanity( nf90_put_att(ncid, varid, 'units','K') )
+      CALL sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
+      CALL sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
+
+      ! 2 m height air temperature in daytime [kelvin]
+      CALL sanity( nf90_def_var(ncid, 'f_trefdt', nf90_double, (/xid,yid/), varid) )
+      CALL sanity( nf90_put_att(ncid, varid, 'long_name','2 m height air temperature in daytime [kelvin]') )
+      CALL sanity( nf90_put_att(ncid, varid, 'units','kelvin') )
+      CALL sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
+      CALL sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
+
+      ! sensible heat from canopy height to atmosphere in night-time [W/m2]
+      CALL sanity( nf90_def_var(ncid, 'f_fsenant', nf90_double, (/xid,yid/), varid) )
+      CALL sanity( nf90_put_att(ncid, varid, 'long_name','sensible heat from canopy height to atmosphere in night-time [W/m2]') )
+      CALL sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
+      CALL sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
+      CALL sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
+
+      ! latent heat flux from canopy height to atmosphere in night-time [W/m2]
+      CALL sanity( nf90_def_var(ncid, 'f_lfevpant', nf90_double, (/xid,yid/), varid) )
+      CALL sanity( nf90_put_att(ncid, varid, 'long_name','latent heat flux from canopy height to atmosphere in night-time [W/m2]') )
+      CALL sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
+      CALL sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
+      CALL sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
+
+      ! ground heat flux in night-time [W/m2]
+      CALL sanity( nf90_def_var(ncid, 'f_fgrndnt', nf90_double, (/xid,yid/), varid) )
+      CALL sanity( nf90_put_att(ncid, varid, 'long_name','ground heat flux in night-time [W/m2]') )
+      CALL sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
+      CALL sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
+      CALL sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
+
+      ! outgoing long-wave radiation from ground+canopy in night-time [W/m2]
+      CALL sanity( nf90_def_var(ncid, 'f_olrgnt', nf90_double, (/xid,yid/), varid) )
+      CALL sanity( nf90_put_att(ncid, varid, 'long_name','outgoing long-wave radiation from ground+canopy in night-time [W/m2]') )
+      CALL sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
+      CALL sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
+      CALL sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
+
+      ! net radiation in night-time [W/m2]
+      CALL sanity( nf90_def_var(ncid, 'f_rnetnt', nf90_double, (/xid,yid/), varid) )
+      CALL sanity( nf90_put_att(ncid, varid, 'long_name','net radiation in night-time [W/m2]') )
+      CALL sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
+      CALL sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
+      CALL sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
+
+      ! ground surface temperature in night-time [K]
+      CALL sanity( nf90_def_var(ncid, 'f_t_grndnt', nf90_double, (/xid,yid/), varid) )
+      CALL sanity( nf90_put_att(ncid, varid, 'long_name','ground surface temperature in night-time [K]') )
+      CALL sanity( nf90_put_att(ncid, varid, 'units','K') )
+      CALL sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
+      CALL sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
+
+      ! radiative temperature of surface in night-time [K]
+      CALL sanity( nf90_def_var(ncid, 'f_tradnt', nf90_double, (/xid,yid/), varid) )
+      CALL sanity( nf90_put_att(ncid, varid, 'long_name','radiative temperature of surface in night-time [K]') )
+      CALL sanity( nf90_put_att(ncid, varid, 'units','K') )
+      CALL sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
+      CALL sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
+
+      ! 2 m height air temperature in night-time [kelvin]
+      CALL sanity( nf90_def_var(ncid, 'f_trefnt', nf90_double, (/xid,yid/), varid) )
+      CALL sanity( nf90_put_att(ncid, varid, 'long_name','2 m height air temperature in night-time [kelvin]') )
+      CALL sanity( nf90_put_att(ncid, varid, 'units','kelvin') )
+      CALL sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
+      CALL sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
+
       !---------------------------------------------------------------------
       ! soil temperature [K]
       call sanity( nf90_def_var(ncid, 'f_t_soisno', nf90_double, (/xid,yid,sslevid/), varid) )
@@ -739,112 +893,112 @@ CONTAINS
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
-      
+
       ! incident diffuse beam vis solar radiation (W/m2)
       call sanity( nf90_def_var(ncid, 'f_solvi', nf90_double, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','incident diffuse beam vis solar radiation (W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
-      
+
       ! incident direct beam nir solar radiation (W/m2)
       call sanity( nf90_def_var(ncid, 'f_solnd', nf90_double, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','incident direct beam nir solar radiation (W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
-      
+
       ! incident diffuse beam nir solar radiation (W/m2)
       call sanity( nf90_def_var(ncid, 'f_solni', nf90_double, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','incident diffuse beam nir solar radiation (W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
-      
+
       ! reflected direct beam vis solar radiation (W/m2)
       call sanity( nf90_def_var(ncid, 'f_srvd', nf90_double, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','reflected direct beam vis solar radiation (W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
-      
+
       ! reflected diffuse beam vis solar radiation (W/m2)
       call sanity( nf90_def_var(ncid, 'f_srvi', nf90_double, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','reflected diffuse beam vis solar radiation (W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
-      
+
       ! reflected direct beam nir solar radiation (W/m2)
       call sanity( nf90_def_var(ncid, 'f_srnd', nf90_double, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','reflected direct beam nir solar radiation (W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
-      
+
       ! reflected diffuse beam nir solar radiation (W/m2)
       call sanity( nf90_def_var(ncid, 'f_srni', nf90_double, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','reflected diffuse beam nir solar radiation (W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
-      
+
       ! incident direct beam vis solar radiation at local noon(W/m2)
       call sanity( nf90_def_var(ncid, 'f_solvdln', nf90_double, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','incident direct beam vis solar radiation at local noon(W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
-      
+
       ! incident diffuse beam vis solar radiation at local noon(W/m2)
       call sanity( nf90_def_var(ncid, 'f_solviln', nf90_double, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','incident diffuse beam vis solar radiation at local noon(W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
-      
+
       ! incident direct beam nir solar radiation at local noon(W/m2)
       call sanity( nf90_def_var(ncid, 'f_solndln', nf90_double, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','incident direct beam nir solar radiation at local noon(W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
-      
+
       ! incident diffuse beam nir solar radiation at local noon(W/m2)
       call sanity( nf90_def_var(ncid, 'f_solniln', nf90_double, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','incident diffuse beam nir solar radiation at local noon(W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
-      
+
       ! reflected direct beam vis solar radiation at local noon(W/m2)
       call sanity( nf90_def_var(ncid, 'f_srvdln', nf90_double, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','reflected direct beam vis solar radiation at local noon(W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
-      
+
       ! reflected diffuse beam vis solar radiation at local noon(W/m2)
       call sanity( nf90_def_var(ncid, 'f_srviln', nf90_double, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','reflected diffuse beam vis solar radiation at local noon(W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
-      
+
       ! reflected direct beam nir solar radiation at local noon(W/m2)
       call sanity( nf90_def_var(ncid, 'f_srndln', nf90_double, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','reflected direct beam nir solar radiation at local noon(W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
-      
+
       ! reflected diffuse beam nir solar radiation at local noon(W/m2)
       call sanity( nf90_def_var(ncid, 'f_srniln', nf90_double, (/xid,yid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','reflected diffuse beam nir solar radiation at local noon(W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval) )
-      
+
 
     ! end defination
       call sanity( nf90_enddef(ncid) )
@@ -878,197 +1032,272 @@ CONTAINS
       end do
       call sanity( nf90_inq_varid(ncid,'band',varid) )
       call sanity( nf90_put_var(ncid,varid,band) )
-      
+
       ! grid mask
       call sanity( nf90_inq_varid(ncid,'landmask',varid) )
       call sanity( nf90_put_var(ncid,varid,mask) )
-      
+
       ! grid total fraction
       call sanity( nf90_inq_varid(ncid,'landfrac',varid) )
       call sanity( nf90_put_var(ncid,varid,frac) )
- 
+
       ! grid cell area [km2]
       call sanity( nf90_inq_varid(ncid,'area',varid) )
       call sanity( nf90_put_var(ncid,varid,area) )
- 
+
       ! wind stress: E-W [kg/m/s2]
       call sanity( nf90_inq_varid(ncid,'f_taux',varid) )
       call sanity( nf90_put_var(ncid,varid,f_taux) )
-      
+
       ! wind stress: N-S [kg/m/s2]
       call sanity( nf90_inq_varid(ncid,'f_tauy',varid) )
       call sanity( nf90_put_var(ncid,varid,f_tauy) )
-      
+
       ! sensible heat from canopy height to atmosphere [W/m2]
       call sanity( nf90_inq_varid(ncid,'f_fsena',varid) )
       call sanity( nf90_put_var(ncid,varid,f_fsena) )
-      
+
       ! latent heat flux from canopy height to atmosphere [W/m2]
       call sanity( nf90_inq_varid(ncid,'f_lfevpa',varid) )
       call sanity( nf90_put_var(ncid,varid,f_lfevpa) )
-     
+
       ! evapotranspiration from canopy to atmosphere [mm/s]
       call sanity( nf90_inq_varid(ncid,'f_fevpa',varid) )
       call sanity( nf90_put_var(ncid,varid,f_fevpa) )
-      
+
       ! sensible heat from leaves [W/m2]
       call sanity( nf90_inq_varid(ncid,'f_fsenl',varid) )
       call sanity( nf90_put_var(ncid,varid,f_fsenl) )
-      
+
       ! evaporation+transpiration from leaves [mm/s]
       call sanity( nf90_inq_varid(ncid,'f_fevpl',varid) )
       call sanity( nf90_put_var(ncid,varid,f_fevpl) )
-      
+
       ! transpiration rate [mm/s]
       call sanity( nf90_inq_varid(ncid,'f_etr',varid) )
       call sanity( nf90_put_var(ncid,varid,f_etr) )
-      
+
       ! sensible heat flux from ground [W/m2]
       call sanity( nf90_inq_varid(ncid,'f_fseng',varid) )
       call sanity( nf90_put_var(ncid,varid,f_fseng) )
-      
+
       ! evaporation heat flux from ground [mm/s]
       call sanity( nf90_inq_varid(ncid,'f_fevpg',varid) )
       call sanity( nf90_put_var(ncid,varid,f_fevpg) )
-      
+
       ! ground heat flux [W/m2]
       call sanity( nf90_inq_varid(ncid,'f_fgrnd',varid) )
       call sanity( nf90_put_var(ncid,varid,f_fgrnd) )
-      
+
       ! solar absorbed by sunlit canopy [W/m2]
       call sanity( nf90_inq_varid(ncid,'f_sabvsun',varid) )
       call sanity( nf90_put_var(ncid,varid,f_sabvsun) )
-      
+
       ! solar absorbed by shaded [W/m2]
       call sanity( nf90_inq_varid(ncid,'f_sabvsha',varid) )
       call sanity( nf90_put_var(ncid,varid,f_sabvsha) )
-      
+
       ! solar absorbed by ground  [W/m2]
       call sanity( nf90_inq_varid(ncid,'f_sabg',varid) )
       call sanity( nf90_put_var(ncid,varid,f_sabg) )
-      
+
       ! outgoing long-wave radiation from ground+canopy [W/m2]
       call sanity( nf90_inq_varid(ncid,'f_olrg',varid) )
       call sanity( nf90_put_var(ncid,varid,f_olrg) )
-      
+
       ! net radiation [W/m2]
       call sanity( nf90_inq_varid(ncid,'f_rnet',varid) )
       call sanity( nf90_put_var(ncid,varid,f_rnet) )
-      
+
       ! the error of water banace [mm/s]
       call sanity( nf90_inq_varid(ncid,'f_xerr',varid) )
       call sanity( nf90_put_var(ncid,varid,f_xerr) )
-      
+
       ! the error of energy balance [W/m2]
       call sanity( nf90_inq_varid(ncid,'f_zerr',varid) )
       call sanity( nf90_put_var(ncid,varid,f_zerr) )
-      
+
       ! surface runoff [mm/s]
       call sanity( nf90_inq_varid(ncid,'f_rsur',varid) )
       call sanity( nf90_put_var(ncid,varid,f_rsur) )
-      
+
       ! total runoff [mm/s]
       call sanity( nf90_inq_varid(ncid,'f_rnof',varid) )
       call sanity( nf90_put_var(ncid,varid,f_rnof) )
-      
+
       ! canopy assimilation rate [mol m-2 s-1]
       call sanity( nf90_inq_varid(ncid,'f_assim',varid) )
       call sanity( nf90_put_var(ncid,varid,f_assim) )
-      
+
       ! respiration (plant+soil) [mol m-2 s-1]
       call sanity( nf90_inq_varid(ncid,'f_respc',varid) )
       call sanity( nf90_put_var(ncid,varid,f_respc) )
-      
-      ! groundwater recharge rate [mm/s] 
+
+      ! groundwater recharge rate [mm/s]
       call sanity( nf90_inq_varid(ncid,'f_qcharge',varid) )
       call sanity( nf90_put_var(ncid,varid,f_qcharge) )
-      
+
 !---------------------------------------------------------------------
       ! ground surface temperature [K]
       call sanity( nf90_inq_varid(ncid,'f_t_grnd',varid) )
       call sanity( nf90_put_var(ncid,varid,f_t_grnd) )
-      
+
       ! sunlit leaf temperature [K]
       call sanity( nf90_inq_varid(ncid,'f_tleaf',varid) )
       call sanity( nf90_put_var(ncid,varid,f_tleaf) )
-      
+
       ! shaded leaf temperature [K]
       !call sanity( nf90_inq_varid(ncid,'f_tlsha',varid) )
       !call sanity( nf90_put_var(ncid,varid,f_tlsha) )
-      
+
       ! depth of water on foliage [mm]
       call sanity( nf90_inq_varid(ncid,'f_ldew',varid) )
       call sanity( nf90_put_var(ncid,varid,f_ldew) )
-      
+
       ! snow cover, water equivalent [mm]
       call sanity( nf90_inq_varid(ncid,'f_scv',varid) )
       call sanity( nf90_put_var(ncid,varid,f_scv) )
-      
+
       ! snow depth [meter]
       call sanity( nf90_inq_varid(ncid,'f_snowdp',varid) )
       call sanity( nf90_put_var(ncid,varid,f_snowdp) )
-      
+
       ! fraction of snow cover on ground
       call sanity( nf90_inq_varid(ncid,'f_fsno',varid) )
       call sanity( nf90_put_var(ncid,varid,f_fsno) )
-      
+
       ! fraction of veg cover, excluding snow-covered veg [-]
       call sanity( nf90_inq_varid(ncid,'f_sigf',varid) )
       call sanity( nf90_put_var(ncid,varid,f_sigf) )
-      
+
       ! leaf greenness
       call sanity( nf90_inq_varid(ncid,'f_green',varid) )
       call sanity( nf90_put_var(ncid,varid,f_green) )
-      
+
       ! leaf area index
       call sanity( nf90_inq_varid(ncid,'f_lai',varid) )
       call sanity( nf90_put_var(ncid,varid,f_lai) )
-      
+
       ! stem area index
       call sanity( nf90_inq_varid(ncid,'f_sai',varid) )
       call sanity( nf90_put_var(ncid,varid,f_sai) )
-      
-      ! averaged albedo direct 
-      tmp(:,:,1) = f_alb(1,1,:,:) 
-      tmp(:,:,2) = f_alb(2,1,:,:) 
+
+      ! averaged albedo direct
+      tmp(:,:,1) = f_alb(1,1,:,:)
+      tmp(:,:,2) = f_alb(2,1,:,:)
       call sanity( nf90_inq_varid(ncid,'f_albd',varid) )
       call sanity( nf90_put_var(ncid,varid,tmp) )
-      
-      ! averaged albedo diffuse 
-      tmp(:,:,1) = f_alb(1,2,:,:) 
-      tmp(:,:,2) = f_alb(2,2,:,:) 
+
+      ! averaged albedo diffuse
+      tmp(:,:,1) = f_alb(1,2,:,:)
+      tmp(:,:,2) = f_alb(2,2,:,:)
       call sanity( nf90_inq_varid(ncid,'f_albi',varid) )
       call sanity( nf90_put_var(ncid,varid,tmp) )
-      
+
       ! averaged bulk surface emissivity
       call sanity( nf90_inq_varid(ncid,'f_emis',varid) )
       call sanity( nf90_put_var(ncid,varid,f_emis) )
-      
+
       ! effective roughness [m]
       call sanity( nf90_inq_varid(ncid,'f_z0m',varid) )
       call sanity( nf90_put_var(ncid,varid,f_z0m) )
-      
+
       ! radiative temperature of surface [K]
       call sanity( nf90_inq_varid(ncid,'f_trad',varid) )
       call sanity( nf90_put_var(ncid,varid,f_trad) )
-      
+
       ! 2 m height air temperature [kelvin]
       call sanity( nf90_inq_varid(ncid,'f_tref',varid) )
       call sanity( nf90_put_var(ncid,varid,f_tref) )
-      
+
       ! 2 m height air specific humidity [kg/kg]
       call sanity( nf90_inq_varid(ncid,'f_qref',varid) )
       call sanity( nf90_put_var(ncid,varid,f_qref) )
-      
+
       ! rain [mm/s]
       call sanity( nf90_inq_varid(ncid,'f_xy_rain',varid) )
       call sanity( nf90_put_var(ncid,varid,f_xy_rain) )
- 
+
       ! snow [mm/s]
       call sanity( nf90_inq_varid(ncid,'f_xy_snow',varid) )
       call sanity( nf90_put_var(ncid,varid,f_xy_snow) )
- 
- 
+
+      ! solar absorbed by sunlit canopy in daytime [W/m2]
+      CALL sanity( nf90_inq_varid(ncid,'f_sabvdt',varid) )
+      CALL sanity( nf90_put_var(ncid,varid,f_sabvdt) )
+
+      ! solar absorbed by ground in daytime [W/m2]
+      CALL sanity( nf90_inq_varid(ncid,'f_sabgdt',varid) )
+      CALL sanity( nf90_put_var(ncid,varid,f_sabgdt) )
+
+      ! reflected solar radiation at surface in daytime [W/m2]
+      CALL sanity( nf90_inq_varid(ncid,'f_srdt',varid) )
+      CALL sanity( nf90_put_var(ncid,varid,f_srdt) )
+
+      ! sensible heat from canopy height to atmosphere in daytime [W/m2]
+      CALL sanity( nf90_inq_varid(ncid,'f_fsenadt',varid) )
+      CALL sanity( nf90_put_var(ncid,varid,f_fsenadt) )
+
+      ! latent heat flux from canopy height to atmosphere in daytime [W/m2]
+      CALL sanity( nf90_inq_varid(ncid,'f_lfevpadt',varid) )
+      CALL sanity( nf90_put_var(ncid,varid,f_lfevpadt) )
+
+      ! ground heat flux in daytime [W/m2]
+      CALL sanity( nf90_inq_varid(ncid,'f_fgrnddt',varid) )
+      CALL sanity( nf90_put_var(ncid,varid,f_fgrnddt) )
+
+      ! outgoing long-wave radiation from ground+canopy in daytime [W/m2]
+      CALL sanity( nf90_inq_varid(ncid,'f_olrgdt',varid) )
+      CALL sanity( nf90_put_var(ncid,varid,f_olrgdt) )
+
+      ! net radiation in daytime [W/m2]
+      CALL sanity( nf90_inq_varid(ncid,'f_rnetdt',varid) )
+      CALL sanity( nf90_put_var(ncid,varid,f_rnetdt) )
+
+      ! ground surface temperature in daytime [K]
+      CALL sanity( nf90_inq_varid(ncid,'f_t_grnddt',varid) )
+      CALL sanity( nf90_put_var(ncid,varid,f_t_grnddt) )
+
+      ! radiative temperature of surface in daytime [K]
+      CALL sanity( nf90_inq_varid(ncid,'f_traddt',varid) )
+      CALL sanity( nf90_put_var(ncid,varid,f_traddt) )
+
+      ! 2 m height air temperature in daytime [kelvin]
+      CALL sanity( nf90_inq_varid(ncid,'f_trefdt',varid) )
+      CALL sanity( nf90_put_var(ncid,varid,f_trefdt) )
+
+      ! sensible heat from canopy height to atmosphere in night-time [W/m2]
+      CALL sanity( nf90_inq_varid(ncid,'f_fsenant',varid) )
+      CALL sanity( nf90_put_var(ncid,varid,f_fsenant) )
+
+      ! latent heat flux from canopy height to atmosphere in night-time [W/m2]
+      CALL sanity( nf90_inq_varid(ncid,'f_lfevpant',varid) )
+      CALL sanity( nf90_put_var(ncid,varid,f_lfevpant) )
+
+      ! ground heat flux in night-time [W/m2]
+      CALL sanity( nf90_inq_varid(ncid,'f_fgrndnt',varid) )
+      CALL sanity( nf90_put_var(ncid,varid,f_fgrndnt) )
+
+      ! outgoing long-wave radiation from ground+canopy in night-time [W/m2]
+      CALL sanity( nf90_inq_varid(ncid,'f_olrgnt',varid) )
+      CALL sanity( nf90_put_var(ncid,varid,f_olrgnt) )
+
+      ! net radiation in night-time [W/m2]
+      CALL sanity( nf90_inq_varid(ncid,'f_rnetnt',varid) )
+      CALL sanity( nf90_put_var(ncid,varid,f_rnetnt) )
+
+      ! ground surface temperature in night-time [K]
+      CALL sanity( nf90_inq_varid(ncid,'f_t_grndnt',varid) )
+      CALL sanity( nf90_put_var(ncid,varid,f_t_grndnt) )
+
+      ! radiative temperature of surface in night-time [K]
+      CALL sanity( nf90_inq_varid(ncid,'f_tradnt',varid) )
+      CALL sanity( nf90_put_var(ncid,varid,f_tradnt) )
+
+      ! 2 m height air temperature in night-time [kelvin]
+      CALL sanity( nf90_inq_varid(ncid,'f_trefnt',varid) )
+      CALL sanity( nf90_put_var(ncid,varid,f_trefnt) )
+
 !---------------------------------------------------------------------
       ! soil temperature [K]
       do i = maxsnl+1, nl_soil
@@ -1076,28 +1305,28 @@ CONTAINS
       end do
       call sanity( nf90_inq_varid(ncid,'f_t_soisno',varid) )
       call sanity( nf90_put_var(ncid,varid,tmp1) )
-      
+
       ! liquid water in soil layers [kg/m2]
       do i = maxsnl+1, nl_soil
          tmp1(:,:,i) = f_wliq_soisno(i,:,:)
       end do
       call sanity( nf90_inq_varid(ncid,'f_wliq_soisno',varid) )
       call sanity( nf90_put_var(ncid,varid,tmp1) )
-      
+
       ! ice lens in soil layers [kg/m2]
       do i = maxsnl+1, nl_soil
          tmp1(:,:,i) = f_wice_soisno(i,:,:)
       end do
       call sanity( nf90_inq_varid(ncid,'f_wice_soisno',varid) )
       call sanity( nf90_put_var(ncid,varid,tmp1) )
- 
+
       ! lake temperature [K]
       do i = 1, nl_lake
          tmp2(:,:,i) = f_t_lake(i,:,:)
       end do
       call sanity( nf90_inq_varid(ncid,'f_t_lake',varid) )
       call sanity( nf90_put_var(ncid,varid,tmp2) )
-      
+
       ! lake ice fraction cover [0-1]
       do i = 1, nl_lake
          tmp2(:,:,i) = f_lake_icefrac(i,:,:)
@@ -1108,43 +1337,43 @@ CONTAINS
       ! u* in similarity theory [m/s]
       call sanity( nf90_inq_varid(ncid,'f_ustar',varid) )
       call sanity( nf90_put_var(ncid,varid,f_ustar) )
-      
+
       ! t* in similarity theory [kg/kg]
       call sanity( nf90_inq_varid(ncid,'f_tstar',varid) )
       call sanity( nf90_put_var(ncid,varid,f_tstar) )
-      
+
       ! q* in similarity theory [kg/kg]
       call sanity( nf90_inq_varid(ncid,'f_qstar',varid) )
       call sanity( nf90_put_var(ncid,varid,f_qstar) )
-      
+
       ! dimensionless height (z/L) used in Monin-Obukhov theory
       call sanity( nf90_inq_varid(ncid,'f_zol',varid) )
       call sanity( nf90_put_var(ncid,varid,f_zol) )
-      
+
       ! bulk Richardson number in surface layer
       call sanity( nf90_inq_varid(ncid,'f_rib',varid) )
       call sanity( nf90_put_var(ncid,varid,f_rib) )
-      
+
       ! integral of profile function for momentum
       call sanity( nf90_inq_varid(ncid,'f_fm',varid) )
       call sanity( nf90_put_var(ncid,varid,f_fm) )
-      
+
       ! integral of profile function for heat
       call sanity( nf90_inq_varid(ncid,'f_fh',varid) )
       call sanity( nf90_put_var(ncid,varid,f_fh) )
-      
+
       ! integral of profile function for moisture
       call sanity( nf90_inq_varid(ncid,'f_fq',varid) )
       call sanity( nf90_put_var(ncid,varid,f_fq) )
-      
+
       ! 10m u-velocity [m/s]
       call sanity( nf90_inq_varid(ncid,'f_us10m',varid) )
       call sanity( nf90_put_var(ncid,varid,f_us10m) )
-      
+
       ! 10m v-velocity [m/s]
       call sanity( nf90_inq_varid(ncid,'f_vs10m',varid) )
       call sanity( nf90_put_var(ncid,varid,f_vs10m) )
-      
+
       ! integral of profile function for momentum at 10m [-]
       call sanity( nf90_inq_varid(ncid,'f_fm10m',varid) )
       call sanity( nf90_put_var(ncid,varid,f_fm10m) )
@@ -1152,113 +1381,113 @@ CONTAINS
       ! wind in eastward direction [m/s]
       call sanity( nf90_inq_varid(ncid,'f_xy_us',varid) )
       call sanity( nf90_put_var(ncid,varid,f_xy_us) )
-      
+
       ! wind in northward direction [m/s]
       call sanity( nf90_inq_varid(ncid,'f_xy_vs',varid) )
       call sanity( nf90_put_var(ncid,varid,f_xy_vs) )
-      
+
       ! temperature at reference height [kelvin]
       call sanity( nf90_inq_varid(ncid,'f_xy_t',varid) )
       call sanity( nf90_put_var(ncid,varid,f_xy_t) )
-      
+
       ! specific humidity at reference height [kg/kg]
       call sanity( nf90_inq_varid(ncid,'f_xy_q',varid) )
       call sanity( nf90_put_var(ncid,varid,f_xy_q) )
-      
+
       ! convective precipitation [mm/s]
       call sanity( nf90_inq_varid(ncid,'f_xy_prc',varid) )
       call sanity( nf90_put_var(ncid,varid,f_xy_prc) )
-      
+
       ! large scale precipitation [mm/s]
       call sanity( nf90_inq_varid(ncid,'f_xy_prl',varid) )
       call sanity( nf90_put_var(ncid,varid,f_xy_prl) )
-      
+
       ! atmospheric pressure at the surface [pa]
       call sanity( nf90_inq_varid(ncid,'f_xy_pbot',varid) )
       call sanity( nf90_put_var(ncid,varid,f_xy_pbot) )
-      
+
       ! atmospheric infrared (longwave) radiation [W/m2]
       call sanity( nf90_inq_varid(ncid,'f_xy_frl',varid) )
       call sanity( nf90_put_var(ncid,varid,f_xy_frl) )
-      
+
       ! downward solar radiation at surface [W/m2]
       call sanity( nf90_inq_varid(ncid,'f_xy_solarin',varid) )
       call sanity( nf90_put_var(ncid,varid,f_xy_solarin) )
-      
+
       ! total reflected solar radiation at surface [W/m2]
       call sanity( nf90_inq_varid(ncid,'f_sr',varid) )
       call sanity( nf90_put_var(ncid,varid,f_sr) )
-      
+
       ! incident direct beam vis solar radiation (W/m2)
       call sanity( nf90_inq_varid(ncid,'f_solvd',varid) )
       call sanity( nf90_put_var(ncid,varid,f_solvd) )
-      
+
       ! incident diffuse beam vis solar radiation (W/m2)
       call sanity( nf90_inq_varid(ncid,'f_solvi',varid) )
       call sanity( nf90_put_var(ncid,varid,f_solvi) )
-      
+
       ! incident direct beam nir solar radiation (W/m2)
       call sanity( nf90_inq_varid(ncid,'f_solnd',varid) )
       call sanity( nf90_put_var(ncid,varid,f_solnd) )
-      
+
       ! incident diffuse beam nir solar radiation (W/m2)
       call sanity( nf90_inq_varid(ncid,'f_solni',varid) )
       call sanity( nf90_put_var(ncid,varid,f_solni) )
-      
+
       ! reflected direct beam vis solar radiation (W/m2)
       call sanity( nf90_inq_varid(ncid,'f_srvd',varid) )
       call sanity( nf90_put_var(ncid,varid,f_srvd) )
-      
+
       ! reflected diffuse beam vis solar radiation (W/m2)
       call sanity( nf90_inq_varid(ncid,'f_srvi',varid) )
       call sanity( nf90_put_var(ncid,varid,f_srvi) )
-      
+
       ! reflected direct beam nir solar radiation (W/m2)
       call sanity( nf90_inq_varid(ncid,'f_srnd',varid) )
       call sanity( nf90_put_var(ncid,varid,f_srnd) )
-      
+
       ! reflected diffuse beam nir solar radiation (W/m2)
       call sanity( nf90_inq_varid(ncid,'f_srni',varid) )
       call sanity( nf90_put_var(ncid,varid,f_srni) )
-      
+
       ! incident direct beam vis solar radiation at local noon(W/m2)
       call sanity( nf90_inq_varid(ncid,'f_solvdln',varid) )
       call sanity( nf90_put_var(ncid,varid,f_solvdln) )
-      
+
       ! incident diffuse beam vis solar radiation at local noon(W/m2)
       call sanity( nf90_inq_varid(ncid,'f_solviln',varid) )
       call sanity( nf90_put_var(ncid,varid,f_solviln) )
-      
+
       ! incident direct beam nir solar radiation at local noon(W/m2)
       call sanity( nf90_inq_varid(ncid,'f_solndln',varid) )
       call sanity( nf90_put_var(ncid,varid,f_solndln) )
-      
+
       ! incident diffuse beam nir solar radiation at local noon(W/m2)
       call sanity( nf90_inq_varid(ncid,'f_solniln',varid) )
       call sanity( nf90_put_var(ncid,varid,f_solniln) )
-      
+
       ! reflected direct beam vis solar radiation at local noon(W/m2)
       call sanity( nf90_inq_varid(ncid,'f_srvdln',varid) )
       call sanity( nf90_put_var(ncid,varid,f_srvdln) )
-      
+
       ! reflected diffuse beam vis solar radiation at local noon(W/m2)
       call sanity( nf90_inq_varid(ncid,'f_srviln',varid) )
       call sanity( nf90_put_var(ncid,varid,f_srviln) )
-      
+
       ! reflected direct beam nir solar radiation at local noon(W/m2)
       call sanity( nf90_inq_varid(ncid,'f_srndln',varid) )
       call sanity( nf90_put_var(ncid,varid,f_srndln) )
-      
+
       ! reflected diffuse beam nir solar radiation at local noon(W/m2)
       call sanity( nf90_inq_varid(ncid,'f_srniln',varid) )
       call sanity( nf90_put_var(ncid,varid,f_srniln) )
- 
+
       call sanity( nf90_close(ncid) )
 
    END SUBROUTINE writenetcdf
 
    SUBROUTINE writenetcdf_ncar
-   
+
       implicit none
 
       integer  :: months(0:12)
@@ -1272,19 +1501,19 @@ CONTAINS
       real(r4) :: tmp1(lon_points, lat_points, nl_soil)
       real(r4) :: tmp2(lon_points, lat_points, nl_lake)
       real(r4) :: calyear
-   
+
       character(len=256) :: casename
       character(len=256) :: year, day, sec, month
-      
+
     ! create netcdf and define dimensions
     ! need to rename the file (split GLOBAL_2D_Fluxes_1990-01/1990-001-84600)
       i = index(filename, '_2D_Fluxes_')
       j = index(filename, '-', back=.true.)
-     
+
       read(filename(    :i-1 ), *) casename
       read(filename(i+11:i+14), *) year
       read(filename(i+11:i+14), "(I4)") iyear
-      
+
       if( (mod(iyear,4)==0 .AND. mod(iyear,100)/=0) .OR. mod(iyear,400)==0 ) then
          months = (/0,31,60,91,121,152,182,213,244,274,305,335,366/)
       else
@@ -1307,7 +1536,7 @@ CONTAINS
          call sanity( nf90_create(trim(casename)//'.clm2.h0.'//trim(year)//'-'//trim(day)//'-'//trim(sec)//'.nc', &
                       nf90_64bit_offset, ncid) )
       end if
-      
+
 
     ! dimensions
       call sanity( nf90_def_dim(ncid, 'lon',           lon_points,      xid) )        ! lon
@@ -1319,7 +1548,7 @@ CONTAINS
 
     ! global attr
       call sanity( nf90_put_att(ncid, NF90_GLOBAL, 'title','CLM SIMULATED SURFACE FLUXES') )
-      
+
     ! variables
     ! dimension variables
       call sanity( nf90_def_var(ncid, 'lon', nf90_float, (/xid/), varid) )
@@ -1332,13 +1561,13 @@ CONTAINS
 
       call sanity( nf90_def_var(ncid, 'levgrnd', nf90_int, (/sslevid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name',"soil plus snow level") )
-      
+
       call sanity( nf90_def_var(ncid, 'levlak', nf90_int, (/lakelevid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name',"lake level") )
-      
+
       call sanity( nf90_def_var(ncid, 'numrad', nf90_int, (/bandid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name',"band (vis/nir)") )
-      
+
       call sanity( nf90_def_var(ncid, 'time', nf90_float, (/timeid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name',"time") )
 
@@ -1706,7 +1935,7 @@ CONTAINS
       call sanity( nf90_put_att(ncid, varid, 'units','m2/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
-      
+
       ! sunlit leaf area index [m2/m2], LAISUN
       call sanity( nf90_def_var(ncid, 'LAISUN', nf90_float, (/xid,yid,timeid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','sunlit leaf area index [m2/m2]') )
@@ -1769,21 +1998,21 @@ CONTAINS
       call sanity( nf90_put_att(ncid, varid, 'units','kg/kg') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
- 
+
       ! rain [mm/s], RAIN
       call sanity( nf90_def_var(ncid, 'RAIN', nf90_float, (/xid,yid,timeid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','rain [mm/s]') )
       call sanity( nf90_put_att(ncid, varid, 'units','mm/s') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
- 
+
       ! snow [mm/s], SNOW
       call sanity( nf90_def_var(ncid, 'SNOW', nf90_float, (/xid,yid,timeid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','snow [mm/s]') )
       call sanity( nf90_put_att(ncid, varid, 'units','mm/s') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
- 
+
       !---------------------------------------------------------------------
       ! soil temperature [K], TSOI
       call sanity( nf90_def_var(ncid, 'TSOI', nf90_float, (/xid,yid,sslevid,timeid/), varid) )
@@ -1805,7 +2034,7 @@ CONTAINS
       call sanity( nf90_put_att(ncid, varid, 'units','kg/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
-      
+
       ! volumetric water in soil layers [m3/m3], H2OSOI
       call sanity( nf90_def_var(ncid, 'H2OSOI', nf90_float, (/xid,yid,sslevid,timeid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','volumetric water in soil layers [m3/m3]') )
@@ -2015,112 +2244,112 @@ CONTAINS
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
-      
+
       ! incident diffuse beam vis solar radiation (W/m2), FSDSVI
       call sanity( nf90_def_var(ncid, 'FSDSVI', nf90_float, (/xid,yid,timeid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','incident diffuse beam vis solar radiation (W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
-      
+
       ! incident direct beam nir solar radiation (W/m2), FSDSND
       call sanity( nf90_def_var(ncid, 'FSDSND', nf90_float, (/xid,yid,timeid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','incident direct beam nir solar radiation (W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
-      
+
       ! incident diffuse beam nir solar radiation (W/m2), FSDSNI
       call sanity( nf90_def_var(ncid, 'FSDSNI', nf90_float, (/xid,yid,timeid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','incident diffuse beam nir solar radiation (W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
-      
+
       ! reflected direct beam vis solar radiation (W/m2), FSRVD
       call sanity( nf90_def_var(ncid, 'FSRVD', nf90_float, (/xid,yid,timeid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','reflected direct beam vis solar radiation (W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
-      
+
       ! reflected diffuse beam vis solar radiation (W/m2), FSRVI
       call sanity( nf90_def_var(ncid, 'FSRVI', nf90_float, (/xid,yid,timeid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','reflected diffuse beam vis solar radiation (W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
-      
+
       ! reflected direct beam nir solar radiation (W/m2), FSRND
       call sanity( nf90_def_var(ncid, 'FSRND', nf90_float, (/xid,yid,timeid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','reflected direct beam nir solar radiation (W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
-      
+
       ! reflected diffuse beam nir solar radiation (W/m2), FSRNI
       call sanity( nf90_def_var(ncid, 'FSRNI', nf90_float, (/xid,yid,timeid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','reflected diffuse beam nir solar radiation (W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
-      
+
       ! incident direct beam vis solar radiation at local noon(W/m2), FSDSVDLN
       call sanity( nf90_def_var(ncid, 'FSDSVDLN', nf90_float, (/xid,yid,timeid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','incident direct beam vis solar radiation at local noon(W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
-      
+
       ! incident diffuse beam vis solar radiation at local noon(W/m2), FSDSVILN
       call sanity( nf90_def_var(ncid, 'FSDSVILN', nf90_float, (/xid,yid,timeid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','incident diffuse beam vis solar radiation at local noon(W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
-      
+
       ! incident direct beam nir solar radiation at local noon(W/m2), FSDSNDLN
       call sanity( nf90_def_var(ncid, 'FSDSNDLN', nf90_float, (/xid,yid,timeid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','incident direct beam nir solar radiation at local noon(W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
-      
+
       ! incident diffuse beam nir solar radiation at local noon(W/m2), FSDSNILN
       call sanity( nf90_def_var(ncid, 'FSDSNILN', nf90_float, (/xid,yid,timeid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','incident diffuse beam nir solar radiation at local noon(W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
-      
+
       ! reflected direct beam vis solar radiation at local noon(W/m2), FSRVDLN
       call sanity( nf90_def_var(ncid, 'FSRVDLN', nf90_float, (/xid,yid,timeid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','reflected direct beam vis solar radiation at local noon(W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
-      
+
       ! reflected diffuse beam vis solar radiation at local noon(W/m2), FSRVILN
       call sanity( nf90_def_var(ncid, 'FSRVILN', nf90_float, (/xid,yid,timeid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','reflected diffuse beam vis solar radiation at local noon(W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
-      
+
       ! reflected direct beam nir solar radiation at local noon(W/m2), FSRNDLN
       call sanity( nf90_def_var(ncid, 'FSRNDLN', nf90_float, (/xid,yid,timeid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','reflected direct beam nir solar radiation at local noon(W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
-      
+
       ! reflected diffuse beam nir solar radiation at local noon(W/m2), FSRNILN
       call sanity( nf90_def_var(ncid, 'FSRNILN', nf90_float, (/xid,yid,timeid/), varid) )
       call sanity( nf90_put_att(ncid, varid, 'long_name','reflected diffuse beam nir solar radiation at local noon(W/m2)') )
       call sanity( nf90_put_att(ncid, varid, 'units','W/m2') )
       call sanity( nf90_put_att(ncid, varid, 'missing_value', spval_r4) )
       call sanity( nf90_put_att(ncid, varid, '_FillValue', spval_r4) )
-      
+
     ! end defination
       call sanity( nf90_enddef(ncid) )
 
@@ -2153,7 +2382,7 @@ CONTAINS
       end do
       call sanity( nf90_inq_varid(ncid,'numrad',varid) )
       call sanity( nf90_put_var(ncid,varid,band) )
-      
+
       call sanity( nf90_inq_varid(ncid,'time',varid) )
       call sanity( nf90_put_var(ncid,varid,calyear) )
 
@@ -2165,82 +2394,82 @@ CONTAINS
       ! grid mask
       call sanity( nf90_inq_varid(ncid,'landmask',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = frac((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = frac(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! grid total fraction
       call sanity( nf90_inq_varid(ncid,'landfrac',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = area((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = area(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! grid cell area [km2]
       call sanity( nf90_inq_varid(ncid,'area',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_taux((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_taux(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! wind stress: E-W [kg/m/s2]
       call sanity( nf90_inq_varid(ncid,'TAUX',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_tauy((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_tauy(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! wind stress: N-S [kg/m/s2]
       call sanity( nf90_inq_varid(ncid,'TAUY',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_fsena((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_fsena(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! sensible heat from canopy height to atmosphere [W/m2]
       call sanity( nf90_inq_varid(ncid,'FSH',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_lfevpa((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_lfevpa(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! latent heat flux from canopy height to atmosphere [W/m2]
       call sanity( nf90_inq_varid(ncid,'f_lfevpa',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-     
+
       vars(1:max(lon_points/2,1),:) = f_fevpa((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_fevpa(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! evapotranspiration from canopy to atmosphere [mm/s]
       call sanity( nf90_inq_varid(ncid,'f_fevpa',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_fsenl((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_fsenl(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! sensible heat from leaves [W/m2]
       call sanity( nf90_inq_varid(ncid,'FSH_V',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_fevpl((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_fevpl(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! evaporation+transpiration from leaves [mm/s]
       call sanity( nf90_inq_varid(ncid,'f_fevpl',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_etr((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_etr(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! transpiration rate [mm/s]
       call sanity( nf90_inq_varid(ncid,'QVEGT',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       where (vars /= spval_r4) vars = hvap * vars
       ! canopy transpiration [W/m2]
       call sanity( nf90_inq_varid(ncid,'FCTR',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       tmp0 = spval_r4
       where (f_fevpl /= spval) tmp0 = f_fevpl - f_etr
 
@@ -2250,121 +2479,121 @@ CONTAINS
       ! evaporation from leaves [mm/s]
       call sanity( nf90_inq_varid(ncid,'QVEGE',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       where (vars /= spval_r4) vars = hvap * vars
       ! canopy evaporation [W/m2]
       call sanity( nf90_inq_varid(ncid,'FCEV',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_fseng((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_fseng(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! sensible heat flux from ground [W/m2]
       call sanity( nf90_inq_varid(ncid,'FSH_G',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_fevpg((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_fevpg(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! evaporation heat flux from ground [mm/s]
       call sanity( nf90_inq_varid(ncid,'QSOIL',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       where (vars /= spval_r4) vars = hvap * vars
       ! ground evaporation [W/m2]
       call sanity( nf90_inq_varid(ncid,'FGEV',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_fgrnd((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_fgrnd(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! ground heat flux [W/m2]
       call sanity( nf90_inq_varid(ncid,'FGR',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_sabvsun((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_sabvsun(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! solar absorbed by sunlit canopy [W/m2]
       call sanity( nf90_inq_varid(ncid,'SUN_ATOT',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_sabvsha((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_sabvsha(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! solar absorbed by shaded [W/m2]
       call sanity( nf90_inq_varid(ncid,'SHA_ATOT',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       tmp0 = spval_r4
       where (f_sabvsun /= spval) tmp0 = f_sabvsun + f_sabvsha
-      
+
       vars(1:max(lon_points/2,1),:) = tmp0((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = tmp0(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! solar absorbed by vegetation  [W/m2]
       call sanity( nf90_inq_varid(ncid,'SABV',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-         
+
       vars(1:max(lon_points/2,1),:) = f_sabg((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_sabg(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! solar absorbed by ground  [W/m2]
       call sanity( nf90_inq_varid(ncid,'SABG',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_olrg((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_olrg(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! outgoing long-wave radiation from ground+canopy [W/m2]
       call sanity( nf90_inq_varid(ncid,'FIRE',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       tmp0 = spval_r4
       where (f_olrg /= spval) tmp0 = f_olrg - f_xy_frl
-      
+
       vars(1:max(lon_points/2,1),:) = tmp0((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = tmp0(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! net long-wave radiation [W/m2]
       call sanity( nf90_inq_varid(ncid,'FIRA',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-         
+
       vars(1:max(lon_points/2,1),:) = f_rnet((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_rnet(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! net radiation [W/m2]
       call sanity( nf90_inq_varid(ncid,'Rnet',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_xerr((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_xerr(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! the error of water banace [mm/s]
       call sanity( nf90_inq_varid(ncid,'ERRH2O',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_zerr((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_zerr(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! the error of energy balance [W/m2]
       call sanity( nf90_inq_varid(ncid,'ERRSEB',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_rsur((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_rsur(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! surface runoff [mm/s]
       call sanity( nf90_inq_varid(ncid,'QOVER',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_rnof((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_rnof(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! total runoff [mm/s]
       call sanity( nf90_inq_varid(ncid,'f_rnof',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       tmp0 = spval_r4
       where (f_rnof /= spval) tmp0 = f_rnof - f_rsur
 
@@ -2374,33 +2603,33 @@ CONTAINS
       ! sub-surface drainage  [mm/s]
       call sanity( nf90_inq_varid(ncid,'QDRAI',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       where (vars /= spval) vars = 0.
       ! surface runoff at glaciers, wetlands, lakes  [mm/s]
       call sanity( nf90_inq_varid(ncid,'QRGWL',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_qintr((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_qintr(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! inflitration [mm/s]
       call sanity( nf90_inq_varid(ncid,'QINTR',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_qinfl((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_qinfl(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! inflitration [mm/s]
       call sanity( nf90_inq_varid(ncid,'QINFL',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_qdrip((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_qdrip(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! throughfall [mm/s]
       call sanity( nf90_inq_varid(ncid,'QDRIP',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       tmp0 = spval_r4
       where (f_assim /= spval) tmp0 = f_assim * 1.e6_r8
 
@@ -2410,21 +2639,21 @@ CONTAINS
       ! canopy assimilation rate [mol m-2 s-1]
       call sanity( nf90_inq_varid(ncid,'FPSN',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_respc((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_respc(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! respiration (plant+soil) [mol m-2 s-1]
       call sanity( nf90_inq_varid(ncid,'f_respc',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_qcharge((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_qcharge(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
-      ! groundwater recharge rate [mm/s] 
+      ! groundwater recharge rate [mm/s]
       call sanity( nf90_inq_varid(ncid,'QCHARGE',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
 !---------------------------------------------------------------------
       vars(1:max(lon_points/2,1),:) = f_t_grnd((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_t_grnd(1:max(lon_points/2,1),:)
@@ -2432,124 +2661,124 @@ CONTAINS
       ! ground surface temperature [K]
       call sanity( nf90_inq_varid(ncid,'TG',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_tleaf((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_tleaf(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! sunlit leaf temperature [K]
       call sanity( nf90_inq_varid(ncid,'TV',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       !vars(1:max(lon_points/2,1),:) = f_tlsha((lon_points/2+1):lon_points,:)
       !vars((lon_points/2+1):lon_points,:) = f_tlsha(1:max(lon_points/2,1),:)
       !vars = vars(:,lat_points:1:-1)
       !! shaded leaf temperature [K]
       !call sanity( nf90_inq_varid(ncid,'f_tlsha',varid) )
       !call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_ldew((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_ldew(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! depth of water on foliage [mm]
       call sanity( nf90_inq_varid(ncid,'H2OCAN',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_scv((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_scv(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! snow cover, water equivalent [mm]
       call sanity( nf90_inq_varid(ncid,'H2OSNO',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       tmp0 = f_wliq_soisno(0,:,:)
       do i = maxsnl+1, -1
          where (f_wliq_soisno(i,:,:) /= spval) tmp0 = tmp0 + f_wliq_soisno(i,:,:)
       end do
-      
+
       vars(1:max(lon_points/2,1),:) = tmp0((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = tmp0(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! snow liquid water [kg/m2]
       call sanity( nf90_inq_varid(ncid,'SNOWLIQ',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       tmp0 = f_wice_soisno(0,:,:)
       do i = maxsnl+1, -1
          where (f_wice_soisno(i,:,:) /= spval) tmp0 = tmp0 + f_wice_soisno(i,:,:)
       end do
-      
+
       vars(1:max(lon_points/2,1),:) = tmp0((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = tmp0(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! snow ice [kg/m2]
       call sanity( nf90_inq_varid(ncid,'SNOWICE',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_snowdp((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_snowdp(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! snow depth [meter]
       call sanity( nf90_inq_varid(ncid,'SNOWDP',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_fsno((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_fsno(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! fraction of snow cover on ground
       call sanity( nf90_inq_varid(ncid,'FSNO',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_sigf((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_sigf(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! fraction of veg cover, excluding snow-covered veg [-]
       call sanity( nf90_inq_varid(ncid,'f_sigf',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_green((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_green(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! leaf greenness
       call sanity( nf90_inq_varid(ncid,'f_green',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_lai((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_lai(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! leaf area index
       call sanity( nf90_inq_varid(ncid,'ELAI',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       ! leaf area index
       call sanity( nf90_inq_varid(ncid,'TLAI',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_sai((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_sai(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! stem area index
       call sanity( nf90_inq_varid(ncid,'ESAI',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       ! stem area index
       call sanity( nf90_inq_varid(ncid,'TSAI',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_laisun((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_laisun(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! sunlit leaf area index
       call sanity( nf90_inq_varid(ncid,'LAISUN',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_laisha((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_laisha(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! shaded leaf area index
       call sanity( nf90_inq_varid(ncid,'LAISHA',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
-      ! averaged albedo direct 
+
+      ! averaged albedo direct
       tmp(1:max(lon_points/2,1),:,1) = f_alb(1,1,(lon_points/2+1):lon_points,:)
       tmp((lon_points/2+1):lon_points,:,1) = f_alb(1,1,1:max(lon_points/2,1),:)
       tmp(1:max(lon_points/2,1),:,2) = f_alb(2,1,(lon_points/2+1):lon_points,:)
@@ -2557,8 +2786,8 @@ CONTAINS
       tmp = tmp(:,lat_points:1:-1,:)
       call sanity( nf90_inq_varid(ncid,'ALBD',varid) )
       call sanity( nf90_put_var(ncid,varid,tmp) )
-      
-      ! averaged albedo diffuse 
+
+      ! averaged albedo diffuse
       tmp(1:max(lon_points/2,1),:,1) = f_alb(1,2,(lon_points/2+1):lon_points,:)
       ! 08/22/2021, yuan: bug
       !tmp((lon_points/2+1):lon_points,:,1) = f_alb(1,1,1:max(lon_points/2,1),:)
@@ -2570,56 +2799,56 @@ CONTAINS
       tmp = tmp(:,lat_points:1:-1,:)
       call sanity( nf90_inq_varid(ncid,'ALBI',varid) )
       call sanity( nf90_put_var(ncid,varid,tmp) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_emis((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_emis(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! averaged bulk surface emissivity
       call sanity( nf90_inq_varid(ncid,'f_emis',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_z0m((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_z0m(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! effective roughness [m]
       call sanity( nf90_inq_varid(ncid,'Z0MG',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_trad((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_trad(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! radiative temperature of surface [K]
       call sanity( nf90_inq_varid(ncid,'f_trad',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_tref((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_tref(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! 2 m height air temperature [kelvin]
       call sanity( nf90_inq_varid(ncid,'TSA',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_qref((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_qref(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! 2 m height air specific humidity [kg/kg]
       call sanity( nf90_inq_varid(ncid,'Q2M',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
- 
+
       vars(1:max(lon_points/2,1),:) = f_xy_rain((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_xy_rain(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! rain [mm/s]
       call sanity( nf90_inq_varid(ncid,'RAIN',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
- 
+
       vars(1:max(lon_points/2,1),:) = f_xy_snow((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_xy_snow(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! snow [mm/s]
       call sanity( nf90_inq_varid(ncid,'SNOW',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
- 
+
 !---------------------------------------------------------------------
       ! soil temperature [K]
       do i = 1, nl_soil
@@ -2629,7 +2858,7 @@ CONTAINS
       tmp1 = tmp1(:,lat_points:1:-1,:)
       call sanity( nf90_inq_varid(ncid,'TSOI',varid) )
       call sanity( nf90_put_var(ncid,varid,tmp1) )
-      
+
       ! liquid water in soil layers [kg/m2]
       do i = 1, nl_soil
          tmp1(1:max(lon_points/2,1),:,i) = f_wliq_soisno(i,(lon_points/2+1):lon_points,:)
@@ -2638,7 +2867,7 @@ CONTAINS
       tmp1 = tmp1(:,lat_points:1:-1,:)
       call sanity( nf90_inq_varid(ncid,'SOILLIQ',varid) )
       call sanity( nf90_put_var(ncid,varid,tmp1) )
-      
+
       ! ice lens in soil layers [kg/m2]
       do i = 1, nl_soil
          tmp1(1:max(lon_points/2,1),:,i) = f_wice_soisno(i,(lon_points/2+1):lon_points,:)
@@ -2647,7 +2876,7 @@ CONTAINS
       tmp1 = tmp1(:,lat_points:1:-1,:)
       call sanity( nf90_inq_varid(ncid,'SOILICE',varid) )
       call sanity( nf90_put_var(ncid,varid,tmp1) )
- 
+
       ! volumetric soil in soil layers [m3/m3]
       do i = 1, nl_soil
          tmp1(1:max(lon_points/2,1),:,i) = f_h2osoi(i,(lon_points/2+1):lon_points,:)
@@ -2656,35 +2885,35 @@ CONTAINS
       tmp1 = tmp1(:,lat_points:1:-1,:)
       call sanity( nf90_inq_varid(ncid,'H2OSOI',varid) )
       call sanity( nf90_put_var(ncid,varid,tmp1) )
- 
+
       vars(1:max(lon_points/2,1),:) = f_rstfac((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_rstfac(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! factor of soil water stress [m/s]
       call sanity( nf90_inq_varid(ncid,'BTRAN',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_zwt((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_zwt(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! soil water depth [m/s]
       call sanity( nf90_inq_varid(ncid,'ZWT',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_wa((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_wa(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! water storage in aquifer [m/s]
       call sanity( nf90_inq_varid(ncid,'WA',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_wat((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_wat(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! total water storage [mm]
       call sanity( nf90_inq_varid(ncid,'WT',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       ! lake temperature [K]
       do i = 1, nl_lake
          tmp2(1:max(lon_points/2,1),:,i) = f_t_lake(i,(lon_points/2+1):lon_points,:)
@@ -2693,7 +2922,7 @@ CONTAINS
       tmp2 = tmp2(:,lat_points:1:-1,:)
       call sanity( nf90_inq_varid(ncid,'TLAKE',varid) )
       call sanity( nf90_put_var(ncid,varid,tmp2) )
-      
+
       ! lake ice fraction cover [0-1]
       do i = 1, nl_lake
          tmp2(1:max(lon_points/2,1),:,i) = f_lake_icefrac(i,(lon_points/2+1):lon_points,:)
@@ -2702,77 +2931,77 @@ CONTAINS
       tmp2 = tmp2(:,lat_points:1:-1,:)
       call sanity( nf90_inq_varid(ncid,'LAKEICEFRAC',varid) )
       call sanity( nf90_put_var(ncid,varid,tmp2) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_ustar((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_ustar(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! u* in similarity theory [m/s]
       call sanity( nf90_inq_varid(ncid,'f_ustar',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_tstar((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_tstar(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! t* in similarity theory [kg/kg]
       call sanity( nf90_inq_varid(ncid,'f_tstar',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_qstar((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_qstar(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! q* in similarity theory [kg/kg]
       call sanity( nf90_inq_varid(ncid,'f_qstar',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_zol((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_zol(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! dimensionless height (z/L) used in Monin-Obukhov theory
       call sanity( nf90_inq_varid(ncid,'f_zol',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_rib((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_rib(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! bulk Richardson number in surface layer
       call sanity( nf90_inq_varid(ncid,'f_rib',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_fm((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_fm(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! integral of profile function for momentum
       call sanity( nf90_inq_varid(ncid,'f_fm',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_fh((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_fh(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! integral of profile function for heat
       call sanity( nf90_inq_varid(ncid,'f_fh',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_fq((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_fq(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! integral of profile function for moisture
       call sanity( nf90_inq_varid(ncid,'f_fq',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_us10m((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_us10m(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! 10m u-velocity [m/s]
       call sanity( nf90_inq_varid(ncid,'U10',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_vs10m((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_vs10m(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! 10m v-velocity [m/s]
       call sanity( nf90_inq_varid(ncid,'f_vs10m',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_fm10m((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_fm10m(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
@@ -2786,70 +3015,70 @@ CONTAINS
       ! wind in eastward direction [m/s]
       call sanity( nf90_inq_varid(ncid,'WIND',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_xy_vs((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_xy_vs(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! wind in northward direction [m/s]
       call sanity( nf90_inq_varid(ncid,'f_xy_vs',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_xy_t((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_xy_t(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! temperature at reference height [kelvin]
       call sanity( nf90_inq_varid(ncid,'TBOT',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_xy_q((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_xy_q(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! specific humidity at reference height [kg/kg]
       call sanity( nf90_inq_varid(ncid,'QBOT',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_xy_prc((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_xy_prc(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! convective precipitation [mm/s]
       call sanity( nf90_inq_varid(ncid,'f_xy_prc',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_xy_prl((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_xy_prl(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! large scale precipitation [mm/s]
       call sanity( nf90_inq_varid(ncid,'f_xy_prl',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_xy_pbot((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_xy_pbot(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! atmospheric pressure at the surface [pa]
       call sanity( nf90_inq_varid(ncid,'PSurf',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_xy_frl((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_xy_frl(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! atmospheric infrared (longwave) radiation [W/m2]
       call sanity( nf90_inq_varid(ncid,'FLDS',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_xy_solarin((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_xy_solarin(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! downward solar radiation at surface [W/m2]
       call sanity( nf90_inq_varid(ncid,'FSDS',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_sr((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_sr(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! total reflected solar radiation (W/m2)
       call sanity( nf90_inq_varid(ncid,'FSR',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       tmp0 = spval_r4
       where (f_sr /= spval) tmp0 = f_xy_solarin - f_sr
 
@@ -2859,119 +3088,119 @@ CONTAINS
       ! total reflected solar radiation (W/m2)
       call sanity( nf90_inq_varid(ncid,'FSA',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_solvd((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_solvd(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! incident direct beam vis solar radiation (W/m2)
       call sanity( nf90_inq_varid(ncid,'FSDSVD',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_solvi((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_solvi(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! incident diffuse beam vis solar radiation (W/m2)
       call sanity( nf90_inq_varid(ncid,'FSDSVI',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_solnd((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_solnd(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! incident direct beam nir solar radiation (W/m2)
       call sanity( nf90_inq_varid(ncid,'FSDSND',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_solni((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_solni(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! incident diffuse beam nir solar radiation (W/m2)
       call sanity( nf90_inq_varid(ncid,'FSDSNI',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_srvd((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_srvd(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! reflected direct beam vis solar radiation (W/m2)
       call sanity( nf90_inq_varid(ncid,'FSRVD',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_srvi((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_srvi(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! reflected diffuse beam vis solar radiation (W/m2)
       call sanity( nf90_inq_varid(ncid,'FSRVI',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_srnd((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_srnd(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! reflected direct beam nir solar radiation (W/m2)
       call sanity( nf90_inq_varid(ncid,'FSRND',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_srni((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_srni(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! reflected diffuse beam nir solar radiation (W/m2)
       call sanity( nf90_inq_varid(ncid,'FSRNI',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_solvdln((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_solvdln(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! incident direct beam vis solar radiation at local noon(W/m2)
       call sanity( nf90_inq_varid(ncid,'FSDSVDLN',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_solviln((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_solviln(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! incident diffuse beam vis solar radiation at local noon(W/m2)
       call sanity( nf90_inq_varid(ncid,'FSDSVILN',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_solndln((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_solndln(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! incident direct beam nir solar radiation at local noon(W/m2)
       call sanity( nf90_inq_varid(ncid,'FSDSNDLN',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_solniln((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_solniln(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! incident diffuse beam nir solar radiation at local noon(W/m2)
       call sanity( nf90_inq_varid(ncid,'FSDSNILN',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_srvdln((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_srvdln(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! reflected direct beam vis solar radiation at local noon(W/m2)
       call sanity( nf90_inq_varid(ncid,'FSRVDLN',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_srviln((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_srviln(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! reflected diffuse beam vis solar radiation at local noon(W/m2)
       call sanity( nf90_inq_varid(ncid,'FSRVILN',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_srndln((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_srndln(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! reflected direct beam nir solar radiation at local noon(W/m2)
       call sanity( nf90_inq_varid(ncid,'FSRNDLN',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       vars(1:max(lon_points/2,1),:) = f_srniln((lon_points/2+1):lon_points,:)
       vars((lon_points/2+1):lon_points,:) = f_srniln(1:max(lon_points/2,1),:)
       vars = vars(:,lat_points:1:-1)
       ! reflected diffuse beam nir solar radiation at local noon(W/m2)
       call sanity( nf90_inq_varid(ncid,'FSRNILN',varid) )
       call sanity( nf90_put_var(ncid,varid,vars) )
-      
+
       call sanity( nf90_close(ncid) )
 
    END SUBROUTINE writenetcdf_ncar

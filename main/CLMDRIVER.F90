@@ -42,7 +42,7 @@ SUBROUTINE CLMDRIVER (idate,deltim,dolai,doalb,dosst,oro)
 !$OMP SCHEDULE(STATIC, 1)
 #endif
       DO i = 1, numpatch
-         
+
          m = patchclass(i)
 
          !TODO: 整理变量次序
@@ -54,7 +54,7 @@ SUBROUTINE CLMDRIVER (idate,deltim,dolai,doalb,dosst,oro)
          soil_s_v_alb(i), soil_d_v_alb(i), soil_s_n_alb(i), soil_d_n_alb(i), &
          porsl(1:,i),     psi0(1:,i),      bsw(1:,i),       hksati(1:,i),    &
          csol(1:,i),      dksatu(1:,i),    dkdry(1:,i),     rootfr(1:,m),    &
-         lakedepth(i),    dz_lake(1:,i),                                     &  
+         lakedepth(i),    dz_lake(1:,i),                                     &
 
        ! VEGETATION INFORMATION
          htop(i),         hbot(i),         sqrtdi(m),                        &
@@ -81,9 +81,9 @@ SUBROUTINE CLMDRIVER (idate,deltim,dolai,doalb,dosst,oro)
          fsno(i),         sigf(i),         green(i),        lai(i),          &
          sai(i),          alb(1:,1:,i),    ssun(1:,1:,i),   ssha(1:,1:,i),   &
          thermk(i),       extkb(i),        extkd(i),                         &
-        
+
          zwt(i),          wa(i),                                             &
-         t_lake(1:,i),    lake_icefrac(1:,i),                                & 
+         t_lake(1:,i),    lake_icefrac(1:,i),                                &
 
        ! additional diagnostic variables for output
          laisun(i),       laisha(i),                                         &

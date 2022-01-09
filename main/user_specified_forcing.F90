@@ -4,11 +4,11 @@
 MODULE user_specified_forcing
 
 ! ------------------------------------------------------------
-! MODULE NANE: 
+! MODULE NANE:
 !     PRIMCETON GSWP2 QIAN POINT
 !
 ! PURPOSE :
-!     Read PRINCETON/GSWP2/QIAN/CRUNCEP/POINT forcing data     
+!     Read PRINCETON/GSWP2/QIAN/CRUNCEP/POINT forcing data
 !
 !     PLEASE modify the following codes when specified forcing used
 !     metpreprocess modified by siguang & weinan for forc_q calibration
@@ -44,7 +44,7 @@ MODULE user_specified_forcing
 
  ! file grouped by year/month
    character(len=256), parameter :: groupby = 'year'
-   
+
  ! prefix of forcing data file
    character(len=256), parameter :: fprefix(NVAR) = [character(len=256) :: &
       'tas/tas_3hourly_', 'shum/shum_3hourly_', 'pres/pres_3hourly_', &
@@ -54,7 +54,7 @@ MODULE user_specified_forcing
  ! variable name of forcing data file
    character(len=256), parameter :: vname(NVAR) = [character(len=256) :: &
       'tas', 'shum', 'pres', 'prcp', 'NULL', 'wind', 'dswrf', 'dlwrf']
- 
+
  ! interpolation method
    character(len=256), parameter :: tintalgo(NVAR) = [character(len=256) :: &
       'linear', 'linear', 'linear', 'nearest', 'NULL', 'linear', 'coszen', 'linear']
@@ -68,7 +68,7 @@ MODULE user_specified_forcing
    END INTERFACE
 
    public metpreprocess
- 
+
 CONTAINS
 
    FUNCTION getfilename(year, month, var_i)
@@ -100,7 +100,7 @@ CONTAINS
 ! respect to temperature: over water when t > 0 c and over ice when t <= 0 c
 ! required to convert relative humidity to specific humidity
 !----------------------------------------------------------------------------
-      do i = 1, nlats 
+      do i = 1, nlats
          do j = 1, nlons
             call qsadv(forcn(j,i,1),forcn(j,i,3),es,esdT,qsat_tmp,dqsat_tmpdT)
             if (qsat_tmp < forcn(j,i,2)) then
@@ -112,7 +112,7 @@ CONTAINS
    END SUBROUTINE metpreprocess
 
 #endif
- 
+
 
 
 #if(defined USE_GSWP2_DATA)
@@ -145,7 +145,7 @@ CONTAINS
 
  ! file grouped by year/month
    character(len=256), parameter :: groupby = 'month'
-   
+
  ! prefix of forcing data file
    character(len=256), parameter :: fprefix(NVAR) = [character(len=256) :: &
       'Tair_cru/Tair_cru', 'Qair_cru/Qair_cru', 'PSurf_ecor/PSurf_ecor', &
@@ -155,11 +155,11 @@ CONTAINS
  ! variable name of forcing data file
    character(len=256), parameter :: vname(NVAR) = [character(len=256) :: &
       'Tair', 'Qair', 'PSurf', 'Rainf', 'Rainf_C', 'Wind', 'SWdown', 'LWdown']
- 
+
  ! interpolation method
    character(len=256), parameter :: tintalgo(NVAR) = [character(len=256) :: &
       'linear', 'linear', 'linear', 'nearest', 'nearest', 'linear', 'coszen', 'linear']
-   
+
    INTERFACE getfilename
       MODULE procedure getfilename
    END INTERFACE
@@ -167,7 +167,7 @@ CONTAINS
    INTERFACE metpreprocess
       MODULE procedure metpreprocess
    END INTERFACE
- 
+
    public metpreprocess
 
 CONTAINS
@@ -181,7 +181,7 @@ CONTAINS
       character(len=256)  :: getfilename
       character(len=256)  :: yearstr
       character(len=256)  :: monthstr
-      
+
       write(yearstr, '(I4.4)') year
       write(monthstr, '(I2.2)') month
       getfilename = '/'//trim(fprefix(var_i))//trim(yearstr)//trim(monthstr)//'.nc'
@@ -203,7 +203,7 @@ CONTAINS
 ! respect to temperature: over water when t > 0 c and over ice when t <= 0 c
 ! required to convert relative humidity to specific humidity
 !----------------------------------------------------------------------------
-      do i = 1, nlats 
+      do i = 1, nlats
          do j = 1, nlons
             call qsadv(forcn(j,i,1),forcn(j,i,3),es,esdT,qsat_tmp,dqsat_tmpdT)
             if (qsat_tmp < forcn(j,i,2)) then
@@ -217,7 +217,7 @@ CONTAINS
 #endif
 
 
- 
+
 #if(defined USE_QIAN_DATA)
 
    use precision
@@ -251,7 +251,7 @@ CONTAINS
 
  ! file grouped by year/month
    character(len=256), parameter :: groupby = 'month'
-   
+
  ! prefix of forcing data file
    character(len=256), parameter :: fprefix(NVAR) = [character(len=256) :: &
       'TmpPrsHumWnd3Hrly/clmforc.Qian.c2006.T62.TPQW.', &
@@ -266,11 +266,11 @@ CONTAINS
  ! variable name of forcing data file
    character(len=256), parameter :: vname(NVAR) = [character(len=256) :: &
       'TBOT', 'QBOT', 'PSRF', 'PRECTmms', 'NULL', 'WIND', 'FSDS', 'NULL']
- 
+
  ! interpolation method
    character(len=256), parameter :: tintalgo(NVAR) = [character(len=256) :: &
       'linear', 'linear', 'linear', 'nearest', 'NULL', 'linear', 'coszen', 'NULL']
-   
+
    INTERFACE getfilename
       MODULE procedure getfilename
    END INTERFACE
@@ -278,7 +278,7 @@ CONTAINS
    INTERFACE metpreprocess
       MODULE procedure metpreprocess
    END INTERFACE
- 
+
    public metpreprocess
 
 CONTAINS
@@ -292,7 +292,7 @@ CONTAINS
       character(len=256)  :: getfilename
       character(len=256)  :: yearstr
       character(len=256)  :: monthstr
-      
+
       write(yearstr, '(I4.4)') year
       write(monthstr, '(I2.2)') month
       getfilename = '/'//trim(fprefix(var_i))//trim(yearstr)//'-'//trim(monthstr)//'.nc'
@@ -315,7 +315,7 @@ CONTAINS
 ! respect to temperature: over water when t > 0 c and over ice when t <= 0 c
 ! required to convert relative humidity to specific humidity
 !----------------------------------------------------------------------------
-      do i = 1, nlats 
+      do i = 1, nlats
          do j = 1, nlons
             call qsadv(forcn(j,i,1),forcn(j,i,3),es,esdT,qsat_tmp,dqsat_tmpdT)
             if (qsat_tmp < forcn(j,i,2)) then
@@ -323,7 +323,7 @@ CONTAINS
             endif
          end do
       end do
-      
+
       do i = 1, nlats
          do j = 1, nlons
             e  = forcn(j,i,3) * forcn(j,i,2) / (0.622_R8 + 0.378_R8 * forcn(j,i,2))
@@ -349,9 +349,9 @@ CONTAINS
    integer, parameter :: NVAR    = 8              ! variable number of forcing data
    integer, parameter :: nlats   = 360            ! number of latitudes
    integer, parameter :: nlons   = 720            ! number of longitudes
-   integer, parameter :: startyr = 2000           ! start year of forcing data        <MARK #1>
+   integer, parameter :: startyr = 1901           ! start year of forcing data        <MARK #1>
    integer, parameter :: startmo = 1              ! start month of forcing data
-   integer, parameter :: endyr   = 2003           ! end year of forcing data
+   integer, parameter :: endyr   = 2016           ! end year of forcing data
    integer, parameter :: endmo   = 12             ! end month of forcing data
    integer, parameter :: dtime(NVAR)  = (/ &      ! temporal resolution
       21600, 21600, 21600, 21600, 0, 21600, 21600, 21600/)
@@ -371,26 +371,26 @@ CONTAINS
 
  ! file grouped by year/month
    character(len=256), parameter :: groupby = 'month'
-   
+
  ! prefix of forcing data file
    character(len=256), parameter :: fprefix(NVAR) = [character(len=256) :: &
-      'TPHWL6Hrly/clmforc.cruncep.V4.c2011.0.5d.TPQWL.', &
-      'TPHWL6Hrly/clmforc.cruncep.V4.c2011.0.5d.TPQWL.', &
-      'TPHWL6Hrly/clmforc.cruncep.V4.c2011.0.5d.TPQWL.', &
-      'Precip6Hrly/clmforc.cruncep.V4.c2011.0.5d.Prec.', &
+      'TPHWL6Hrly/clmforc.cruncep.V7.c2016.0.5d.TPQWL.', &
+      'TPHWL6Hrly/clmforc.cruncep.V7.c2016.0.5d.TPQWL.', &
+      'TPHWL6Hrly/clmforc.cruncep.V7.c2016.0.5d.TPQWL.', &
+      'Precip6Hrly/clmforc.cruncep.V7.c2016.0.5d.Prec.', &
       'NULL', &
-      'TPHWL6Hrly/clmforc.cruncep.V4.c2011.0.5d.TPQWL.', &
-      'Solar6Hrly/clmforc.cruncep.V4.c2011.0.5d.Solr.', &
-      'TPHWL6Hrly/clmforc.cruncep.V4.c2011.0.5d.TPQWL.']
+      'TPHWL6Hrly/clmforc.cruncep.V7.c2016.0.5d.TPQWL.', &
+      'Solar6Hrly/clmforc.cruncep.V7.c2016.0.5d.Solr.', &
+      'TPHWL6Hrly/clmforc.cruncep.V7.c2016.0.5d.TPQWL.']
 
  ! variable name of forcing data file
    character(len=256), parameter :: vname(NVAR) = [character(len=256) :: &
       'TBOT', 'QBOT', 'PSRF', 'PRECTmms', 'NULL', 'WIND', 'FSDS', 'FLDS']
- 
+
  ! interpolation method
    character(len=256), parameter :: tintalgo(NVAR) = [character(len=256) :: &
       'linear', 'linear', 'linear', 'nearest', 'NULL', 'linear', 'coszen', 'linear']
-   
+
    INTERFACE getfilename
       MODULE procedure getfilename
    END INTERFACE
@@ -398,7 +398,7 @@ CONTAINS
    INTERFACE metpreprocess
       MODULE procedure metpreprocess
    END INTERFACE
- 
+
    public metpreprocess
 
 CONTAINS
@@ -412,7 +412,7 @@ CONTAINS
       character(len=256)  :: getfilename
       character(len=256)  :: yearstr
       character(len=256)  :: monthstr
-      
+
       write(yearstr, '(I4.4)') year
       write(monthstr, '(I2.2)') month
       getfilename = '/'//trim(fprefix(var_i))//trim(yearstr)//'-'//trim(monthstr)//'.nc'
@@ -435,7 +435,7 @@ CONTAINS
 ! respect to temperature: over water when t > 0 c and over ice when t <= 0 c
 ! required to convert relative humidity to specific humidity
 !----------------------------------------------------------------------------
-      do i = 1, nlats 
+      do i = 1, nlats
          do j = 1, nlons
             call qsadv(forcn(j,i,1),forcn(j,i,3),es,esdT,qsat_tmp,dqsat_tmpdT)
             if (qsat_tmp < forcn(j,i,2)) then
@@ -443,7 +443,7 @@ CONTAINS
             endif
          end do
       end do
-      
+
    END SUBROUTINE metpreprocess
 
 #endif
@@ -454,7 +454,7 @@ CONTAINS
 
    use precision
    implicit none
- 
+
  ! parameter setting
  ! ------------------------------------------------------------
    integer, parameter :: NVAR    = 8              ! variable number of forcing data
@@ -483,13 +483,13 @@ CONTAINS
 
  ! not applied for POINT
    character(len=256), parameter :: groupby = 'NULL'
-   
+
  ! prefix of forcing data file
    character(len=256), parameter :: fprefix(NVAR) = 'VAL.DAT.CTRL.INT'
 
  ! not applied for POINT
    character(len=256), parameter :: vname(NVAR) = 'NULL'
- 
+
  ! not applied for POINT
    character(len=256), parameter :: tintalgo(NVAR) = 'NULL'
 
@@ -500,7 +500,7 @@ CONTAINS
    INTERFACE metpreprocess
       MODULE procedure metpreprocess
    END INTERFACE
- 
+
    public metpreprocess
 
 CONTAINS

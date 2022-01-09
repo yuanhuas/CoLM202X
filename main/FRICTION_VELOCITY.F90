@@ -247,7 +247,7 @@ MODULE FRICTION_VELOCITY
         zetam=1.574
         if(zeta < -zetam)then           ! zeta < -1
           fmtop  = log(-zetam*obu/z0m) - psi(1,-zetam) &
-                + psi(1,z0m/obu) + 1.14*((-zeta)**0.333-(zetam)**0.333) 
+                 + psi(1,z0m/obu) + 1.14*((-zeta)**0.333-(zetam)**0.333) 
         else if(zeta < 0.)then          ! -1 <= zeta < 0
           fmtop  = log(zldis/z0m) - psi(1,zeta) + psi(1,z0m/obu) 
         else if(zeta <= 1.)then         !  0 <= ztea <= 1
@@ -261,7 +261,7 @@ MODULE FRICTION_VELOCITY
         zeta=zldis/obu
         zetat=0.465
         if(zeta < -zetat)then           ! zeta < -1
-          fh    = log(-zetat*obu/z0h)-psi(2,-zetat) &
+          fh    = log(-zetat*obu/z0h) - psi(2,-zetat) &
                 + psi(2,z0h/obu) + 0.8*((zetat)**(-0.333)-(-zeta)**(-0.333)) 
         else if(zeta < 0.)then          ! -1 <= zeta < 0
           fh    = log(zldis/z0h) - psi(2,zeta) + psi(2,z0h/obu) 
@@ -277,7 +277,7 @@ MODULE FRICTION_VELOCITY
         zetat=0.465
         if(zeta < -zetat)then           ! zeta < -1
           fh2m = log(-zetat*obu/z0h)-psi(2,-zetat) &
-                + psi(2,z0h/obu) + 0.8*((zetat)**(-0.333)-(-zeta)**(-0.333))
+               + psi(2,z0h/obu) + 0.8*((zetat)**(-0.333)-(-zeta)**(-0.333))
         else if(zeta < 0.)then          ! -1 <= zeta < 0
           fh2m = log(zldis/z0h) - psi(2,zeta) + psi(2,z0h/obu)
         else if(zeta <= 1.)then         !  0 <= ztea <= 1
@@ -292,7 +292,7 @@ MODULE FRICTION_VELOCITY
         zetat=0.465
         if(zeta < -zetat)then           ! zeta < -1
           fht = log(-zetat*obu/z0h)-psi(2,-zetat) &
-                + psi(2,z0h/obu) + 0.8*((zetat)**(-0.333)-(-zeta)**(-0.333))
+              + psi(2,z0h/obu) + 0.8*((zetat)**(-0.333)-(-zeta)**(-0.333))
         else if(zeta < 0.)then          ! -1 <= zeta < 0
           fht = log(zldis/z0h) - psi(2,zeta) + psi(2,z0h/obu)
         else if(zeta <= 1.)then         !  0 <= ztea <= 1

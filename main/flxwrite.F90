@@ -1,7 +1,7 @@
 #include <define.h>
 
- SUBROUTINE flxwrite (idate,nac,nac_ln,lon_points,lat_points,&
-                      dir_output,casename)
+ SUBROUTINE flxwrite (idate,nac,nac_ln,nac_dt,nac_nt,&
+                      lon_points,lat_points,dir_output,casename)
 
 !=======================================================================
 ! Original version: Yongjiu Dai, September 15, 1999, 03/2014
@@ -10,7 +10,7 @@
   use precision
   USE GlobalVars
   use MOD_2D_Fluxes
-  use MOD_TimeInvariants, only: gridlond, gridlatd 
+  use MOD_TimeInvariants, only: gridlond, gridlatd
   use timemanager
   use omp_lib
   IMPLICIT NONE
@@ -18,12 +18,14 @@
   integer, INTENT(in) :: idate(3)
   integer, INTENT(in) :: nac
   integer, INTENT(in) :: nac_ln(lon_points,lat_points)
+  INTEGER, intent(in) :: nac_dt(lon_points,lat_points)
+  INTEGER, intent(in) :: nac_nt(lon_points,lat_points)
   integer, INTENT(in) :: lon_points
   integer, INTENT(in) :: lat_points
-  
+
   character(LEN=256) :: dir_output
   character(LEN=256) :: casename
- 
+
   integer luout, month, day, i, j, l
   character(LEN=256) fout
   character(LEN=256) cdate
@@ -52,7 +54,7 @@
 #endif
      do j = 1, lat_points
         do i = 1, lon_points
-           
+
            if (f_taux   (i,j) /= spval) f_taux   (i,j) = f_taux   (i,j) / a  ! wind stress: E-W [kg/m/s2]
            if (f_tauy   (i,j) /= spval) f_tauy   (i,j) = f_tauy   (i,j) / a  ! wind stress: N-S [kg/m/s2]
            if (f_fsena  (i,j) /= spval) f_fsena  (i,j) = f_fsena  (i,j) / a  ! sensible heat from canopy height to atmosphere [W/m2]
@@ -76,13 +78,13 @@
            if (f_qintr  (i,j) /= spval) f_qintr  (i,j) = f_qintr  (i,j) / a  ! interception [mm/s]
            if (f_qinfl  (i,j) /= spval) f_qinfl  (i,j) = f_qinfl  (i,j) / a  ! inflitraton [mm/s]
            if (f_qdrip  (i,j) /= spval) f_qdrip  (i,j) = f_qdrip  (i,j) / a  ! throughfall [mm/s]
-           if (f_rstfac (i,j) /= spval) f_rstfac (i,j) = f_rstfac (i,j) / a  ! factor of soil water stress 
+           if (f_rstfac (i,j) /= spval) f_rstfac (i,j) = f_rstfac (i,j) / a  ! factor of soil water stress
            if (f_zwt    (i,j) /= spval) f_zwt    (i,j) = f_zwt    (i,j) / a  ! water depth [m]
            if (f_wa     (i,j) /= spval) f_wa     (i,j) = f_wa     (i,j) / a  ! water storage in aquifer [mm]
            if (f_wat    (i,j) /= spval) f_wat    (i,j) = f_wat    (i,j) / a  ! total water storage [mm]
            if (f_assim  (i,j) /= spval) f_assim  (i,j) = f_assim  (i,j) / a  ! canopy assimilation rate [mol m-2 s-1]
            if (f_respc  (i,j) /= spval) f_respc  (i,j) = f_respc  (i,j) / a  ! respiration (plant+soil) [mol m-2 s-1]
-           if (f_qcharge(i,j) /= spval) f_qcharge(i,j) = f_qcharge(i,j) / a  ! groundwater recharge rate [mm/s] 
+           if (f_qcharge(i,j) /= spval) f_qcharge(i,j) = f_qcharge(i,j) / a  ! groundwater recharge rate [mm/s]
 
 !---------------------------------------------------------------------
            if (f_t_grnd (i,j) /= spval) f_t_grnd (i,j) = f_t_grnd (i,j) / a  ! ground surface temperature [K]
@@ -108,6 +110,27 @@
            if (f_qref   (i,j) /= spval) f_qref   (i,j) = f_qref   (i,j) / a  ! 2 m height air specific humidity [kg/kg]
            if (f_xy_rain(i,j) /= spval) f_xy_rain(i,j) = f_xy_rain(i,j) / a  ! rain [mm/s]
            if (f_xy_snow(i,j) /= spval) f_xy_snow(i,j) = f_xy_snow(i,j) / a  ! snow [mm/s]
+
+           IF (f_sabvdt  (i,j) /= spval) f_sabvdt  (i,j) = f_sabvdt  (i,j) / nac_dt(i,j)  ! solar absorbed by sunlit canopy [w/m2]
+           IF (f_sabgdt  (i,j) /= spval) f_sabgdt  (i,j) = f_sabgdt  (i,j) / nac_dt(i,j)  ! solar absorbed by ground [w/m2]
+           IF (f_srdt    (i,j) /= spval) f_srdt    (i,j) = f_srdt    (i,j) / nac_dt(i,j)  ! total reflected solar radiation (w/m2)
+           IF (f_fsenadt (i,j) /= spval) f_fsenadt (i,j) = f_fsenadt (i,j) / nac_dt(i,j)  ! sensible heat from canopy height to atmosphere [w/m2]
+           IF (f_lfevpadt(i,j) /= spval) f_lfevpadt(i,j) = f_lfevpadt(i,j) / nac_dt(i,j)  ! latent heat flux from canopy height to atmosphere [w/m2]
+           IF (f_fgrnddt (i,j) /= spval) f_fgrnddt (i,j) = f_fgrnddt (i,j) / nac_dt(i,j)  ! ground heat flux [w/m2]
+           IF (f_olrgdt  (i,j) /= spval) f_olrgdt  (i,j) = f_olrgdt  (i,j) / nac_dt(i,j)  ! outgoing long-wave radiation from ground+canopy [w/m2]
+           IF (f_rnetdt  (i,j) /= spval) f_rnetdt  (i,j) = f_rnetdt  (i,j) / nac_dt(i,j)  ! net radiation [w/m2]
+           IF (f_t_grnddt(i,j) /= spval) f_t_grnddt(i,j) = f_t_grnddt(i,j) / nac_dt(i,j)  ! ground surface temperature [k]
+           IF (f_traddt  (i,j) /= spval) f_traddt  (i,j) = f_traddt  (i,j) / nac_dt(i,j)  ! radiative temperature of surface [k]
+           IF (f_trefdt  (i,j) /= spval) f_trefdt  (i,j) = f_trefdt  (i,j) / nac_dt(i,j)  ! 2 m height air temperature [kelvin]
+
+           IF (f_fsenant (i,j) /= spval) f_fsenant (i,j) = f_fsenant (i,j) / nac_nt(i,j)  ! sensible heat from canopy height to atmosphere [w/m2]
+           IF (f_lfevpant(i,j) /= spval) f_lfevpant(i,j) = f_lfevpant(i,j) / nac_nt(i,j)  ! latent heat flux from canopy height to atmosphere [w/m2]
+           IF (f_fgrndnt (i,j) /= spval) f_fgrndnt (i,j) = f_fgrndnt (i,j) / nac_nt(i,j)  ! ground heat flux [w/m2]
+           IF (f_olrgnt  (i,j) /= spval) f_olrgnt  (i,j) = f_olrgnt  (i,j) / nac_nt(i,j)  ! outgoing long-wave radiation from ground+canopy [w/m2]
+           IF (f_rnetnt  (i,j) /= spval) f_rnetnt  (i,j) = f_rnetnt  (i,j) / nac_nt(i,j)  ! net radiation [w/m2]
+           IF (f_t_grndnt(i,j) /= spval) f_t_grndnt(i,j) = f_t_grndnt(i,j) / nac_nt(i,j)  ! ground surface temperature [k]
+           IF (f_tradnt  (i,j) /= spval) f_tradnt  (i,j) = f_tradnt  (i,j) / nac_nt(i,j)  ! radiative temperature of surface [k]
+           IF (f_trefnt  (i,j) /= spval) f_trefnt  (i,j) = f_trefnt  (i,j) / nac_nt(i,j)  ! 2 m height air temperature [kelvin]
 
 !---------------------------------------------------------------------
            do l = maxsnl+1, nl_soil
@@ -202,7 +225,7 @@
      write(luout) f_qdrip  (:,:)  ! throughfall [mm/s]
      write(luout) f_assim  (:,:)  ! canopy assimilation rate [mol m-2 s-1]
      write(luout) f_respc  (:,:)  ! respiration (plant+soil) [mol m-2 s-1]
-     write(luout) f_qcharge(:,:)  ! groundwater recharge rate [mm/s] 
+     write(luout) f_qcharge(:,:)  ! groundwater recharge rate [mm/s]
 
 !---------------------------------------------------------------------
      write(luout) f_t_grnd (:,:)  ! ground surface temperature [K]
@@ -225,17 +248,38 @@
      write(luout) f_qref   (:,:)  ! 2 m height air specific humidity [kg/kg]
      write(luout) f_xy_rain(:,:)  ! rain [mm/s]
      write(luout) f_xy_snow(:,:)  ! snow [mm/s]
- 
+
+     write(luout) f_sabvdt  (:,:) ! solar absorbed by sunlit canopy [w/m2]
+     write(luout) f_sabgdt  (:,:) ! solar absorbed by ground [w/m2]
+     write(luout) f_srdt    (:,:) ! total reflected solar radiation (w/m2)
+     write(luout) f_fsenadt (:,:) ! sensible heat from canopy height to atmosphere [w/m2]
+     write(luout) f_lfevpadt(:,:) ! latent heat flux from canopy height to atmosphere [w/m2]
+     write(luout) f_fgrnddt (:,:) ! ground heat flux [w/m2]
+     write(luout) f_olrgdt  (:,:) ! outgoing long-wave radiation from ground+canopy [w/m2]
+     write(luout) f_rnetdt  (:,:) ! net radiation [w/m2]
+     write(luout) f_t_grnddt(:,:) ! ground surface temperature [k]
+     write(luout) f_traddt  (:,:) ! radiative temperature of surface [k]
+     write(luout) f_trefdt  (:,:) ! 2 m height air temperature [kelvin]
+
+     write(luout) f_fsenant (:,:) ! sensible heat from canopy height to atmosphere [w/m2]
+     write(luout) f_lfevpant(:,:) ! latent heat flux from canopy height to atmosphere [w/m2]
+     write(luout) f_fgrndnt (:,:) ! ground heat flux [w/m2]
+     write(luout) f_olrgnt  (:,:) ! outgoing long-wave radiation from ground+canopy [w/m2]
+     write(luout) f_rnetnt  (:,:) ! net radiation [w/m2]
+     write(luout) f_t_grndnt(:,:) ! ground surface temperature [k]
+     write(luout) f_tradnt  (:,:) ! radiative temperature of surface [k]
+     write(luout) f_trefnt  (:,:) ! 2 m height air temperature [kelvin]
+
 !---------------------------------------------------------------------
      write(luout) f_t_soisno   (:,:,:)  ! soil temperature [K]
      write(luout) f_wliq_soisno(:,:,:)  ! liquid water in soil layers [kg/m2]
      write(luout) f_wice_soisno(:,:,:)  ! ice lens in soil layers [kg/m2]
      write(luout) f_h2osoi     (:,:,:)  ! volumetric soil water in layers [m3/m3]
-     write(luout) f_rstfac     (:,:)    ! factor of soil water stress 
+     write(luout) f_rstfac     (:,:)    ! factor of soil water stress
      write(luout) f_zwt        (:,:)    ! the depth to water table [m]
      write(luout) f_wa         (:,:)    ! water storage in aquifer [mm]
      write(luout) f_wat        (:,:)    ! total water storage [mm]
- 
+
      write(luout) f_t_lake      (:,:,:) ! lake temperature [K]
      write(luout) f_lake_icefrac(:,:,:) ! lake ice fraction cover [0-1]
 

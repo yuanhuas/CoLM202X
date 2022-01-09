@@ -33,10 +33,10 @@ MODULE SOIL_SNOW_hydrology
              etr         ,qseva       ,qsdew       ,qsubl   ,qfros ,&
              rsur        ,rnof        ,qinfl       ,wtfact  ,pondmx,&
              ssi         ,wimp        ,smpmin      ,zwt     ,wa    ,&
-             qcharge     )  
+             qcharge     )
 
 !=======================================================================
-! this is the main subroutine to execute the calculation of 
+! this is the main subroutine to execute the calculation of
 ! hydrological processes
 !
 ! Original author : Yongjiu Dai, /09/1999/, /08/2002/, /04/2014/
@@ -44,9 +44,9 @@ MODULE SOIL_SNOW_hydrology
 ! FLOW DIAGRAM FOR WATER.F90
 !
 ! WATER ===> snowwater
-!            surfacerunoff 
-!            soilwater 
-!            subsurfacerunoff 
+!            surfacerunoff
+!            soilwater
+!            subsurfacerunoff
 !
 !=======================================================================
 
@@ -54,13 +54,13 @@ MODULE SOIL_SNOW_hydrology
   use PhysicalConstants, only: denice, denh2o, tfrz
 
   implicit none
-    
+
 !-----------------------Argument---------- ------------------------------
   integer, INTENT(in) :: &
         ipatch           ,& ! patch index
-        patchtype           ! land water type (0=soil, 1=urban or built-up, 2=wetland, 
+        patchtype           ! land water type (0=soil, 1=urban or built-up, 2=wetland,
                             ! 3=land ice, 4=land water bodies, 99=ocean
-  
+
   integer, INTENT(in) :: &
         lb               , &! lower bound of array
         nl_soil            ! upper bound of array
@@ -102,12 +102,12 @@ MODULE SOIL_SNOW_hydrology
         rnof             , &! total runoff (mm h2o/s)
         qinfl            , &! infiltration rate (mm h2o/s)
         qcharge             ! groundwater recharge (positive to aquifer) [mm/s]
-  
+
 !-----------------------Local Variables------------------------------
-!                   
+!
   integer j                 ! loop counter
 
-  real(r8) :: & 
+  real(r8) :: &
   eff_porosity(1:nl_soil), &! effective porosity = porosity - vol_ice
        dwat(1:nl_soil)   , &! change in soil water
        gwat              , &! net water input from top (mm/s)
@@ -165,8 +165,8 @@ MODULE SOIL_SNOW_hydrology
            rsur = 0.
       endif
 
-      ! infiltration into surface soil layer 
-      qinfl = gwat - rsur 
+      ! infiltration into surface soil layer
+      qinfl = gwat - rsur
 
 !=======================================================================
 ! [3] determine the change of soil water
@@ -199,8 +199,8 @@ MODULE SOIL_SNOW_hydrology
                              qcharge,rsubst)
 
       ! total runoff (mm/s)
-      rnof = rsubst + rsur                
- 
+      rnof = rsubst + rsur
+
       ! Renew the ice and liquid mass due to condensation
       if(lb >= 1)then
          ! make consistent with how evap_grnd removed in infiltration
@@ -228,12 +228,12 @@ MODULE SOIL_SNOW_hydrology
 ! [6] assumed hydrological scheme for the wetland and glacier
 !=======================================================================
 
-  else                          
+  else
       if(patchtype==2)then        ! WETLAND
          qinfl = 0.
          rsur = max(0.,gwat)
          rsubst = 0.
-         rnof = 0.  
+         rnof = 0.
          do j = 1, nl_soil
             if(t_soisno(j)>tfrz)then
                wice_soisno(j) = 0.0
@@ -301,7 +301,7 @@ MODULE SOIL_SNOW_hydrology
   real(r8), INTENT(inout) :: &
         wice_soisno(lb:0),&! ice lens (kg/m2)
         wliq_soisno(lb:0)  ! liquid water (kg/m2)
-  
+
   real(r8), INTENT(out) :: &
         qout_snowb  ! rate of water out of snow bottom (mm/s)
 
@@ -318,7 +318,7 @@ MODULE SOIL_SNOW_hydrology
  eff_porosity(lb:0) ! effective porosity = porosity - vol_ice
 
 !=======================================================================
-! renew the mass of ice lens (wice_soisno) and liquid (wliq_soisno) in the surface snow layer, 
+! renew the mass of ice lens (wice_soisno) and liquid (wliq_soisno) in the surface snow layer,
 ! resulted by sublimation (frost) / evaporation (condense)
 
       wgdif = wice_soisno(lb) + (qfros - qsubl)*deltim
@@ -339,11 +339,11 @@ MODULE SOIL_SNOW_hydrology
 
 ! Capillary force within snow could be two or more orders of magnitude
 ! less than those of gravity, this term may be ignored.
-! Here we could keep the garavity term only. The genernal expression 
-! for water flow is "K * ss**3", however, no effective paramterization 
-! for "K". Thus, a very simple treatment (not physical based) is introduced: 
-! when the liquid water of layer exceeds the layer's holding 
-! capacity, the excess meltwater adds to the underlying neighbor layer. 
+! Here we could keep the garavity term only. The genernal expression
+! for water flow is "K * ss**3", however, no effective paramterization
+! for "K". Thus, a very simple treatment (not physical based) is introduced:
+! when the liquid water of layer exceeds the layer's holding
+! capacity, the excess meltwater adds to the underlying neighbor layer.
 
       qin = 0.
       do j= lb, 0
@@ -444,7 +444,7 @@ MODULE SOIL_SNOW_hydrology
 ! Original author : Yongjiu Dai, 09/1999, 04/2014, 07/2014
 !
 ! some new parameterization are added, which are based on CLM4.5
-! 
+!
 ! Soil moisture is predicted from a 10-layer model (as with soil
 ! temperature), in which the vertical soil moisture transport is governed
 ! by infiltration, runoff, gradient diffusion, gravity, and root
@@ -470,7 +470,7 @@ MODULE SOIL_SNOW_hydrology
 !
 ! d wat     d     d psi
 ! ----- =  -- [ k(----- - 1) ] + S
-!   dt     dz       dz 
+!   dt     dz       dz
 !
 ! where: wat = volume of water per volume of soil (mm**3/mm**3)
 ! psi = soil matrix potential (mm)
@@ -564,7 +564,7 @@ MODULE SOIL_SNOW_hydrology
     real(r8) :: hk(1:nl_soil)     ! hydraulic conductivity [mm h2o/s]
     real(r8) :: dhkdw1(1:nl_soil) ! d(hk)/d(vol_liq(j))
     real(r8) :: dhkdw2(1:nl_soil) ! d(hk)/d(vol_liq(j+1))
-    real(r8) :: imped(1:nl_soil)  !           
+    real(r8) :: imped(1:nl_soil)  !
     real(r8) :: errorw            ! mass balance error for this time step
 
     integer  :: jwt               ! index of the soil layer right above the water table (-)
@@ -637,7 +637,7 @@ MODULE SOIL_SNOW_hydrology
           dhkdw1(j) = 0.
           dhkdw2(j) = 0.
        else
-          ! The average conductivity between two heterogeneous medium layers (j and j + 1), 
+          ! The average conductivity between two heterogeneous medium layers (j and j + 1),
           ! are computed using different methods
           if(j < nl_soil)then
 ! Method I: UPSTREAM MEAN
@@ -650,7 +650,7 @@ MODULE SOIL_SNOW_hydrology
                 dhkdw1(j) = 0.
                 dhkdw2(j) = hksati(j+1) * (2.*bsw(j+1)+3.)*(vol_liq(j+1)/porsl(j+1))**(2.*bsw(j+1)+2.)/porsl(j+1)
              endif
-! Method II: 
+! Method II:
           !  ! The harmonic averaging of the saturated conductivities
           !  hksat_interface = (zmm(j+1)-zmm(j))/((zimm(j)-zmm(j))/hksati(j)+(zmm(j+1)-zimm(j))/hksati(j+1))
           !  s1 = (vol_liq(j)*(zimm(j)-zmm(j)) + vol_liq(j+1)*(zmm(j+1)-zimm(j))) &
@@ -748,7 +748,7 @@ MODULE SOIL_SNOW_hydrology
 #endif
 
     ! Recharge rate qcharge to groundwater (positive to aquifer)
-    qcharge = qout(nl_soil) + dqodw1(nl_soil)*dwat(nl_soil) 
+    qcharge = qout(nl_soil) + dqodw1(nl_soil)*dwat(nl_soil)
 
 
   end subroutine soilwater
@@ -813,14 +813,14 @@ MODULE SOIL_SNOW_hydrology
     real(r8) :: rous             ! specific yield [-]
 
     real(r8) :: wt
-    real(r8) :: wtsub 
+    real(r8) :: wtsub
     real(r8) :: dzsum
     real(r8) :: icefracsum
     real(r8) :: fracice_rsub
     real(r8) :: imped
 
 
-    real(r8), parameter :: watmin = 0.01  ! Limit irreduciable wrapping liquid water 
+    real(r8), parameter :: watmin = 0.01  ! Limit irreduciable wrapping liquid water
                                           ! a tunable constant
     real(r8), parameter :: rsbmx  = 5.0   ! baseflow coefficient [mm/s]
     real(r8), parameter :: timean = 10.5  ! global mean topographic index
@@ -829,12 +829,12 @@ MODULE SOIL_SNOW_hydrology
 ! -------------------------------------------------------------------------
 
 !   ! Convert layer thicknesses from m to mm
- 
+
     do j = 1,nl_soil
        dzmm(j) = dz_soisno(j)*1000.
     end do
- 
-!   ! The layer index of the first unsaturated layer, 
+
+!   ! The layer index of the first unsaturated layer,
 !   ! i.e., the layer right above the water table
 
     jwt = nl_soil
@@ -845,7 +845,7 @@ MODULE SOIL_SNOW_hydrology
           exit
        end if
     enddo
- 
+
 !============================== QCHARGE =========================================
 ! Water table changes due to qcharge
 ! use analytical expression for aquifer specific yield
@@ -856,26 +856,26 @@ MODULE SOIL_SNOW_hydrology
 !
 !---------------------------------------
     ! water table is below the soil column
-    if(jwt == nl_soil) then             
+    if(jwt == nl_soil) then
        zwt = max(0.,zwt - (qcharge*deltim)/1000./rous)
-    else                                
+    else
     ! water table within soil layers 1-9
     ! try to raise water table to account for qcharge
- 
+
        qcharge_tot = qcharge * deltim
- 
+
        if(qcharge_tot > 0.) then ! rising water table
           do j = jwt+1, 1,-1
              ! use analytical expression for specific yield
- 
+
              s_y = porsl(j) * (1.-(1.-1.e3*zwt/psi0(j))**(-1./bsw(j)))
              s_y=max(s_y,0.02)
- 
+
              qcharge_layer = min(qcharge_tot,(s_y*(zwt-zi_soisno(j-1))*1.e3))
              qcharge_layer = max(qcharge_layer,0.)
- 
+
              zwt = max(0.,zwt - qcharge_layer/s_y/1000.)
-             
+
              qcharge_tot = qcharge_tot - qcharge_layer
              if (qcharge_tot <= 0.) exit
           enddo
@@ -887,8 +887,8 @@ MODULE SOIL_SNOW_hydrology
              qcharge_layer = max(qcharge_tot,-(s_y*(zi_soisno(j) - zwt)*1.e3))
              qcharge_layer = min(qcharge_layer,0.)
              qcharge_tot = qcharge_tot - qcharge_layer
- 
-             if (qcharge_tot >= 0.) then 
+
+             if (qcharge_tot >= 0.) then
                 zwt = max(0.,zwt - qcharge_layer/s_y/1000.)
                 exit
              else
@@ -912,12 +912,12 @@ MODULE SOIL_SNOW_hydrology
     drainage = imped * 5.5e-3 * exp(-2.5*zwt)  ! drainage (positive = out of soil column)
 
 !-- Water table is below the soil column  ----------------------------------------
-    if(jwt == nl_soil) then             
+    if(jwt == nl_soil) then
        wa = wa - drainage * deltim
        zwt = max(0.,zwt + (drainage * deltim)/1000./rous)
        wliq_soisno(nl_soil) = wliq_soisno(nl_soil) + max(0.,(wa-5000.))
        wa = min(wa, 5000.)
-    else                                
+    else
 !-- Water table within soil layers 1-9  ------------------------------------------
 !============================== RSUB_TOP =========================================
        !-- Now remove water via drainage
@@ -926,14 +926,14 @@ MODULE SOIL_SNOW_hydrology
           ! use analytical expression for specific yield
           s_y = porsl(j) * ( 1. - (1.-1.e3*zwt/psi0(j))**(-1./bsw(j)))
           s_y = max(s_y,0.02)
-             
+
           drainage_layer = max(drainage_tot, -(s_y*(zi_soisno(j)-zwt)*1.e3))
           drainage_layer = min(drainage_layer,0.)
           wliq_soisno(j) = wliq_soisno(j) + drainage_layer
 
           drainage_tot = drainage_tot - drainage_layer
 
-          if(drainage_tot >= 0.)then 
+          if(drainage_tot >= 0.)then
              zwt = max(0.,zwt - drainage_layer/s_y/1000.)
              exit
           else
@@ -974,6 +974,7 @@ MODULE SOIL_SNOW_hydrology
        wliq_soisno(j-1) = wliq_soisno(j-1) + xsi
     end do
 
+    !TODO: 这里有可能的bug, 当wice_soisno(1)>pondmx+porsl*dzmm时
     xs1 = wliq_soisno(1) - (pondmx+porsl(1)*dzmm(1)-wice_soisno(1))
     if(xs1 > 0.)then
        wliq_soisno(1) = pondmx+porsl(1)*dzmm(1)-wice_soisno(1)
@@ -993,7 +994,7 @@ MODULE SOIL_SNOW_hydrology
     xs = 0.
     do j = 1, nl_soil
        if (wliq_soisno(j) < 0.) then
-          xs = xs + wliq_soisno(j) 
+          xs = xs + wliq_soisno(j)
           wliq_soisno(j) = 0.
        endif
     enddo
@@ -1007,7 +1008,7 @@ MODULE SOIL_SNOW_hydrology
 !         if (wliq_soisno(j) < watmin) then
 !            xs = watmin - wliq_soisno(j)
 !            ! deepen water table if water is passed from below zwt layer
-!            if(j == jwt) then 
+!            if(j == jwt) then
 !               zwt = max(0.,zwt + xs/eff_porosity(j)/1000.)
 !            endif
 !         else

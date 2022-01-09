@@ -1,7 +1,7 @@
 #include <define.h>
 
 SUBROUTINE CLMMAIN ( &
-   
+
          ! 模型运行信息
            ipatch,       idate,        coszen,       deltim,        &
            patchlonr,    patchlatr,    patchclass,   patchtype,     &
@@ -61,9 +61,9 @@ SUBROUTINE CLMMAIN ( &
            zlnd,         zsno,         csoilc,       dewmx,         &
            wtfact,       capr,         cnfac,        ssi,           &
            wimp,         pondmx,       smpmax,       smpmin,        &
-           trsmx0,       tcrit,                                     & 
+           trsmx0,       tcrit,                                     &
 
-         ! additional variables required by coupling with WRF model 
+         ! additional variables required by coupling with WRF model
            emis,         z0m,          zol,          rib,           &
            ustar,        qstar,        tstar,        fm,            &
            fh,           fq                                         )
@@ -79,25 +79,25 @@ SUBROUTINE CLMMAIN ( &
 !    CLMMAIN ===> netsolar                 |> all surface
 !                 rain_snow_temp           !> all surface
 !
-!                 LEAF_interception        |]  
+!                 LEAF_interception        |]
 !                 newsnow                  |] patchtype = 0 (soil ground)
 !                 THERMAL                  |]           = 1 (urban & built-up)
 !                 WATER                    |]           = 2 (wetland)
 !                 snowcompaction           |]           = 3 (land ice)
 !                 snowlayerscombine        |]           = 4 (lake)
 !                 snowlayersdivide         |]
-!                 snowage                  |]  
+!                 snowage                  |]
 !
 !                 newsnow_lake             |]
 !                 laketem                  |] lake scheme
 !                 snowwater_lake           |]
 !
 !                 SOCEAN                   |> ocean and sea ice
-!                
+!
 !                 orb_coszen               |> all surface
-!                 EcoModel (LAI_empirical) |> land 
+!                 EcoModel (LAI_empirical) |> land
 !                 snowfraction             |> land
-!                 albland                  |> land 
+!                 albland                  |> land
 !                 albocean                 |> ocean & sea ice
 !
 !=======================================================================
@@ -118,25 +118,25 @@ SUBROUTINE CLMMAIN ( &
   USE SIMPLE_OCEAN
   USE ALBEDO
   USE timemanager
- 
+
   IMPLICIT NONE
- 
+
 ! ------------------------ Dummy Argument ------------------------------
   REAL(r8),intent(in) :: deltim  !seconds in a time step [second]
   LOGICAL, intent(in) :: doalb   !true if time for surface albedo calculation
   LOGICAL, intent(in) :: dolai   !true if time for leaf area index calculation
   LOGICAL, intent(in) :: dosst   !true to update sst/ice/snow before calculation
 
-  INTEGER, intent(in) :: & 
+  INTEGER, intent(in) :: &
         ipatch        ! patch index
 
   REAL(r8), intent(in) :: &
         patchlonr   ,&! logitude in radians
         patchlatr     ! latitude in radians
 
-  INTEGER, intent(in) :: & 
+  INTEGER, intent(in) :: &
         patchclass  ,&! land cover type of USGS classification or others
-        patchtype     ! land water type (0=soil, 1=urban and built-up, 
+        patchtype     ! land water type (0=soil, 1=urban and built-up,
                       ! 2=wetland, 3=land ice, 4=land water bodies, 99 = ocean)
 ! Parameters
 ! ----------------------
@@ -164,13 +164,13 @@ SUBROUTINE CLMMAIN ( &
         sqrtdi      ,&! inverse sqrt of leaf dimension [m**-0.5]
         effcon      ,&! quantum efficiency of RuBP regeneration (mol CO2/mol quanta)
         vmax25      ,&! maximum carboxylation rate at 25 C at canopy top
-        slti        ,&! slope of low temperature inhibition function      [s3] 
+        slti        ,&! slope of low temperature inhibition function      [s3]
         hlti        ,&! 1/2 point of low temperature inhibition function  [s4]
         shti        ,&! slope of high temperature inhibition function     [s1]
         hhti        ,&! 1/2 point of high temperature inhibition function [s2]
         trda        ,&! temperature coefficient in gs-a model             [s5]
         trdm        ,&! temperature coefficient in gs-a model             [s6]
-        trop        ,&! temperature coefficient in gs-a model          
+        trop        ,&! temperature coefficient in gs-a model
         gradm       ,&! conductance-photosynthesis slope parameter
         binter      ,&! conductance-photosynthesis intercep
         extkn       ,&! coefficient of leaf nitrogen allocation
@@ -248,7 +248,7 @@ SUBROUTINE CLMMAIN ( &
         green       ,&! greenness
         lai         ,&! leaf area index
         sai         ,&! stem area index
- 
+
         coszen      ,&! cosine of solar zenith angle
         alb(2,2)    ,&! averaged albedo [-]
         ssun(2,2)   ,&! sunlit canopy absorption for solar radiation
@@ -256,13 +256,13 @@ SUBROUTINE CLMMAIN ( &
         thermk      ,&! canopy gap fraction for tir radiation
         extkb       ,&! (k, g(mu)/mu) direct solar extinction coefficient
         extkd         ! diffuse and scattered diffuse PAR extinction coefficient
-        
-     
+
+
 ! additional diagnostic variables for output
   REAL(r8), intent(out) :: &
         laisun      ,&! sunlit leaf area index
         laisha      ,&! shaded leaf area index
-        rstfac      ,&! factor of soil water stress 
+        rstfac      ,&! factor of soil water stress
         wat         ,&! total water storage
         h2osoi(nl_soil)! volumetric soil water in layers [m3/m3]
 
@@ -293,8 +293,8 @@ SUBROUTINE CLMMAIN ( &
         qinfl       ,&! inflitration (mm h2o/s)
         qdrip       ,&! throughfall (mm h2o/s)
         qcharge     ,&! groundwater recharge [mm/s]
-       
-        rst         ,&! canopy stomatal resistance 
+
+        rst         ,&! canopy stomatal resistance
         assim       ,&! canopy assimilation
         respc       ,&! canopy respiration
 
@@ -376,7 +376,7 @@ SUBROUTINE CLMMAIN ( &
         lb          ,&! lower bound of arrays
         j             ! do looping index
 
-     REAL(r8) :: a, aa 
+     REAL(r8) :: a, aa
      INTEGER ps, pe, pc
 
 !======================================================================
@@ -464,7 +464,7 @@ ELSE
                               prc_rain,prc_snow,prl_rain,prl_snow,&
                               ldew,pg_rain,pg_snow,qintr)
 ENDIF
-      
+
       qdrip = pg_rain + pg_snow
 
 !----------------------------------------------------------------------
@@ -476,9 +476,9 @@ ENDIF
                     wliq_soisno(:0),wice_soisno(:0),fiold(:0),snl,sag,scv,snowdp,fsno)
 
 !----------------------------------------------------------------------
-! [4] Energy and Water balance 
+! [4] Energy and Water balance
 !----------------------------------------------------------------------
-      lb  = snl + 1           !lower bound of array 
+      lb  = snl + 1           !lower bound of array
 
       CALL THERMAL (ipatch   ,patchtype         ,lb                ,deltim            ,&
            trsmx0            ,zlnd              ,zsno              ,csoilc            ,&
@@ -519,10 +519,10 @@ ENDIF
            wa                ,qcharge                                                  )
 
       IF (snl < 0) THEN
-         ! Compaction rate for snow 
+         ! Compaction rate for snow
          ! Natural compaction and metamorphosis. The compaction rate
          ! is recalculated for every new timestep
-         lb  = snl + 1   !lower bound of array 
+         lb  = snl + 1   !lower bound of array
          CALL snowcompaction (lb,deltim,&
                          imelt(lb:0),fiold(lb:0),t_soisno(lb:0),&
                          wliq_soisno(lb:0),wice_soisno(lb:0),dz_soisno(lb:0))
@@ -539,7 +539,7 @@ ENDIF
                          z_soisno(lb:0),dz_soisno(lb:0),zi_soisno(lb-1:0),&
                          wliq_soisno(lb:0),wice_soisno(lb:0),t_soisno(lb:0))
       ENDIF
-      
+
       ! Set zero to the empty node
       IF (snl > maxsnl) THEN
          wice_soisno(maxsnl+1:snl) = 0.
@@ -581,7 +581,7 @@ ENDIF
 
 !======================================================================
 
-ELSE IF(patchtype == 3)THEN   ! <=== is LAND ICE (glacier/ice sheet) (patchtype = 3) 
+ELSE IF(patchtype == 3)THEN   ! <=== is LAND ICE (glacier/ice sheet) (patchtype = 3)
 
 !======================================================================
                             !initial set
@@ -620,9 +620,9 @@ ELSE IF(patchtype == 3)THEN   ! <=== is LAND ICE (glacier/ice sheet) (patchtype 
                     wliq_soisno(:0),wice_soisno(:0),fiold(:0),snl,sag,scv,snowdp,fsno)
 
       !----------------------------------------------------------------
-      ! Energy and Water balance 
+      ! Energy and Water balance
       !----------------------------------------------------------------
-      lb  = snl + 1            !lower bound of array 
+      lb  = snl + 1            !lower bound of array
 
       CALL GLACIER_TEMP (lb    ,nl_soil     ,deltim     ,&
                    zlnd        ,zsno        ,capr       ,cnfac       ,&
@@ -664,7 +664,7 @@ ELSE IF(patchtype == 3)THEN   ! <=== is LAND ICE (glacier/ice sheet) (patchtype 
 
 !======================================================================
 
-ELSE IF(patchtype == 4) THEN   ! <=== is LAND WATER BODIES (lake, reservior and river) (patchtype = 4) 
+ELSE IF(patchtype == 4) THEN   ! <=== is LAND WATER BODIES (lake, reservior and river) (patchtype = 4)
 
 !======================================================================
 
@@ -710,7 +710,7 @@ ELSE IF(patchtype == 4) THEN   ! <=== is LAND WATER BODIES (lake, reservior and 
            fiold(:0)    ,snl          ,sag             ,scv             ,&
            snowdp       ,lake_icefrac )
 
- 
+
       CALL laketem ( &
            ! "in" laketem arguments
            ! ---------------------------
@@ -754,7 +754,7 @@ ELSE IF(patchtype == 4) THEN   ! <=== is LAND WATER BODIES (lake, reservior and 
            fseng        ,fgrnd        ,snl             ,scv             ,&
            snowdp       ,sm )
 
-      ! We assume the land water bodies have zero extra liquid water capacity 
+      ! We assume the land water bodies have zero extra liquid water capacity
       ! (i.e.,constant capacity), all excess liquid water are put into the runoff,
       ! this unreasonable assumption should be updated in the future version
       a = (sum(wliq_soisno(snl+1:))-w_old)/deltim
@@ -774,19 +774,19 @@ ELSE IF(patchtype == 4) THEN   ! <=== is LAND WATER BODIES (lake, reservior and 
 
 !======================================================================
 
-ELSE                     ! <=== is OCEAN (patchtype >= 99) 
+ELSE                     ! <=== is OCEAN (patchtype >= 99)
 
 !======================================================================
 ! simple ocean-sea ice model
 
     tssea = t_grnd
-    tssub (1:7) = t_soisno (1:7) 
+    tssub (1:7) = t_soisno (1:7)
     CALL SOCEAN (dosst,deltim,oro,forc_hgt_u,forc_hgt_t,forc_hgt_q,&
                  forc_us,forc_vs,forc_t,forc_t,forc_rhoair,forc_psrf,&
                  sabg,forc_frl,tssea,tssub(1:7),scv,&
                  taux,tauy,fsena,fevpa,lfevpa,fseng,fevpg,tref,qref,&
                  z0m,zol,rib,ustar,qstar,tstar,fm,fh,fq,emis,olrg)
-                 
+
                ! null data for sea component
                  z_soisno   (:) = 0.0
                  dz_soisno  (:) = 0.0
@@ -795,7 +795,7 @@ ELSE                     ! <=== is OCEAN (patchtype >= 99)
                  wliq_soisno(:) = 0.0
                  wice_soisno(:) = 0.0
                  t_grnd  = tssea
-                 snowdp  = scv/1000.*20. 
+                 snowdp  = scv/1000.*20.
 
                  trad    = tssea
                  fgrnd   = 0.0
@@ -810,12 +810,12 @@ ENDIF
 !======================================================================
 ! Preparation for the next time step
 ! 1) time-varying parameters for vegatation
-! 2) fraction of snow cover 
+! 2) fraction of snow cover
 ! 3) solar zenith angle and
-! 4) albedos 
+! 4) albedos
 !======================================================================
 
-    ! cosine of solar zenith angle 
+    ! cosine of solar zenith angle
     calday = calendarday(idate, gridlond(1))
     coszen = orb_coszen(calday,patchlonr,patchlatr)
 
@@ -838,7 +838,7 @@ IF (patchtype == 0) THEN
 #endif
 
 #ifdef PFT_CLASSIFICATION
-       ps = patch_pft_s(ipatch)      
+       ps = patch_pft_s(ipatch)
        pe = patch_pft_e(ipatch)
        CALL snowfraction_pftwrap (ipatch,zlnd,scv,snowdp,wt,sigf,fsno)
        lai_p(ps:pe) = tlai_p(ps:pe)
@@ -862,7 +862,7 @@ ELSE
        sai = tsai(ipatch) * sigf
 ENDIF
 
-       ! update the snow age 
+       ! update the snow age
        IF (snl == 0) sag=0.
        CALL snowage (deltim,t_grnd,scv,scvold,sag)
 
@@ -870,8 +870,8 @@ ENDIF
        ssw = min(1.,1.e-3*wliq_soisno(1)/dz_soisno(1))
        IF (patchtype >= 3) ssw = 1.0
 
-       ! albedos 
-       ! we supposed CALL it every time-step, because 
+       ! albedos
+       ! we supposed CALL it every time-step, because
        ! other vegeation related parameters are needed to create
        IF (doalb) THEN
             CALL albland (ipatch, patchtype,&
@@ -916,13 +916,13 @@ ENDIF
        qinfl = 0.
        qdrip = forc_rain + forc_snow
        qintr = 0.
-       h2osoi = 0. 
+       h2osoi = 0.
        rstfac = 0.
        zwt = 0.
        wa = 4800.
        qcharge = 0.
     ENDIF
-      
+
     h2osoi = wliq_soisno(1:)/(dz_soisno(1:)*denh2o) + wice_soisno(1:)/(dz_soisno(1:)*denice)
     wat = sum(wice_soisno(1:)+wliq_soisno(1:))+ldew+scv + wa
 
