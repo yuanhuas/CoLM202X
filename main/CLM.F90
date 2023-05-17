@@ -2,7 +2,7 @@
 
 PROGRAM CLM
    ! ======================================================================
-   ! Reference: 
+   ! Reference:
    !     [1] Dai et al., 2003: The Common Land Model (CoLM).
    !         Bull. of Amer. Meter. Soc., 84: 1013-1023
    !     [2] Dai et al., 2004: A two-big-leaf model for canopy temperature,
@@ -49,7 +49,7 @@ PROGRAM CLM
 #ifdef PC_CLASSIFICATION
    USE mod_landpc
 #endif
-#if (defined UNSTRUCTURED || defined CATCHMENT) 
+#if (defined UNSTRUCTURED || defined CATCHMENT)
    USE mod_elm_vector
 #endif
 #ifdef CATCHMENT
@@ -94,13 +94,13 @@ PROGRAM CLM
    integer  :: edate(3)     ! calendar (year, julian day, seconds)
    integer  :: pdate(3)     ! calendar (year, julian day, seconds)
    logical  :: greenwich    ! greenwich time
-   
+
    logical :: doalb         ! true => start up the surface albedo calculation
    logical :: dolai         ! true => start up the time-varying vegetation paramter
    logical :: dosst         ! true => update sst/ice/snow
 
-   integer :: Julian_1day_p, Julian_1day 
-   integer :: Julian_8day_p, Julian_8day 
+   integer :: Julian_1day_p, Julian_1day
+   integer :: Julian_8day_p, Julian_8day
    integer :: s_year, s_month, s_day, s_seconds, s_julian
    integer :: e_year, e_month, e_day, e_seconds, e_julian
    integer :: p_year, p_month, p_day, p_seconds, p_julian
