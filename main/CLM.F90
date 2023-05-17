@@ -3,7 +3,7 @@
 PROGRAM CLM
    ! ======================================================================
    ! Reference: 
-   !     [1] Dai et al., 2003: The Common Land Model (CoLM). 
+   !     [1] Dai et al., 2003: The Common Land Model (CoLM).
    !         Bull. of Amer. Meter. Soc., 84: 1013-1023
    !     [2] Dai et al., 2004: A two-big-leaf model for canopy temperature,
    !         photosynthesis and stomatal conductance. J. Climate, 17: 2281-2299.
@@ -81,7 +81,7 @@ PROGRAM CLM
    IMPLICIT NONE
 
    character(LEN=256) :: nlfile
-   character(LEN=256) :: casename   
+   character(LEN=256) :: casename
    character(len=256) :: dir_landdata
    character(len=256) :: dir_forcing
    character(len=256) :: dir_hist
@@ -137,20 +137,20 @@ PROGRAM CLM
 
    deltim    = DEF_simulation_time%timestep
    greenwich = DEF_simulation_time%greenwich
-   s_year    = DEF_simulation_time%start_year    
-   s_month   = DEF_simulation_time%start_month    
+   s_year    = DEF_simulation_time%start_year
+   s_month   = DEF_simulation_time%start_month
    s_day     = DEF_simulation_time%start_day
-   s_seconds = DEF_simulation_time%start_sec   
-   e_year    = DEF_simulation_time%end_year      
+   s_seconds = DEF_simulation_time%start_sec
+   e_year    = DEF_simulation_time%end_year  
    e_month   = DEF_simulation_time%end_month
-   e_day     = DEF_simulation_time%end_day       
-   e_seconds = DEF_simulation_time%end_sec       
-   p_year    = DEF_simulation_time%spinup_year   
+   e_day     = DEF_simulation_time%end_day
+   e_seconds = DEF_simulation_time%end_sec
+   p_year    = DEF_simulation_time%spinup_year
    p_month   = DEF_simulation_time%spinup_month
-   p_day     = DEF_simulation_time%spinup_day    
-   p_seconds = DEF_simulation_time%spinup_sec  
+   p_day     = DEF_simulation_time%spinup_day
+   p_seconds = DEF_simulation_time%spinup_sec
    
-   spinup_repeat = DEF_simulation_time%spinup_repeat 
+   spinup_repeat = DEF_simulation_time%spinup_repeat
 
    call initimetype(greenwich)
    call monthday2julian(s_year,s_month,s_day,s_julian)
