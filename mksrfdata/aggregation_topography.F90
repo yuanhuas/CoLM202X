@@ -39,7 +39,8 @@ SUBROUTINE aggregation_topography ( &
    REAL(r8), allocatable :: topography_patches(:)
    REAL(r8), allocatable :: topography_one(:), area_one(:)
 #ifdef SrfdataDiag
-   INTEGER :: typpatch(N_land_classification+1), ityp
+   INTEGER :: ityp
+   INTEGER :: typindex(N_land_classification+1)
 #endif
 
    landdir = trim(dir_model_landdata) // '/topography/'
@@ -109,9 +110,9 @@ SUBROUTINE aggregation_topography ( &
    CALL ncio_write_vector (lndname, 'topography_patches', 'patch', landpatch, topography_patches, 1)
 
 #ifdef SrfdataDiag
-   typpatch = (/(ityp, ityp = 0, N_land_classification)/)
+   typindex = (/(ityp, ityp = 0, N_land_classification)/)
    lndname  = trim(dir_model_landdata) // '/diag/topo.nc'
-   CALL srfdata_map_and_write (topography_patches, landpatch%settyp, typpatch, m_patch2diag, &
+   CALL srfdata_map_and_write (topography_patches, landpatch%settyp, typindex, m_patch2diag, &
       -1.0e36_r8, lndname, 'topography', compress = 0, write_mode = 'one')
 #endif
 

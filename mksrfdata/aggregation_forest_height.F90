@@ -67,16 +67,6 @@ SUBROUTINE aggregation_forest_height ( &
    INTEGER  :: ip, ipft
    REAL(r8) :: sumarea
 
-#ifdef SrfdataDiag
-   INTEGER :: typpatch(N_land_classification+1), ityp
-#ifndef CROP
-   INTEGER :: typpft  (N_PFT)
-#else
-   INTEGER :: typpft  (N_PFT+N_CFT)
-#endif
-   INTEGER :: typpc   (N_land_classification+1)
-#endif
-
    landdir = trim(dir_model_landdata) // '/htop/'
 
 #ifdef USEMPI
@@ -142,14 +132,6 @@ SUBROUTINE aggregation_forest_height ( &
    CALL ncio_create_file_vector (lndname, landpatch)
    CALL ncio_define_dimension_vector (lndname, landpatch, 'patch')
    CALL ncio_write_vector (lndname, 'htop_patches', 'patch', landpatch, tree_height_patches, 1)
-
-#ifdef SrfdataDiag
-   typpatch = (/(ityp, ityp = 0, N_land_classification)/)
-   lndname  = trim(dir_model_landdata) // '/diag/htop_patch.nc'
-   CALL srfdata_map_and_write (tree_height_patches, landpatch%settyp, typpatch, m_patch2diag, &
-      -1.0e36_r8, lndname, 'htop', compress = 1, write_mode = 'one')
-#endif
-
 #else
    SITE_htop = tree_height_patches(1)
 #endif 
@@ -206,14 +188,6 @@ SUBROUTINE aggregation_forest_height ( &
    CALL ncio_create_file_vector (lndname, landpatch)
    CALL ncio_define_dimension_vector (lndname, landpatch, 'patch')
    CALL ncio_write_vector (lndname, 'htop_patches', 'patch', landpatch, htop_patches, 1)
-
-#ifdef SrfdataDiag
-   typpatch = (/(ityp, ityp = 0, N_land_classification)/)
-   lndname  = trim(dir_model_landdata) // '/diag/htop_patch.nc'
-   CALL srfdata_map_and_write (htop_patches, landpatch%settyp, typpatch, m_patch2diag, &
-      -1.0e36_r8, lndname, 'htop', compress = 1, write_mode = 'one')
-#endif
-
 #else
    SITE_htop = htop_patches(1)
 #endif 
@@ -252,7 +226,7 @@ SUBROUTINE aggregation_forest_height ( &
 
          CALL aggregation_request_data (landpatch, ipatch, gland, area = area_one, &
             data_r8_2d_in1 = htop,   data_r8_2d_out1 = htop_one, &
-            data_r8_3d_in1 = pftPCT, data_r8_3d_out1 = pct_one, n1_r8_3d_in1 = 16, lb1_r8_3d_in1 = 0)
+            data_r8_3d_in1 = pftPCT, data_r8_3d_out1 = pct_one, n1_r8_3d_in1 = 16)
 
          htop_patches(ipatch) = sum(htop_one * area_one) / sum(area_one)
 
@@ -294,29 +268,10 @@ SUBROUTINE aggregation_forest_height ( &
    CALL ncio_define_dimension_vector (lndname, landpatch, 'patch')
    CALL ncio_write_vector (lndname, 'htop_patches', 'patch', landpatch, htop_patches, 1)
    
-#ifdef SrfdataDiag
-   typpatch = (/(ityp, ityp = 0, N_land_classification)/)
-   lndname  = trim(dir_model_landdata) // '/diag/htop_patch.nc'
-   CALL srfdata_map_and_write (htop_patches, landpatch%settyp, typpatch, m_patch2diag, &
-      -1.0e36_r8, lndname, 'htop', compress = 1, write_mode = 'one')
-#endif
-
    lndname = trim(landdir)//'/htop_pfts.nc'
    CALL ncio_create_file_vector (lndname, landpft)
    CALL ncio_define_dimension_vector (lndname, landpft, 'pft')
    CALL ncio_write_vector (lndname, 'htop_pfts', 'pft', landpft, htop_pfts, 1)
-
-#ifdef SrfdataDiag
-#ifndef CROP
-   typpft  = (/(ityp, ityp = 0, N_PFT-1)/)
-#else
-   typpft  = (/(ityp, ityp = 0, N_PFT+N_CFT-1)/)
-#endif
-   lndname = trim(dir_model_landdata) // '/diag/htop_pft.nc'
-   CALL srfdata_map_and_write (htop_pfts, landpft%settyp, typpft, m_pft2diag, &
-      -1.0e36_r8, lndname, 'htop', compress = 1, write_mode = 'one')
-#endif
-
 #else
    allocate (SITE_htop_pfts(numpft))
    SITE_htop_pfts(:) = htop_pfts(:)
@@ -358,7 +313,7 @@ SUBROUTINE aggregation_forest_height ( &
 
          CALL aggregation_request_data (landpatch, ipatch, gland, area = area_one, &
             data_r8_2d_in1 = htop,   data_r8_2d_out1 = htop_one, &
-            data_r8_3d_in1 = pftPCT, data_r8_3d_out1 = pct_one, n1_r8_3d_in1 = 16, lb1_r8_3d_in1 = 0)
+            data_r8_3d_in1 = pftPCT, data_r8_3d_out1 = pct_one, n1_r8_3d_in1 = 16)
 
          htop_patches(ipatch) = sum(htop_one * area_one) / sum(area_one)
 
@@ -395,19 +350,11 @@ SUBROUTINE aggregation_forest_height ( &
    CALL ncio_define_dimension_vector (lndname, landpatch, 'patch')
    CALL ncio_write_vector (lndname, 'htop_patches', 'patch', landpatch, htop_patches, 1)
 
-#ifdef SrfdataDiag
-   typpatch = (/(ityp, ityp = 0, N_land_classification)/)
-   lndname  = trim(dir_model_landdata) // '/diag/htop_patch.nc'
-   CALL srfdata_map_and_write (htop_patches, landpatch%settyp, typpatch, m_patch2diag, &
-      -1.0e36_r8, lndname, 'htop', compress = 1, write_mode = 'one')
-#endif
-
    lndname = trim(landdir)//'/htop_pcs.nc'
    CALL ncio_create_file_vector (lndname, landpc)
    CALL ncio_define_dimension_vector (lndname, landpc, 'pc')
    CALL ncio_define_dimension_vector (lndname, landpc, 'pft', N_PFT)
    CALL ncio_write_vector (lndname, 'htop_pcs', 'pft', N_PFT, 'pc', landpc, htop_pcs, 1)
-
 #else
    allocate (SITE_htop_pfts(N_PFT))
    SITE_htop_pfts(:) = htop_pcs(:,1)

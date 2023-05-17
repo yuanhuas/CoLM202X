@@ -47,7 +47,7 @@ MODULE mod_pixelset
       procedure, PUBLIC :: set_vecgs         => vec_gather_scatter_set
       procedure, PUBLIC :: get_lonlat_radian => pixelset_get_lonlat_radian
       procedure, PUBLIC :: pset_pack         => pixelset_pack
-
+      procedure, PUBLIC :: forc_free_mem     => pixelset_forc_free_mem
       final :: pixelset_free_mem
 
    END TYPE pixelset_type
@@ -215,7 +215,43 @@ CONTAINS
       IF (allocated(this%yblkgrp)) deallocate(this%yblkgrp)
 
    END SUBROUTINE pixelset_free_mem
-   
+  
+   ! --------------------------------
+   SUBROUTINE pixelset_forc_free_mem (this)
+      
+      IMPLICIT NONE
+
+      class(pixelset_type) :: this
+
+      IF (allocated(this%eindex)) deallocate(this%eindex)
+      IF (allocated(this%ipxstt)) deallocate(this%ipxstt)
+      IF (allocated(this%ipxend)) deallocate(this%ipxend)
+      IF (allocated(this%settyp)) deallocate(this%settyp)
+
+      IF (allocated(this%ielm  )) deallocate(this%ielm  )
+
+      IF (allocated(this%xblkgrp)) deallocate(this%xblkgrp)
+      IF (allocated(this%yblkgrp)) deallocate(this%yblkgrp)
+
+   END SUBROUTINE pixelset_forc_free_mem 
+   ! --------------------------------
+   SUBROUTINE copy_pixelset(pixel_from, pixel_to)
+      IMPLICIT NONE
+
+      TYPE(pixelset_type), intent(in)  :: pixel_from
+      TYPE(pixelset_type), intent(out) :: pixel_to
+
+      pixel_to%eindex = pixel_from%eindex
+      pixel_to%ipxstt = pixel_from%ipxstt
+      pixel_to%ipxend = pixel_from%ipxend
+      pixel_to%ielm   = pixel_from%ielm
+
+      pixel_to%nset   = pixel_from%nset
+      pixel_to%nblkgrp= pixel_from%nblkgrp
+      pixel_to%xblkgrp= pixel_from%xblkgrp
+      pixel_to%yblkgrp= pixel_from%yblkgrp
+      
+   END SUBROUTINE
    ! --------------------------------
    SUBROUTINE vec_gather_scatter_set (this)
 

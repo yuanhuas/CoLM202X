@@ -28,6 +28,14 @@ MODULE mod_mesh
    
 CONTAINS
 
+   SUBROUTINE deallocate_mesh(this)
+      IMPLICIT NONE
+
+      TYPE(irregular_elm_type) :: this
+
+      IF (allocated(this%ilon)) deallocate(this%ilon)
+      IF (allocated(this%ilat)) deallocate(this%ilat)
+   END SUBROUTINE deallocate_mesh
    ! -------
    SUBROUTINE copy_elm (elm_from, elm_to)
 
