@@ -158,7 +158,7 @@ MODULE MOD_Namelist
    LOGICAL :: DEF_USE_OZONESTRESS             = .false.
    LOGICAL :: DEF_USE_OZONEDATA               = .false.
 
-    ! .true. for running SNICAR model
+   ! .true. for running SNICAR model
    logical :: DEF_USE_SNICAR                  = .true.
 
    ! .true. read aerosol deposition data from file or .false. set in the code
@@ -839,7 +839,7 @@ CONTAINS
            write(*,*) 'Note: The Urban model is not opened. IF you want to run Urban model '
            write(*,*) 'please #define URBAN_MODEL in define.h. otherwise DEF_URBAN_RUN will '
            write(*,*) 'be set to false automatically.'
-           DEF_URBAN_RUN = .true.
+           DEF_URBAN_RUN = .false.
         ENDIF
 #endif
 
