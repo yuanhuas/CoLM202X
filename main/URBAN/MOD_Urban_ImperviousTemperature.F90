@@ -58,22 +58,22 @@ CONTAINS
   REAL(r8), intent(in) :: cnfac    !Crank Nicholson factor between 0 and 1
 
   REAL(r8), intent(in) :: csol  (1:nl_soil) !heat capacity of soil solids [J/(m3 K)]
-  REAL(r8), INTENT(in) :: k_solids(1:nl_soil) ! thermal conductivity of minerals soil [W/m-K]
+  REAL(r8), intent(in) :: k_solids(1:nl_soil) ! thermal conductivity of minerals soil [W/m-K]
   REAL(r8), intent(in) :: porsl (1:nl_soil) !soil porosity [-]
 
   REAL(r8), intent(in) :: dkdry (1:nl_soil) !thermal conductivity of dry soil [W/m-K]
   REAL(r8), intent(in) :: dksatu(1:nl_soil) !thermal conductivity of saturated soil [W/m-K]
-  REAL(r8), INTENT(in) :: dksatf(1:nl_soil) ! thermal conductivity of saturated frozen soil [W/m-K]
+  REAL(r8), intent(in) :: dksatf(1:nl_soil) ! thermal conductivity of saturated frozen soil [W/m-K]
 
-  REAL(r8), INTENT(in) :: vf_quartz (1:nl_soil) ! volumetric fraction of quartz within mineral soil
-  REAL(r8), INTENT(in) :: vf_gravels(1:nl_soil) ! volumetric fraction of gravels
-  REAL(r8), INTENT(in) :: vf_om     (1:nl_soil) ! volumetric fraction of organic matter
-  REAL(r8), INTENT(in) :: vf_sand   (1:nl_soil) ! volumetric fraction of sand
-  REAL(r8), INTENT(in) :: wf_gravels(1:nl_soil) ! gravimetric fraction of gravels
-  REAL(r8), INTENT(in) :: wf_sand   (1:nl_soil) ! gravimetric fraction of sand
+  REAL(r8), intent(in) :: vf_quartz (1:nl_soil) ! volumetric fraction of quartz within mineral soil
+  REAL(r8), intent(in) :: vf_gravels(1:nl_soil) ! volumetric fraction of gravels
+  REAL(r8), intent(in) :: vf_om     (1:nl_soil) ! volumetric fraction of organic matter
+  REAL(r8), intent(in) :: vf_sand   (1:nl_soil) ! volumetric fraction of sand
+  REAL(r8), intent(in) :: wf_gravels(1:nl_soil) ! gravimetric fraction of gravels
+  REAL(r8), intent(in) :: wf_sand   (1:nl_soil) ! gravimetric fraction of sand
 
-  REAL(r8), INTENT(in) :: BA_alpha(1:nl_soil) ! alpha in Balland and Arp(2005) thermal conductivity scheme
-  REAL(r8), INTENT(in) :: BA_beta(1:nl_soil)  ! beta in Balland and Arp(2005) thermal conductivity scheme
+  REAL(r8), intent(in) :: BA_alpha(1:nl_soil) ! alpha in Balland and Arp(2005) thermal conductivity scheme
+  REAL(r8), intent(in) :: BA_beta(1:nl_soil)  ! beta in Balland and Arp(2005) thermal conductivity scheme
 
   REAL(r8), intent(in) :: cv_gimp(1:nl_soil)       !heat capacity of urban impervious [J/m3/K]
   REAL(r8), intent(in) :: tk_gimp(1:nl_soil)       !thermal conductivity of urban impervious [W/m/K]
