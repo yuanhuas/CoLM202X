@@ -253,7 +253,7 @@ MODULE MOD_SoilSnowHydrology
       dzmm(1:) = dz_soisno(1:)*1000.
       zimm(0:) = zi_soisno(0:)*1000.
 
-      call soilwater(nl_soil,deltim,wimp,smpmin,&
+      call soilwater(patchtype,nl_soil,deltim,wimp,smpmin,&
                      qinfl,etr,z_soisno(1:),dz_soisno(1:),zi_soisno(0:),&
                      t_soisno(1:),vol_liq,vol_ice,smp,hk,icefrac,eff_porosity,&
                      porsl,hksati,bsw,psi0,rootr,&
@@ -1239,11 +1239,6 @@ real(r8), INTENT(out) :: qinfl_fld ! inundation water input from top (mm/s)
     ! (cloud-borne) aerosol, and "pho" flavors are interstitial
     ! aerosol. "wet" and "dry" fluxes of BC and OC specified here are
     ! purely diagnostic
-    !
-    ! NOTE: right now the macro 'MODAL_AER' is not defined anywhere, i.e.,
-    ! the below (modal aerosol scheme) is not available and can not be
-    ! active either. It depends on the specific input aerosol deposition
-    ! data which is suitable for modal scheme. [06/15/2023, Hua Yuan]
 
     flx_bc_dep_phi   = forc_aer(3)
     flx_bc_dep_pho   = forc_aer(1) + forc_aer(2)
@@ -1413,7 +1408,7 @@ real(r8), INTENT(out) :: qinfl_fld ! inundation water input from top (mm/s)
 
 
 
-  subroutine soilwater(nl_soil,deltim,wimp,smpmin,&
+  subroutine soilwater(patchtype,nl_soil,deltim,wimp,smpmin,&
                        qinfl,etr,z_soisno,dz_soisno,zi_soisno,&
                        t_soisno,vol_liq,vol_ice,smp,hk,icefrac,eff_porosity,&
                        porsl,hksati,bsw,psi0,rootr,&
@@ -1490,13 +1485,14 @@ real(r8), INTENT(out) :: qinfl_fld ! inundation water input from top (mm/s)
 
     IMPLICIT NONE
 
-    integer, INTENT(in) :: nl_soil  ! number of soil layers
-    real(r8), INTENT(in) :: deltim  ! land model time step (sec)
-    real(r8), INTENT(in) :: wimp    ! water impremeable if porosity less than wimp
-    real(r8), INTENT(in) :: smpmin  ! restriction for min of soil potential (mm)
+    INTEGER , INTENT(in) :: patchtype ! land water type
+    integer , INTENT(in) :: nl_soil   ! number of soil layers
+    real(r8), INTENT(in) :: deltim    ! land model time step (sec)
+    real(r8), INTENT(in) :: wimp      ! water impremeable if porosity less than wimp
+    real(r8), INTENT(in) :: smpmin    ! restriction for min of soil potential (mm)
 
-    real(r8), INTENT(in) :: qinfl   ! infiltration (mm H2O /s)
-    real(r8), INTENT(in) :: etr     ! vegetation transpiration (mm H2O/s) (+ = to atm)
+    real(r8), INTENT(in) :: qinfl     ! infiltration (mm H2O /s)
+    real(r8), INTENT(in) :: etr       ! vegetation transpiration (mm H2O/s) (+ = to atm)
 
     real(r8), INTENT(in) :: z_soisno (1:nl_soil) ! layer depth (m)
     real(r8), INTENT(in) :: dz_soisno(1:nl_soil) ! layer thickness (m)
@@ -1579,26 +1575,49 @@ real(r8), INTENT(out) :: qinfl_fld ! inundation water input from top (mm/s)
     ! Compute matric potential and derivative based on liquid water content only
     do j = 1, nl_soil
        if(DEF_USE_PLANTHYDRAULICS)then
-          if(t_soisno(j)>=tfrz) then
-             if(porsl(j)<1.e-6)then     ! bed rock
-                s_node = 0.001
-                smp(j) = psi0(j)
-                dsmpdw(j) = 0.
+          IF (patchtype /= 1) THEN
+             if(t_soisno(j)>=tfrz) then
+                if(porsl(j)<1.e-6)then     ! bed rock
+                   s_node = 0.001
+                   smp(j) = psi0(j)
+                   dsmpdw(j) = 0.
+                else
+                   s_node = max(vol_liq(j)/porsl(j),0.01)
+                   s_node = min(1.0,s_node)
+                   smp(j) = psi0(j)*s_node**(-bsw(j))
+                   smp(j) = max(smpmin,smp(j))
+                   dsmpdw(j) = -bsw(j)*smp(j)/(s_node*porsl(j))
+                endif
              else
-                s_node = max(vol_liq(j)/porsl(j),0.01)
-                s_node = min(1.0,s_node)
-                smp(j) = psi0(j)*s_node**(-bsw(j))
-                smp(j) = max(smpmin,smp(j))
-                dsmpdw(j) = -bsw(j)*smp(j)/(s_node*porsl(j))
+                ! when ice is present, the matric potential is only related to temperature
+                ! by (Fuchs et al., 1978: Soil Sci. Soc. Amer. J. 42(3):379-385)
+                ! Unit 1 Joule = 1 (kg m2/s2), J/kg /(m/s2) ==> m ==> 1e3 mm
+                smp(j) = 1.e3 * 0.3336e6/9.80616*(t_soisno(j)-tfrz)/t_soisno(j)
+                smp(j) = max(smpmin, smp(j))        ! Limit soil suction
+                dsmpdw(j) = 0.
              endif
-          else
-             ! when ice is present, the matric potential is only related to temperature
-             ! by (Fuchs et al., 1978: Soil Sci. Soc. Amer. J. 42(3):379-385)
-             ! Unit 1 Joule = 1 (kg m2/s2), J/kg /(m/s2) ==> m ==> 1e3 mm
-             smp(j) = 1.e3 * 0.3336e6/9.80616*(t_soisno(j)-tfrz)/t_soisno(j)
-             smp(j) = max(smpmin, smp(j))        ! Limit soil suction
-             dsmpdw(j) = 0.
-          endif
+          ELSE
+             if (t_soisno(j)>tfrz) then
+                if (porsl(j)<1.e-6)then     ! bed rock
+                   s_node = 0.001
+                   smp(j) = psi0(j)
+                   dsmpdw(j) = 0.
+                else
+                   s_node = max(vol_liq(j)/porsl(j),0.01)
+                   s_node = min(1.0,s_node)
+                   smp(j) = psi0(j)*s_node**(-bsw(j))
+                   smp(j) = max(smpmin,smp(j))
+                   dsmpdw(j) = -bsw(j)*smp(j)/(s_node*porsl(j))
+                endif
+             else
+                ! when ice is present, the matric potential is only related to temperature
+                ! by (Fuchs et al., 1978: Soil Sci. Soc. Amer. J. 42(3):379-385)
+                ! Unit 1 Joule = 1 (kg m2/s2), J/kg /(m/s2) ==> m ==> 1e3 mm
+                smp(j) = 1.e3 * 0.3336e6/9.80616*(t_soisno(j)-tfrz)/t_soisno(j)
+                smp(j) = max(smpmin, smp(j))        ! Limit soil suction
+                dsmpdw(j) = 0.
+             endif
+          ENDIF
        else
           if(t_soisno(j)>tfrz) then
              if(porsl(j)<1.e-6)then     ! bed rock
@@ -1694,8 +1713,12 @@ real(r8), INTENT(out) :: qinfl_fld ! inundation water input from top (mm/s)
     amx(j) = 0.
     bmx(j) = dzmm(j)/deltim + dqodw1(j)
     cmx(j) = dqodw2(j)
-    if(DEF_USE_PLANTHYDRAULICS)then
-       rmx(j) =  qin(j) - qout(j) - rootr(j)
+    if (DEF_USE_PLANTHYDRAULICS) then
+       IF (patchtype /= 1) THEN
+          rmx(j) =  qin(j) - qout(j) - rootr(j)
+       ELSE
+          rmx(j) =  qin(j) - qout(j) - etr*rootr(j)
+       ENDIF
     else
        rmx(j) =  qin(j) - qout(j) - etr*rootr(j)
     end if
@@ -1714,8 +1737,12 @@ real(r8), INTENT(out) :: qinfl_fld ! inundation water input from top (mm/s)
        amx(j) = -dqidw0(j)
        bmx(j) =  dzmm(j)/deltim - dqidw1(j) + dqodw1(j)
        cmx(j) =  dqodw2(j)
-       if(DEF_USE_PLANTHYDRAULICS)then
-          rmx(j) =  qin(j) - qout(j) - rootr(j)
+       if (DEF_USE_PLANTHYDRAULICS) then
+          IF (patchtype /= 1) THEN
+             rmx(j) =  qin(j) - qout(j) - rootr(j)
+          ELSE
+             rmx(j) =  qin(j) - qout(j) - etr*rootr(j)
+          ENDIF
        else
           rmx(j) =  qin(j) - qout(j) - etr*rootr(j)
        end if
@@ -1741,8 +1768,12 @@ real(r8), INTENT(out) :: qinfl_fld ! inundation water input from top (mm/s)
     amx(j) = -dqidw0(j)
     bmx(j) =  dzmm(j)/deltim - dqidw1(j) + dqodw1(j)
     cmx(j) =  dqodw2(j)
-    if(DEF_USE_PLANTHYDRAULICS)then
-       rmx(j) =  qin(j) - qout(j) - rootr(j)
+    if (DEF_USE_PLANTHYDRAULICS) then
+       IF (patchtype /= 1) THEN
+          rmx(j) =  qin(j) - qout(j) - rootr(j)
+       ELSE
+          rmx(j) =  qin(j) - qout(j) - etr*rootr(j)
+       ENDIF
     else
        rmx(j) =  qin(j) - qout(j) - etr*rootr(j)
     end if
@@ -1755,8 +1786,12 @@ real(r8), INTENT(out) :: qinfl_fld ! inundation water input from top (mm/s)
 ! The mass balance error (mm) for this time step is
     errorw = -deltim*(qin(1)-qout(nl_soil)-dqodw1(nl_soil)*dwat(nl_soil))
     do j = 1, nl_soil
-       if(DEF_USE_PLANTHYDRAULICS)then
-          errorw = errorw+dwat(j)*dzmm(j)+rootr(j)*deltim
+       if (DEF_USE_PLANTHYDRAULICS) then
+          IF (patchtype /= 1) THEN
+             errorw = errorw+dwat(j)*dzmm(j)+rootr(j)*deltim
+          ELSE
+             errorw = errorw+dwat(j)*dzmm(j)+etr*rootr(j)*deltim
+          ENDIF
        else
           errorw = errorw+dwat(j)*dzmm(j)+etr*rootr(j)*deltim
        end if

@@ -105,7 +105,7 @@ CONTAINS
          CALL allocate_block_data (gurban, data_urb_class)
          CALL flush_block_data (data_urb_class, 0)
 
-         write(cyear,'(i4.4)') lc_year
+         write(cyear,'(i4.4)') int(lc_year/5)*5
          suffix = 'URB'//trim(cyear)
 #ifdef URBAN_LCZ
          CALL read_5x5_data (dir_urban, suffix, gurban, 'LCZ', data_urb_class)
@@ -156,7 +156,7 @@ CONTAINS
                ! Some urban patches and NCAR data are inconsistent (NCAR has no urban ID),
                ! so the these points are assigned by the 3(medium density), or can define by ueser
                where (ibuff < 1 .or. ibuff > 3)
-                  ibuff = 3
+                  ibuff = 2
                END where
 #else
                ! Same for NCAR, fill the gap LCZ class of urban patch if LCZ data is non-urban

@@ -762,6 +762,7 @@ CONTAINS
 
          IF (abs(eb-forc_frl) > 1e-6) THEN
             print *, "Urban Only Longwave - Energy Balance Check error!", eb-forc_frl
+            CALL abort
          ENDIF
 
          ! fur per unit surface
@@ -943,7 +944,7 @@ CONTAINS
            twsha_inner,lwsha,clwsha,sabwsha,fsenwsha,cwalls,tkdz_wsha)
 
       CALL UrbanImperviousTem (patchtype,lbi,deltim,&
-           capr,cnfac,csol,k_solids,porsl,psi0,dkdry,dksatu,dksatf,&
+           capr,cnfac,csol,k_solids,porsl,dkdry,dksatu,dksatf,&
            vf_quartz,vf_gravels,vf_om,vf_sand,wf_gravels,wf_sand,&
            BA_alpha, BA_beta,&
            cv_gimp,tk_gimp,dz_gimpsno,z_gimpsno,zi_gimpsno,&
@@ -1254,6 +1255,7 @@ CONTAINS
 
       IF (abs(eb) > 1e-6) THEN
          print *, "Urban Vegetation Longwave - Energy Balance Check error!", eb
+         CALL abort
       ENDIF
 
       ! for per unit surface
