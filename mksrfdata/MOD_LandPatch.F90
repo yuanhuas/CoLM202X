@@ -14,7 +14,7 @@ MODULE MOD_LandPatch
    !       ELEMENT >>> HRU >>> PATCH
    !    If Plant Function Type classification is used, PATCH is further divided into PFT.
    !    If Plant Community classification is used,     PATCH is further divided into PC.
-   ! 
+   !
    !    "landpatch" refers to pixelset PATCH.
    !
    ! Created by Shupeng Zhang, May 2023
@@ -201,13 +201,14 @@ CONTAINS
 #endif
 
 #ifdef CATCHMENT
-            IF (landhru%settyp(iset) == 0) THEN
+            IF (landhru%settyp(iset) <= 0) THEN
                types(ipxstt:ipxend) = WATERBODY
             ENDIF
 #endif
 
-#ifdef LULC_IGBP_PFT
-            ! For classification of plant function types, merge all land types with soil ground
+IF ((DEF_USE_PFT .and. .not.DEF_SOLO_PFT) .or. DEF_FAST_PC) THEN
+            ! For classification of plant function types or fast PC,
+            ! merge all land types with soil ground
             DO ipxl = ipxstt, ipxend
                IF (types(ipxl) > 0) THEN
                   IF (patchtypes(types(ipxl)) == 0) THEN
@@ -223,7 +224,7 @@ CONTAINS
                   ENDIF
                ENDIF
             ENDDO
-#endif
+ENDIF
 
             allocate (order (ipxstt:ipxend))
             order = (/ (ipxl, ipxl = ipxstt, ipxend) /)
@@ -386,7 +387,7 @@ CONTAINS
       CALL ncio_write_vector (lndname, 'patchfrac_elm', 'patch', landpatch, elm_patch%subfrc, 1)
 
 #ifdef CATCHMENT
-      lndname = trim(dir_landdata)//'/landpatch/'//trim(cyear)//'patchfrac_hru.nc'
+      lndname = trim(dir_landdata)//'/landpatch/'//trim(cyear)//'/patchfrac_hru.nc'
       CALL ncio_create_file_vector (lndname, landpatch)
       CALL ncio_define_dimension_vector (lndname, landpatch, 'patch')
       CALL ncio_write_vector (lndname, 'patchfrac_hru', 'patch', landpatch, hru_patch%subfrc, 1)

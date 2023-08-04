@@ -8,7 +8,7 @@ VPATH = include : share : mksrfdata : mkinidata : main : main/HYDRO : main/BGC :
 
 # ********** Targets ALL **********
 .PHONY: all
-all : mkdir_build mksrfdata.x mkinidata.x colm.x postprocess.x
+all : mkdir_build mksrfdata.x mkinidata.x colm.x postprocess.x lib
 	@echo ''
 	@echo '*******************************************************'
 	@echo '*                                                     *'
@@ -23,14 +23,15 @@ mkdir_build :
 
 OBJS_SHARED =    \
 				  MOD_Precision.o              \
-				  MOD_Vars_Global.o            \
-				  MOD_Const_Physical.o         \
 				  MOD_SPMD_Task.o              \
 				  MOD_Namelist.o               \
+				  MOD_Vars_Global.o            \
+				  MOD_Const_Physical.o         \
 				  MOD_Const_LC.o               \
 				  MOD_Utils.o                  \
 				  MOD_TimeManager.o            \
 				  MOD_NetCDFSerial.o           \
+				  MOD_SingleSrfdata.o          \
 				  MOD_Block.o                  \
 				  MOD_Grid.o                   \
 				  MOD_Pixel.o                  \
@@ -46,13 +47,11 @@ OBJS_SHARED =    \
 				  MOD_Mapping_Pset2Grid.o      \
 				  MOD_AggregationRequestData.o \
 				  MOD_PixelsetShadow.o         \
-				  MOD_SingleSrfdata.o          \
 				  MOD_LandElm.o                \
 				  MOD_LandHRU.o                \
 				  MOD_LandPatch.o              \
 				  MOD_LandUrban.o              \
 				  MOD_LandPFT.o                \
-				  MOD_LandPC.o                 \
 				  MOD_SrfdataDiag.o            \
 				  MOD_SrfdataRestart.o         \
 				  MOD_ElmVector.o              \
@@ -100,19 +99,16 @@ OBJS_BASIC =    \
 				 MOD_Hydro_Vars_1DFluxes.o      \
 				 MOD_BGC_Vars_1DFluxes.o        \
 				 MOD_BGC_Vars_1DPFTFluxes.o     \
-				 MOD_BGC_Vars_2DFluxes.o        \
 				 MOD_BGC_Vars_PFTimeVariables.o \
 				 MOD_BGC_Vars_TimeInvariants.o  \
 				 MOD_BGC_Vars_TimeVariables.o   \
 				 MOD_Urban_Vars_1DFluxes.o      \
-				 MOD_Urban_Vars_2DFluxes.o      \
 				 MOD_Urban_Vars_TimeVariables.o \
 				 MOD_Urban_Vars_TimeInvariants.o\
 				 MOD_Const_PFT.o                \
 				 MOD_Vars_TimeInvariants.o      \
 				 MOD_Vars_TimeVariables.o       \
 				 MOD_Vars_1DPFTFluxes.o         \
-				 MOD_Vars_1DPCFluxes.o          \
 				 MOD_Vars_1DFluxes.o            \
 				 MOD_Vars_1DForcing.o           \
 				 MOD_Hydro_SoilFunction.o       \
@@ -212,12 +208,12 @@ OBJS_CAMA_T = $(addprefix .bld/,${OBJECTS_CAMA})
 endif
 
 OBJS_MAIN = \
-				MOD_Hydro_SurfaceNetwork.o                \
-				MOD_Hydro_RiverNetwork.o                  \
-				MOD_Hydro_SubsurfaceNetwork.o             \
-				MOD_Hydro_SurfaceFlow.o                   \
+				MOD_Hydro_HillslopeNetwork.o              \
+				MOD_Hydro_RiverLakeNetwork.o              \
+				MOD_Hydro_BasinNeighbour.o                \
+				MOD_Hydro_HillslopeFlow.o                 \
 				MOD_Hydro_SubsurfaceFlow.o                \
-				MOD_Hydro_RiverFlow.o                     \
+				MOD_Hydro_RiverLakeFlow.o                 \
 				MOD_Hydro_Hist.o                          \
 				MOD_Hydro_LateralFlow.o                   \
 				MOD_BGC_CNCStateUpdate1.o                 \
@@ -251,7 +247,6 @@ OBJS_MAIN = \
 				MOD_BGC_Veg_CNFireBase.o                  \
 				MOD_BGC_Veg_CNFireLi2016.o                \
 				MOD_BGC_driver.o                          \
-				MOD_Vars_2DFluxes.o                       \
 				MOD_Vars_2DForcing.o                      \
 				MOD_UserSpecifiedForcing.o                \
 				MOD_ForcingDownscaling.o                  \
@@ -280,7 +275,9 @@ OBJS_MAIN = \
 				MOD_Thermal.o                             \
 				MOD_Vars_1DAccFluxes.o                    \
 				MOD_CaMa_Vars.o                           \
+				MOD_HistGridded.o                         \
 				MOD_HistVector.o                          \
+				MOD_HistSingle.o                          \
 				MOD_Hist.o                                \
 				MOD_LightningData.o                       \
 				MOD_CaMa_colmCaMa.o                       \
@@ -382,10 +379,22 @@ postprocess.x : mkdir_build hist_concatenate.x srfdata_concatenate.x post_vector
 endif
 # --- End of Target 4 postprocess ------
 
+# ------ Target 5: static libs --------
+.PHONY: lib
+lib :
+	@echo ''
+	@echo 'making CoLM static library >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>'
+	mkdir -p lib
+	cd lib && find ../.bld -name "*.o" ! -name "CoLM.o" ! -name "MKSRFDATA.o" ! -name "CoLMINI.o" -exec ln -sf {} ./ \;
+	cd lib && ar rc libcolm.a *.o && ranlib libcolm.a
+	ln -sf lib/libcolm.a ./libcolm.a
+# ------End of Target 5: static libs --------
 
 .PHONY: clean
 clean :
 	rm -rf .bld
+	rm -rf lib libcolm.a
 	rm -f run/mksrfdata.x run/mkinidata.x run/colm.x
 	rm -f run/hist_concatenate.x run/srfdata_concatenate.x run/post_vector2grid.x
 	rm -f CaMa/src/*.o CaMa/src/*.mod CaMa/src/*.a
+

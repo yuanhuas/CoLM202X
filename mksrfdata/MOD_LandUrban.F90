@@ -15,7 +15,7 @@ MODULE MOD_LandUrban
 
    USE MOD_Grid
    USE MOD_Pixelset
-   USE MOD_Vars_Global, only: NCAR_URB, LCZ_URB, URBAN
+   USE MOD_Vars_Global, only: N_URB, URBAN
    IMPLICIT NONE
 
    ! ---- Instance ----
@@ -77,7 +77,6 @@ CONTAINS
       INTEGER :: nurb_glb, npatch_glb
 
       ! local vars for landpath and landurban
-      INTEGER :: N_URB
       INTEGER :: numpatch_
       INTEGER, allocatable :: eindex_(:)
       INTEGER, allocatable :: ipxstt_(:)
@@ -123,25 +122,21 @@ ENDIF
 
       if (p_is_worker) then
 
-IF (DEF_URBAN_type_scheme == 1) THEN
-         N_URB = NCAR_URB
-ELSE IF(DEF_URBAN_type_scheme == 2) THEN
-         N_URB = LCZ_URB
-ENDIF
+         IF (numpatch > 0) THEN
+            ! a temporary numpatch with max urban patch
+            numpatch_ = numpatch + count(landpatch%settyp == URBAN) * (N_URB-1)
 
-         ! a temporary numpatch with max urban patch
-         numpatch_ = numpatch + count(landpatch%settyp == URBAN) * (N_URB-1)
+            allocate (eindex_(numpatch_))
+            allocate (ipxstt_(numpatch_))
+            allocate (ipxend_(numpatch_))
+            allocate (settyp_(numpatch_))
+            allocate (ielm_  (numpatch_))
 
-         allocate (eindex_(numpatch_))
-         allocate (ipxstt_(numpatch_))
-         allocate (ipxend_(numpatch_))
-         allocate (settyp_(numpatch_))
-         allocate (ielm_  (numpatch_))
-
-         ! max urban patch number
-         numurban_ = count(landpatch%settyp == URBAN) * N_URB
-         IF (numurban_ > 0) THEN
-            allocate (urbclass(numurban_))
+            ! max urban patch number
+            numurban_ = count(landpatch%settyp == URBAN) * N_URB
+            IF (numurban_ > 0) THEN
+               allocate (urbclass(numurban_))
+            ENDIF
          ENDIF
 
          jpatch = 0
@@ -167,7 +162,7 @@ IF (DEF_URBAN_type_scheme == 1) THEN
                END where
 ELSE IF(DEF_URBAN_type_scheme == 2) THEN
                ! Same for NCAR, fill the gap LCZ class of urban patch if LCZ data is non-urban
-               where (ibuff > 10)
+               where (ibuff > 10 .or. ibuff == 0)
                   ibuff = 9
                END where
 ENDIF
@@ -232,26 +227,28 @@ ENDIF
 
          numpatch = jpatch
 
-         ! update landpath with new patch number
-         ! all urban type patch are included
-         IF (allocated (landpatch%eindex)) deallocate (landpatch%eindex)
-         IF (allocated (landpatch%ipxstt)) deallocate (landpatch%ipxstt)
-         IF (allocated (landpatch%ipxend)) deallocate (landpatch%ipxend)
-         IF (allocated (landpatch%settyp)) deallocate (landpatch%settyp)
-         IF (allocated (landpatch%ielm  )) deallocate (landpatch%ielm  )
+         IF (numpatch > 0) THEN
+            ! update landpath with new patch number
+            ! all urban type patch are included
+            IF (allocated (landpatch%eindex)) deallocate (landpatch%eindex)
+            IF (allocated (landpatch%ipxstt)) deallocate (landpatch%ipxstt)
+            IF (allocated (landpatch%ipxend)) deallocate (landpatch%ipxend)
+            IF (allocated (landpatch%settyp)) deallocate (landpatch%settyp)
+            IF (allocated (landpatch%ielm  )) deallocate (landpatch%ielm  )
 
-         allocate (landpatch%eindex (numpatch))
-         allocate (landpatch%ipxstt (numpatch))
-         allocate (landpatch%ipxend (numpatch))
-         allocate (landpatch%settyp (numpatch))
-         allocate (landpatch%ielm   (numpatch))
+            allocate (landpatch%eindex (numpatch))
+            allocate (landpatch%ipxstt (numpatch))
+            allocate (landpatch%ipxend (numpatch))
+            allocate (landpatch%settyp (numpatch))
+            allocate (landpatch%ielm   (numpatch))
 
-         ! update all information of landpatch
-         landpatch%eindex = eindex_(1:jpatch)
-         landpatch%ipxstt = ipxstt_(1:jpatch)
-         landpatch%ipxend = ipxend_(1:jpatch)
-         landpatch%settyp = settyp_(1:jpatch)
-         landpatch%ielm   = ielm_  (1:jpatch)
+            ! update all information of landpatch
+            landpatch%eindex = eindex_(1:jpatch)
+            landpatch%ipxstt = ipxstt_(1:jpatch)
+            landpatch%ipxend = ipxend_(1:jpatch)
+            landpatch%settyp = settyp_(1:jpatch)
+            landpatch%ielm   = ielm_  (1:jpatch)
+         ENDIF
 
          ! update urban patch number
          IF (numpatch > 0) THEN
