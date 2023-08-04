@@ -16,7 +16,7 @@ MODULE MOD_Albedo
 
 ! PRIVATE MEMBER FUNCTIONS:
   PRIVATE :: twostream
-#ifdef LULC_IGBP_PFT
+#if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
   PRIVATE :: twostream_mod
   PRIVATE :: twostream_wrap
 #endif
@@ -79,15 +79,11 @@ MODULE MOD_Albedo
   USE MOD_Vars_Global
   USE MOD_Const_Physical, only: tfrz
   USE MOD_Namelist, only: DEF_USE_SNICAR
-#ifdef LULC_IGBP_PFT
+  USE MOD_Vars_TimeInvariants, only: patchclass
+#if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
   USE MOD_LandPFT, only: patch_pft_s, patch_pft_e
   USE MOD_Vars_PFTimeInvariants
   USE MOD_Vars_PFTimeVariables
-#endif
-#ifdef LULC_IGBP_PC
-  USE MOD_LandPC
-  USE MOD_Vars_PCTimeInvariants
-  USE MOD_Vars_PCTimeVariables
 #endif
   USE MOD_Aerosol, only: AerosolMasses
   USE MOD_SnowSnicar, only: SnowAge_grain
@@ -241,7 +237,11 @@ MODULE MOD_Albedo
       ssun(:,:) = 0.
       ssha(:,:) = 0.
       ! 07/06/2023, yuan: use the values of previous timestep.
+      ! for nighttime longwave calculations.
       !thermk    = 1.e-3
+      IF (lai+sai <= 1.e-6) THEN
+         thermk = 1.e-3
+      ENDIF
       extkb     = 1.
       extkd     = 0.718
 
@@ -254,27 +254,16 @@ MODULE MOD_Albedo
       ssno(:,:,snl+1) = 1.     !set initial snow absorption
 
 IF (patchtype == 0) THEN
-#ifdef LULC_IGBP_PFT
+#if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
       ps = patch_pft_s(ipatch)
       pe = patch_pft_e(ipatch)
       ssun_p(:,:,ps:pe) = 0.
       ssha_p(:,:,ps:pe) = 0.
       ! 07/06/2023, yuan: use the values of previous timestep.
       !thermk_p(ps:pe)   = 1.e-3
+      WHERE (lai_p(ps:pe)+sai_p(ps:pe) <= 1.e-6) thermk_p(ps:pe) = 1.e-3
       extkb_p(ps:pe)    = 1.
       extkd_p(ps:pe)    = 0.718
-#endif
-
-#ifdef LULC_IGBP_PC
-      pc = patch2pc(ipatch)
-      ssun_c(:,:,:,pc) = 0.
-      ssha_c(:,:,:,pc) = 0.
-      ! 07/06/2023, yuan: use the values of previous timestep.
-      !thermk_c(:,pc)   = 1.e-3
-      !fshade_c(:,pc)   = pcfrac(:,pc)
-      !fshade_c(0,pc)   = 0.
-      extkb_c(:,pc)    = 1.
-      extkd_c(:,pc)    = 0.718
 #endif
 ENDIF
 
@@ -415,48 +404,44 @@ ENDIF
 ! 4. canopy albedos : two stream approximation
 ! ----------------------------------------------------------------------
       IF (lai+sai > 1e-6) THEN
+         IF (patchtype == 0) THEN
 
-IF (patchtype == 0) THEN
-
-#if(defined LULC_USGS)
-         IF (lai > 1e-6) THEN
+#if (defined LULC_USGS || defined LULC_IGBP)
             CALL twostream (chil,rho,tau,green,lai,sai,&
                             czen,albg,albv,tran,thermk,extkb,extkd,ssun,ssha)
 
             albv(:,:) = (1.-wt)*albv(:,:) + wt*albsno(:,:)
             alb(:,:)  = (1.-fveg)*albg(:,:) + fveg*albv(:,:)
+#endif
+         ELSE  !other patchtypes (/=0)
+            CALL twostream (chil,rho,tau,green,lai,sai,&
+                            czen,albg,albv,tran,thermk,extkb,extkd,ssun,ssha)
+
+            albv(:,:) = (1.-wt)*albv(:,:) + wt*albsno(:,:)
+            alb(:,:)  = (1.-fveg)*albg(:,:) + fveg*albv(:,:)
+
          ENDIF
-#endif
+      ENDIF
 
-#if(defined LULC_IGBP)
-         CALL twostream (chil,rho,tau,green,lai,sai,&
-                         czen,albg,albv,tran,thermk,extkb,extkd,ssun,ssha)
-
-         albv(:,:) = (1.-wt)*albv(:,:) + wt*albsno(:,:)
-         alb(:,:)  = (1.-fveg)*albg(:,:) + fveg*albv(:,:)
-#endif
-
-
+      IF (patchtype == 0) THEN
 #ifdef LULC_IGBP_PFT
-         CALL twostream_wrap (ipatch, czen, albg, &
-                              albv, tran, ssun, ssha)
+         CALL twostream_wrap (ipatch, czen, albg, albv, tran, ssun, ssha)
          alb(:,:) = albv(:,:)
 #endif
 
 #ifdef LULC_IGBP_PC
-         CALL ThreeDCanopy_wrap (ipatch, czen, albg, albv, ssun, ssha)
-         alb(:,:) = albv(:,:)
-#endif
-      ELSE
-         IF (lai > 1e-6) THEN
-            CALL twostream (chil,rho,tau,green,lai,sai,&
-                            czen,albg,albv,tran,thermk,extkb,extkd,ssun,ssha)
-
-            albv(:,:) = (1.-wt)*albv(:,:) + wt*albsno(:,:)
-            alb(:,:)  = (1.-fveg)*albg(:,:) + fveg*albv(:,:)
+         !IF patchclass == CROPLAND, using twostream model
+         IF (patchclass(ipatch) == CROPLAND) THEN
+            CALL twostream_wrap (ipatch, czen, albg, &
+                                 albv, tran, ssun, ssha)
+            alb(:,:) = albv(:,:)
+         ELSE
+            CALL ThreeDCanopy_wrap (ipatch, czen, albg, albv, ssun, ssha)
+            alb(:,:) = albv(:,:)
          ENDIF
-ENDIF
+#endif
       ENDIF
+
 
 !-----------------------------------------------------------------------
 
@@ -599,6 +584,8 @@ ENDIF
       power3 = min( 50., power3 )
       power3 = max( 1.e-5, power3 )
       thermk = exp(-power3)
+
+      IF (lsai <= 1e-6) RETURN
 
       DO iw = 1, 2    ! WAVE_BAND_LOOP
 
@@ -768,7 +755,7 @@ ENDIF
 
   END SUBROUTINE twostream
 
-#ifdef LULC_IGBP_PFT
+#if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
   SUBROUTINE twostream_mod ( chil, rho, tau, green, lai, sai, &
              coszen, albg, albv, tran, thermk, extkb, extkd, ssun, ssha )
 
@@ -1138,7 +1125,7 @@ ENDIF
   END SUBROUTINE twostream_mod
 #endif
 
-#ifdef LULC_IGBP_PFT
+#if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
   SUBROUTINE twostream_wrap ( ipatch, coszen, albg, &
              albv, tran, ssun, ssha )
 
@@ -1176,7 +1163,7 @@ ENDIF
 
       INTEGER :: i, p, ps, pe
       REAL(r8), allocatable :: tran_p(:,:,:)
-      REAL(r8), allocatable :: albv_p (:,:,:)
+      REAL(r8), allocatable :: albv_p(:,:,:)
 
       ps = patch_pft_s(ipatch)
       pe = patch_pft_e(ipatch)
@@ -1226,6 +1213,7 @@ ENDIF
       ENDIF
 
       deallocate ( tran_p )
+      deallocate ( albv_p )
 
   END SUBROUTINE twostream_wrap
 #endif

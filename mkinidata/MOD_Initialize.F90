@@ -44,15 +44,10 @@ MODULE MOD_Initialize
       use MOD_Const_Physical
       use MOD_Vars_TimeInvariants
       use MOD_Vars_TimeVariables
-#ifdef LULC_IGBP_PFT
+#if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
       USE MOD_LandPFT
       USE MOD_Vars_PFTimeInvariants
       USE MOD_Vars_PFTimeVariables
-#endif
-#ifdef LULC_IGBP_PC
-      USE MOD_LandPC
-      USE MOD_Vars_PCTimeInvariants
-      USE MOD_Vars_PCTimeVariables
 #endif
       USE MOD_Const_LC
       USE MOD_Const_PFT
@@ -178,14 +173,26 @@ MODULE MOD_Initialize
       if (p_is_worker) then
 
          patchclass = landpatch%settyp
+         patchmask  = .true.
 
          DO ipatch = 1, numpatch
-            patchtype(ipatch) = patchtypes(patchclass(ipatch))
+
+            m = patchclass(ipatch)
+            patchtype(ipatch) = patchtypes(m)
+
+            !     ***** patch mask setting *****
+            ! ---------------------------------------
+
+            IF (DEF_URBAN_ONLY .and. m.ne.URBAN) THEN
+               patchmask(ipatch) = .false.
+               CYCLE
+            ENDIF
+
          ENDDO
 
          call landpatch%get_lonlat_radian (patchlonr, patchlatr)
 
-#ifdef LULC_IGBP_PFT
+#if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
          pftclass = landpft%settyp
 #endif
 
@@ -416,7 +423,7 @@ MODULE MOD_Initialize
 
       IF (p_is_master) THEN
          IF(.not. greenwich)THEN
-            print *, ".........greenwich false"
+            write(*,*) char(27)//"[1;31m"//"Notice: greenwich false, local time is used."//char(27)//"[0m"
          ENDIF
       ENDIF
 
@@ -495,36 +502,31 @@ MODULE MOD_Initialize
       ENDIF
 
       ! for SOIL Water INIT by using water table depth
-      IF (DEF_USE_WaterTable_INIT) THEN
-
-         fwtd = DEF_file_water_table_depth
-         IF (p_is_master) THEN
-            inquire (file=trim(fwtd), exist=use_wtd)
-            IF (use_wtd) THEN
-               write(*,'(/, 2A)') 'Use water table depth and derived equilibrium state ' &
-                  // ' to initialize soil water content: ', trim(fwtd)
-            ENDIF
+      fwtd = trim(DEF_dir_runtime) // 'wtd.nc'
+      IF (p_is_master) THEN
+         inquire (file=trim(fwtd), exist=use_wtd)
+         IF (use_wtd) THEN
+            write(*,'(/, 2A)') 'Use water table depth and derived equilibrium state ' &
+               // ' to initialize soil water content: ', trim(fwtd)
          ENDIF
+      ENDIF
 #ifdef USEMPI
-         call mpi_bcast (use_wtd, 1, MPI_LOGICAL, p_root, p_comm_glb, p_err)
+      call mpi_bcast (use_wtd, 1, MPI_LOGICAL, p_root, p_comm_glb, p_err)
 #endif
 
-         IF (use_wtd) THEN
+      IF (use_wtd) THEN
 
-            CALL julian2monthday (idate(1), idate(2), month, mday)
-            call gwtd%define_from_file (fwtd)
+         CALL julian2monthday (idate(1), idate(2), month, mday)
+         call gwtd%define_from_file (fwtd)
 
-            if (p_is_io) then
-               call allocate_block_data (gwtd, wtd_xy)
-               call ncio_read_block_time (fwtd, 'wtd', gwtd, month, wtd_xy)
-            ENDIF
-
-            call m_wtd2p%build (gwtd, landpatch)
-            call m_wtd2p%map_aweighted (wtd_xy, zwt)
-
+         if (p_is_io) then
+            call allocate_block_data (gwtd, wtd_xy)
+            call ncio_read_block_time (fwtd, 'wtd', gwtd, month, wtd_xy)
          ENDIF
-      ELSE
-         use_wtd = .false.
+
+         call m_wtd2p%build (gwtd, landpatch)
+         call m_wtd2p%map_aweighted (wtd_xy, zwt)
+
       ENDIF
 
       ! ...................
@@ -586,7 +588,7 @@ MODULE MOD_Initialize
          CALL CROP_readin ()
          if (p_is_worker) then
             do i = 1, numpatch
-               if(patchtype(i) .eq.  0)then
+               if(patchtype(i) .eq. 0)then
                   ps = patch_pft_s(i)
                   pe = patch_pft_e(i)
                   do m = ps, pe
@@ -625,8 +627,8 @@ MODULE MOD_Initialize
       if (p_is_worker) then
 
          !TODO: can be removed as CLMDRIVER.F90 yuan@
-         allocate ( z_soisno (maxsnl+1:nl_soil,numpatch) )
-         allocate ( dz_soisno(maxsnl+1:nl_soil,numpatch) )
+         allocate ( z_soisno (maxsnl+1:nl_soil,numpatch) ); z_soisno (:,:) = spval
+         allocate ( dz_soisno(maxsnl+1:nl_soil,numpatch) ); dz_soisno(:,:) = spval
 
          do i = 1, numpatch
             z_soisno (1:nl_soil ,i) = z_soi (1:nl_soil)
@@ -660,7 +662,7 @@ MODULE MOD_Initialize
             CALL iniTimeVar(i, patchtype(i)&
                ,porsl(1:,i),psi0(1:,i),hksati(1:,i)&
                ,soil_s_v_alb(i),soil_d_v_alb(i),soil_s_n_alb(i),soil_d_n_alb(i)&
-               ,z0m(i),zlnd,chil(m),rho(1:,1:,m),tau(1:,1:,m)&
+               ,z0m(i),zlnd,htop(i),z0mr(m),chil(m),rho(1:,1:,m),tau(1:,1:,m)&
                ,z_soisno(maxsnl+1:,i),dz_soisno(maxsnl+1:,i)&
                ,t_soisno(maxsnl+1:,i),wliq_soisno(maxsnl+1:,i),wice_soisno(maxsnl+1:,i)&
                ,smp(1:,i),hk(1:,i),zwt(i),wa(i)&
@@ -795,8 +797,8 @@ MODULE MOD_Initialize
 #endif
       IF (p_is_worker) THEN
          IF (numelm > 0) THEN
-            riverheight(:) = 0
-            riverveloct(:) = 0
+            wdsrf_bsn(:) = 0
+            veloc_riv(:) = 0
          ENDIF
 
          IF (numhru > 0) THEN
