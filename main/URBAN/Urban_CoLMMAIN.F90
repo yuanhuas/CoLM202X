@@ -904,7 +904,7 @@ SUBROUTINE UrbanCoLMMAIN ( &
          theta_r              ,alpha_vgm            ,n_vgm                ,L_vgm                ,&
          sc_vgm               ,fc_vgm               ,&
 #endif
-         k_solids             ,dksatu               ,dksatf               ,dkdry                ,&
+         k_solids             ,dksatu               ,dksatf,hksati        ,dkdry                ,&
          BA_alpha             ,BA_beta              ,&
          cv_roof              ,cv_wall              ,cv_gimp              ,&
          tk_roof              ,tk_wall              ,tk_gimp              ,dz_roofsno(lbr:)     ,&

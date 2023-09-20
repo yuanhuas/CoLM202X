@@ -46,7 +46,7 @@ MODULE MOD_Urban_Flux
         htvp_roof   ,htvp_gimp   ,htvp_gper   ,troof       ,&
         twsun       ,twsha       ,tgimp       ,tgper       ,&
         qroof       ,qgimp       ,qgper       ,dqroofdT    ,&
-        dqgimpdT    ,dqgperdT    ,rsr                      ,&
+        dqgimpdT    ,dqgperdT    ,rss                      ,&
         ! Output
         taux        ,tauy        ,fsenroof    ,fsenwsun    ,&
         fsenwsha    ,fsengimp    ,fsengper    ,fevproof    ,&
@@ -61,6 +61,7 @@ MODULE MOD_Urban_Flux
      USE MOD_Precision
      USE MOD_Const_Physical, only: cpair,vonkar,grav
      USE MOD_FrictionVelocity
+     USE MOD_Namelist, only: DEF_RSS_SCHEME
      IMPLICIT NONE
 
 !----------------------- Dummy argument --------------------------------
@@ -102,7 +103,7 @@ MODULE MOD_Urban_Flux
         fcover(0:4)! coverage of aboveground urban components [-]
 
      REAL(r8), intent(in) :: &
-        rsr,      &! bare soil resistance for evaporation
+        rss,      &! bare soil resistance for evaporation
         z0h_g,    &! roughness length for bare ground, sensible heat [m]
         obug,     &! monin-obukhov length for bare ground (m)
         ustarg,   &! friction velocity for bare ground [m/s]
@@ -673,8 +674,8 @@ MODULE MOD_Urban_Flux
 
            ! - Equations:
            ! qaf(3) = (1/raw*qm + 1/rd(3)*qaf(2) + 1/rb(0)*qroof*fc(0))/(1/raw + 1/rd(3) + 1/rb(0)*fc(0))
-           ! qaf(2) = (1/rd(3)*qaf(3) + 1/(rd(2)+rsr)*qper*fgper*fg + fwetimp/rd(2)*qimp*fgimp*fg + AHE/rho)/ &
-           !          (1/rd(3) + 1/(rd(2)+rsr)*fgper*fg + fwetimp/rd(2)*fgimp*fg)
+           ! qaf(2) = (1/rd(3)*qaf(3) + 1/(rd(2)+rss)*qper*fgper*fg + fwetimp/rd(2)*qimp*fgimp*fg + AHE/rho)/ &
+           !          (1/rd(3) + 1/(rd(2)+rss)*fgper*fg + fwetimp/rd(2)*fgimp*fg)
            ! Also written as:
            ! qaf(3) = (caw(3)*qm + caw(2)*qaf(2) + cfw(0)*qroof*fc(0))/(caw(3) + caw(2) + cfw(0)*fc(0))
            ! qaf(2) = (caw(2)*qaf(3) + cgwper*qper*fgper*fg + cgwimp*qimp*fgimp*fg + AHE/rho)/ &
@@ -698,7 +699,11 @@ MODULE MOD_Urban_Flux
              ! dew case. no soil resistance
              cgw_per= cgw(2)
            ELSE
-             cgw_per= 1/(1/cgw(2)+rsr)
+             IF (DEF_RSS_SCHEME .eq. 4) THEN
+                cgw_per = rss/(1/cgw(2))
+             ELSE     
+                cgw_per= 1/(1/cgw(2)+rss)
+             ENDIF   
            ENDIF
 
            cgw_imp= fwet_gimp*cgw(2)
@@ -890,7 +895,7 @@ MODULE MOD_Urban_Flux
         twsun       ,twsha       ,tgimp       ,tgper       ,&
         qroof       ,qgimp       ,qgper       ,dqroofdT    ,&
         dqgimpdT    ,dqgperdT    ,sigf        ,tl          ,&
-        ldew        ,rsr                                   ,&
+        ldew        ,rss                                   ,&
         ! Longwave information
         Ainv        ,B           ,B1          ,dBdT        ,&
         SkyVF       ,VegVF                                 ,&
@@ -994,7 +999,7 @@ MODULE MOD_Urban_Flux
 
      ! Status of surface
      REAL(r8), intent(in) :: &
-        rsr,      &! bare soil resistance for evaporation
+        rss,      &! bare soil resistance for evaporation
         z0h_g,    &! roughness length for bare ground, sensible heat [m]
         obug,     &! monin-obukhov length for bare ground (m)
         ustarg,   &! friction velocity for bare ground [m/s]
@@ -1825,8 +1830,8 @@ MODULE MOD_Urban_Flux
            !          (cah(2) + cgh(2)*fg + cfh(1)*fc(1) + cfh(2)*fc(2) + cfh(3)*fc(3))
            ! - Equations:
            ! qaf(3) = (1/raw*qm + 1/rd(3)*qaf(2) + 1/rb(0)*qroof*fc(0))/(1/raw + 1/rd(3) + 1/rb(0)*fc(0))
-           ! qaf(2) = (1/rd(3)*qaf(3) + 1/(rd(2)+rsr)*qper*fgper*fg + fwetimp/rd(2)*qimp*fgimp*fg + lsai/(rb(3)+rs)*ql*fc(3) + AHE/rho)/ &
-           !          (1/rd(3) + 1/(rd(2)+rsr)*fgper*fg + fwetimp/rd(2)*fgimp*fg + lsai/(rb(3)+rs)*fc(3))
+           ! qaf(2) = (1/rd(3)*qaf(3) + 1/(rd(2)+rss)*qper*fgper*fg + fwetimp/rd(2)*qimp*fgimp*fg + lsai/(rb(3)+rs)*ql*fc(3) + AHE/rho)/ &
+           !          (1/rd(3) + 1/(rd(2)+rss)*fgper*fg + fwetimp/rd(2)*fgimp*fg + lsai/(rb(3)+rs)*fc(3))
            ! Also written as:
            ! qaf(3) = (caw(3)*qm + caw(2)*qaf(2) + cfw(0)*qroof*fc(0))/(caw(3) + caw(2) + cfw(0)*fc(0))
            ! qaf(2) = (caw(2)*qaf(3) + cgwper*qper*fgper*fg + cgwimp*qimp*fgimp*fg + cfw(3)*ql*fc(3) + AHE/rho)/ &
@@ -1850,7 +1855,8 @@ MODULE MOD_Urban_Flux
              ! dew case. no soil resistance
              cgw_per= cgw(2)
            ELSE
-             cgw_per= 1/(1/cgw(2)+rsr)
+
+             cgw_per= 1/(1/cgw(2)+rss)
            ENDIF
 
            cgw_imp= fwet_gimp*cgw(2)
@@ -1889,8 +1895,8 @@ MODULE MOD_Urban_Flux
            !          (1/raw+1/rd(3)+1/rb(0)*fc(0))
            ! qaf(2) = (1/rd(3)*qaf(3)+1/rd(2)*qaf(1))/&
            !          (1/rd(3) + 1/rd(2))
-           ! qaf(1) = (1/rd(2)*qaf(2)+1/(rd(1)+rsr)*qgper*fgper*fg+1/rd(1)*qimp*fgimp*fg+1/(rb(3)+rs)*ql*fc(3)+h_veh/rho))/&
-           !          (1/rd(2)+1/(rd(1)+rsr)*fgper*fg+1/rd(1)*fgimp*fg+1/(rb(3)+rs)*fc(3))
+           ! qaf(1) = (1/rd(2)*qaf(2)+1/(rd(1)+rss)*qgper*fgper*fg+1/rd(1)*qimp*fgimp*fg+1/(rb(3)+rs)*ql*fc(3)+h_veh/rho))/&
+           !          (1/rd(2)+1/(rd(1)+rss)*fgper*fg+1/rd(1)*fgimp*fg+1/(rb(3)+rs)*fc(3))
 
            tmpw1  = cah(1)*(cgh(1)*tg*fg + cfh(3)*tu(3)*fc(3) + (vehc+meta)/rhoair/cpair)/&
                     (cah(1) + cgh(1)*fg + cfh(3)*fc(3))
@@ -1918,7 +1924,7 @@ MODULE MOD_Urban_Flux
              ! dew case. no soil resistance
              cgw_per= cgw(1)
            ELSE
-             cgw_per= 1/(1/cgw(1)+rsr)
+             cgw_per= 1/(1/cgw(1)+rss)
            ENDIF
 
            cgw_imp= fwet_gimp*cgw(1)
@@ -2092,8 +2098,8 @@ MODULE MOD_Urban_Flux
            !          (cah(2) + cgh(2)*fg + cfh(1)*fc(1) + cfh(2)*fc(2) + cfh(3)*fc(3))
            ! - Equations:
            ! qaf(3) = (1/raw*qm + 1/rd(3)*qaf(2) + 1/rb(0)*qroof*fc(0))/(1/raw + 1/rd(3) + 1/rb(0)*fc(0))
-           ! qaf(2) = (1/rd(3)*qaf(3) + 1/(rd(2)+rsr)*qper*fgper*fg + fwetimp/rd(2)*qimp*fgimp*fg + lsai/(rb(3)+rs)*ql*fc(3) + AHE/rho)/ &
-           !          (1/rd(3) + 1/(rd(2)+rsr)*fgper*fg + fwetimp/rd(2)*fgimp*fg + lsai/(rb(3)+rs)*fc(3))
+           ! qaf(2) = (1/rd(3)*qaf(3) + 1/(rd(2)+rss)*qper*fgper*fg + fwetimp/rd(2)*qimp*fgimp*fg + lsai/(rb(3)+rs)*ql*fc(3) + AHE/rho)/ &
+           !          (1/rd(3) + 1/(rd(2)+rss)*fgper*fg + fwetimp/rd(2)*fgimp*fg + lsai/(rb(3)+rs)*fc(3))
            ! Also written as:
            ! qaf(3) = (caw(3)*qm + caw(2)*qaf(2) + cfw(0)*qroof*fc(0))/(caw(3) + caw(2) + cfw(0)*fc(0))
            ! qaf(2) = (caw(2)*qaf(3) + cgwper*qper*fgper*fg + cgwimp*qimp*fgimp*fg + cfw(3)*ql*fc(3) + AHE/rho)/ &
@@ -2117,7 +2123,7 @@ MODULE MOD_Urban_Flux
              ! dew case. no soil resistance
              cgw_per= cgw(2)
            ELSE
-             cgw_per= 1/(1/cgw(2)+rsr)
+             cgw_per= 1/(1/cgw(2)+rss)
            ENDIF
 
            cgw_imp= fwet_gimp*cgw(2)
@@ -2156,8 +2162,8 @@ MODULE MOD_Urban_Flux
            !          (1/raw+1/rd(3)+1/rb(0)*fc(0))
            ! qaf(2) = (1/rd(3)*qaf(3)+1/rd(2)*qaf(1))/&
            !          (1/rd(3) + 1/rd(2))
-           ! qaf(1) = (1/rd(2)*qaf(2)+1/(rd(1)+rsr)*qgper*fgper*fg+1/rd(1)*qimp*fgimp*fg+1/(rb(3)+rs)*ql*fc(3)+h_veh/rho))/&
-           !          (1/rd(2)+1/(rd(1)+rsr)*fgper*fg+1/rd(1)*fgimp*fg+1/(rb(3)+rs)*fc(3))
+           ! qaf(1) = (1/rd(2)*qaf(2)+1/(rd(1)+rss)*qgper*fgper*fg+1/rd(1)*qimp*fgimp*fg+1/(rb(3)+rs)*ql*fc(3)+h_veh/rho))/&
+           !          (1/rd(2)+1/(rd(1)+rss)*fgper*fg+1/rd(1)*fgimp*fg+1/(rb(3)+rs)*fc(3))
 
            tmpw1  = cah(1)*(cgh(1)*tg*fg + cfh(3)*tu(3)*fc(3) + (vehc+meta)/rhoair/cpair)/&
                     (cah(1) + cgh(1)*fg + cfh(3)*fc(3))
@@ -2185,7 +2191,11 @@ MODULE MOD_Urban_Flux
              ! dew case. no soil resistance
              cgw_per= cgw(1)
            ELSE
-             cgw_per= 1/(1/cgw(1)+rsr)
+             IF (DEF_RSS_SCHEME .eq. 4) THEN
+                cgw_per = rss/(1/cgw(2))
+             ELSE
+                cgw_per= 1/(1/cgw(1)+rss)
+             ENDIF   
            ENDIF
 
            cgw_imp= fwet_gimp*cgw(1)
