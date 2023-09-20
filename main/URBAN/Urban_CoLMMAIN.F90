@@ -104,10 +104,12 @@ SUBROUTINE UrbanCoLMMAIN ( &
            solni        ,srvd         ,srvi         ,srnd         ,&
            srni         ,solvdln      ,solviln      ,solndln      ,&
            solniln      ,srvdln       ,srviln       ,srndln       ,&
-           srniln       ,qcharge      ,xerr         ,zerr         ,&
+           srniln       ,qcharge      ,&
+           urb_qflx_irrig,&
+           xerr         ,zerr         ,&
 
          ! TUNABLE modle constants
-           zlnd         ,zsno         ,csoilc       ,dewmx        ,&
+           zlnd        ,zsno         ,csoilc       ,dewmx        ,&
            wtfact       ,capr         ,cnfac        ,ssi          ,&
            wimp         ,pondmx       ,smpmax       ,smpmin       ,&
            trsmx0       ,tcrit                                    ,&
@@ -419,7 +421,7 @@ SUBROUTINE UrbanCoLMMAIN ( &
         laisha     ,&! shaded leaf area index
         rstfac     ,&! factor of soil water stress
         wat        ,&! total water storage
-        h2osoi(nl_soil)! volumetric soil water in layers [m3/m3]
+        h2osoi(nl_soil)   ! volumetric soil water in layers [m3/m3]
 
 ! Fluxes
 ! ----------------------------------------------------------------------
@@ -448,7 +450,7 @@ SUBROUTINE UrbanCoLMMAIN ( &
         qinfl      ,&! inflitration (mm h2o/s)
         qdrip      ,&! throughfall (mm h2o/s)
         qcharge    ,&! groundwater recharge [mm/s]
-
+        urb_qflx_irrig  ,&!
         rst        ,&! canopy stomatal resistance
         assim      ,&! canopy assimilation
         respc      ,&! canopy respiration
@@ -986,6 +988,8 @@ SUBROUTINE UrbanCoLMMAIN ( &
         sm_roof              ,sm_gimp              ,sm_gper              ,sm_lake              ,&
         lake_icefrac         ,scv_lake             ,snowdp_lake          ,imeltl               ,&
         fioldl               ,w_old                                                            ,&
+        ! irrigation
+        idate                ,fveg                 ,lai                  ,patchlonr            ,&     
 #if(defined CaMa_Flood)
         flddepth             ,fldfrc               ,qinfl_fld                                  ,&
 #endif
@@ -999,7 +1003,9 @@ SUBROUTINE UrbanCoLMMAIN ( &
 
         ! output
         rsur                 ,rnof                 ,qinfl                ,zwt                  ,&
-        wa                   ,qcharge              ,smp                  ,hk                   ,&
+        wa                   ,qcharge              ,&
+        urb_qflx_irrig       ,&
+        smp                  ,hk                   ,&
         errw_rsub            )
 
       ! roof

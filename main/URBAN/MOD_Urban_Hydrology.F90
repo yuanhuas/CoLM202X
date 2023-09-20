@@ -34,6 +34,8 @@ CONTAINS
         sm_roof        ,sm_gimp        ,sm_gper        ,sm_lake        ,&
         lake_icefrac   ,scv_lake       ,snowdp_lake    ,imelt_lake     ,&
         fioldl         ,w_old                                          ,&
+        ! irrigation
+        idate          ,fveg           ,lai            ,patchlonr      ,&     
 #if(defined CaMa_Flood)
         flddepth       ,fldfrc         ,qinfl_fld                      ,&
 #endif
@@ -46,7 +48,9 @@ CONTAINS
 
         ! output
         rsur           ,rnof           ,qinfl          ,zwt            ,&
-        wa             ,qcharge        ,smp            ,hk             ,&
+        wa             ,qcharge        ,&
+        urb_qflx_irrig ,&
+        smp            ,hk             ,&
         errw_rsub      )
 
 !=======================================================================
@@ -58,6 +62,7 @@ CONTAINS
   USE MOD_Precision
   USE MOD_Vars_Global
   USE MOD_Const_Physical, only: denice, denh2o, tfrz
+  USE MOD_Urban_Irrigation, only: UrbanIrrigationFluxes 
   USE MOD_SoilSnowHydrology
   USE MOD_Lake
 
@@ -71,8 +76,8 @@ CONTAINS
         lbr              ,&! lower bound of array
         lbi              ,&! lower bound of array
         lbp              ,&! lower bound of array
-        lbl                ! lower bound of array
-
+        lbl              ,&! lower bound of array
+        idate(3)           !
   INTEGER, intent(inout) :: &
         snll               ! number of snow layers
 
@@ -119,8 +124,10 @@ CONTAINS
         sm_roof          ,&! snow melt (mm h2o/s)
         sm_gimp          ,&! snow melt (mm h2o/s)
         sm_gper          ,&! snow melt (mm h2o/s)
-        w_old              ! liquid water mass of the column at the previous time step (mm)
-
+        w_old            ,&! liquid water mass of the column at the previous time step (mm)
+        fveg             ,&!
+        lai              ,&!  
+        patchlonr          !
 #if(defined CaMa_Flood)
   real(r8), INTENT(inout) :: flddepth  ! inundation water depth [mm]
   real(r8), INTENT(in)    :: fldfrc    ! inundation water depth   [0-1]
@@ -186,8 +193,8 @@ CONTAINS
         rsur             ,&! surface runoff (mm h2o/s)
         rnof             ,&! total runoff (mm h2o/s)
         qinfl            ,&! infiltration rate (mm h2o/s)
-        qcharge            ! groundwater recharge (positive to aquifer) [mm/s]
-
+        qcharge          ,&! groundwater recharge (positive to aquifer) [mm/s]
+        urb_qflx_irrig     !
   REAL(r8), intent(out) :: &
         smp(1:nl_soil)   ,&! soil matrix potential [mm]
         hk (1:nl_soil)   ,&! hydraulic conductivity [mm h2o/m]
@@ -198,6 +205,7 @@ CONTAINS
   REAL(r8) :: &
         fg               ,&! ground fractional cover [-]
         gwat             ,&! net water input from top (mm/s)
+        urb_rain_irrig   ,&!
         rnof_roof        ,&! total runoff (mm h2o/s)
         rnof_gimp        ,&! total runoff (mm h2o/s)
         rnof_gper        ,&! total runoff (mm h2o/s)
@@ -218,11 +226,24 @@ CONTAINS
 !=======================================================================
 ! [1] for pervious road, the same as soil
 !=======================================================================
+      
+      urb_rain_irrig = 0.
+      urb_qflx_irrig = 0.
+      CALL UrbanIrrigationFluxes( lbp,nl_soil ,    idate    ,    deltim   ,    fveg ,      lai ,  patchlonr,&
+                                  dz_gpersno  ,    z_gpersno,    t_gpersno,    porsl,      psi0,  bsw,&
+                                  wliq_gpersno,&
+                                  urb_qflx_irrig)
 
+      IF (urb_qflx_irrig > 0.) THEN
+          urb_rain_irrig  = pgper_rain +  urb_qflx_irrig
+      ELSE
+          urb_rain_irrig  = pgper_rain  
+      ENDIF     
+      write(*,*) urb_qflx_irrig 
       CALL WATER ( ipatch,patchtype   ,lbp         ,nl_soil   ,deltim    ,&
              z_gpersno   ,dz_gpersno  ,zi_gpersno  ,&
              bsw         ,porsl       ,psi0        ,hksati    ,rootr     ,&
-             t_gpersno   ,wliq_gpersno,wice_gpersno,smp,hk,pgper_rain,sm_gper,&
+             t_gpersno   ,wliq_gpersno,wice_gpersno,smp,hk,urb_rain_irrig,sm_gper,&
              etr         ,qseva_gper  ,qsdew_gper  ,qsubl_gper,qfros_gper,&
              rsur_gper   ,rnof_gper   ,qinfl       ,wtfact    ,pondmx    ,&
              ssi         ,wimp        ,smpmin      ,zwt       ,wa        ,&
@@ -236,7 +257,7 @@ CONTAINS
              mss_dst1    ,mss_dst2    ,mss_dst3    ,mss_dst4     &
 ! END SNICAR model variables
             )
-
+             
 !=======================================================================
 ! [2] for roof and impervious road
 !=======================================================================
