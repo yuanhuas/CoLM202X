@@ -295,6 +295,7 @@ OBJS_MAIN = \
 				MOD_Urban_WallTemperature.o               \
 				MOD_Urban_PerviousTemperature.o           \
 				MOD_Urban_ImperviousTemperature.o         \
+				MOD_Urban_Irrigation.o                    \
 				MOD_Urban_Hydrology.o                     \
 				MOD_Urban_BEM.o                           \
 				MOD_Urban_LUCY.o                          \
