@@ -918,6 +918,7 @@ MODULE MOD_Urban_Flux
      USE MOD_Const_Physical, only: vonkar,grav,hvap,cpair,stefnc
      USE MOD_FrictionVelocity
      USE MOD_AssimStomataConductance
+     USE MOD_Namelist, only: DEF_RSS_SCHEME
      IMPLICIT NONE
 
 !-----------------------Arguments---------------------------------------
@@ -1855,8 +1856,11 @@ MODULE MOD_Urban_Flux
              ! dew case. no soil resistance
              cgw_per= cgw(2)
            ELSE
-
-             cgw_per= 1/(1/cgw(2)+rss)
+             IF (DEF_RSS_SCHEME .eq. 4) THEN
+                cgw_per= rss/(1/cgw(2))
+             ELSE
+                cgw_per= 1/(1/cgw(2)+rss)
+             ENDIF   
            ENDIF
 
            cgw_imp= fwet_gimp*cgw(2)
@@ -1924,7 +1928,11 @@ MODULE MOD_Urban_Flux
              ! dew case. no soil resistance
              cgw_per= cgw(1)
            ELSE
-             cgw_per= 1/(1/cgw(1)+rss)
+             IF (DEF_RSS_SCHEME .eq. 4) THEN
+                cgw_per= rss/(1/cgw(1))
+             ELSE        
+                cgw_per= 1/(1/cgw(1)+rss)
+             ENDIF   
            ENDIF
 
            cgw_imp= fwet_gimp*cgw(1)
@@ -2123,7 +2131,11 @@ MODULE MOD_Urban_Flux
              ! dew case. no soil resistance
              cgw_per= cgw(2)
            ELSE
-             cgw_per= 1/(1/cgw(2)+rss)
+             IF (DEF_RSS_SCHEME .eq. 4) THEN
+                cgw_per= rss/(1/cgw(1))
+             ELSE   
+                cgw_per= 1/(1/cgw(2)+rss)
+             ENDIF   
            ENDIF
 
            cgw_imp= fwet_gimp*cgw(2)
