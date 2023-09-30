@@ -700,6 +700,10 @@ contains
             a_lfevpurbl, file_hist, 'f_lfevpurbl', itime_in_file, sumarea_urb, filter_urb, &
             'latent heat from urban tree [W/m2]','W/m2')
 
+         call write_history_variable_urb_2d ( DEF_hist_vars%urb_qflx_irrig, &
+            a_urb_qflx_irrig, file_hist, 'f_urb_qflx_irrig', itime_in_file, sumarea_urb, filter_urb, &
+            'urban irrigation rate [mm/s]','mm/s')
+
          ! sensible flux from heat or cool AC [W/m2]
          call write_history_variable_urb_2d ( DEF_hist_vars%fhac, &
             a_fhac, file_hist, 'f_fhac', itime_in_file, sumarea_urb, filter_urb, &

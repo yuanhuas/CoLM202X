@@ -115,6 +115,7 @@ module MOD_Vars_1DAccFluxes
 
    REAL(r8), allocatable :: a_troof    (:)  !temperature of roof [K]
    REAL(r8), allocatable :: a_twall    (:)  !temperature of wall [K]
+   REAL(r8), allocatable :: a_urb_qflx_irrig    (:)  !temperature of wall [K]
 #endif
 
 
@@ -451,6 +452,7 @@ contains
 
                allocate (a_troof     (numurban))
                allocate (a_twall     (numurban))
+               allocate (a_urb_qflx_irrig     (numurban))
             ENDIF
 #endif
 #ifdef BGC
@@ -792,6 +794,7 @@ contains
 
                deallocate (a_troof     )
                deallocate (a_twall     )
+               deallocate (a_urb_qflx_irrig     )
             ENDIF
 #endif
 
@@ -1132,6 +1135,7 @@ contains
 
                a_troof    (:) = spval
                a_twall    (:) = spval
+               a_urb_qflx_irrig (:) = spval           
             ENDIF
 #endif
 
@@ -1556,6 +1560,7 @@ contains
 
                CALL acc1d(t_roof    , a_troof     )
                CALL acc1d(t_wall    , a_twall     )
+               CALL acc1d(urb_qflx_irrig    , a_urb_qflx_irrig     )
             ENDIF
 #endif
 

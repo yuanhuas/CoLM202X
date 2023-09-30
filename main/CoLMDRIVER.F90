@@ -276,7 +276,7 @@ SUBROUTINE CoLMDRIVER (idate,deltim,dolai,doalb,dosst,oro)
 #endif
 
       ! additional diagnostic variables for output
-        laisun(i)       ,laisha(i)       ,rss(i)                           ,&
+        laisun(i)       ,laisha(i)                                         ,&
         rstfacsun_out(i),h2osoi(1:,i)    ,wat(i)                           ,&
 
       ! FLUXES
@@ -294,7 +294,9 @@ SUBROUTINE CoLMDRIVER (idate,deltim,dolai,doalb,dosst,oro)
         solni(i)        ,srvd(i)         ,srvi(i)         ,srnd(i)         ,&
         srni(i)         ,solvdln(i)      ,solviln(i)      ,solndln(i)      ,&
         solniln(i)      ,srvdln(i)       ,srviln(i)       ,srndln(i)       ,&
-        srniln(i)       ,qcharge(i)      ,xerr(i)         ,zerr(i)         ,&
+        srniln(i)       ,qcharge(i)      ,&
+        urb_qflx_irrig(u),&
+        xerr(i)         ,zerr(i)         ,&
 
       ! TUNABLE modle constants
         zlnd            ,zsno            ,csoilc          ,dewmx           ,&

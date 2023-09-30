@@ -44,7 +44,7 @@ CONTAINS
         theta_r        ,alpha_vgm      ,n_vgm          ,L_vgm          ,&
         sc_vgm         ,fc_vgm         ,&
 #endif
-        k_solids       ,dksatu         ,dksatf         ,dkdry          ,&
+        k_solids       ,dksatu         ,dksatf,hksati  ,dkdry          ,&
         BA_alpha       ,BA_beta        ,&
         cv_roof        ,cv_wall        ,cv_gimp        ,&
         tk_roof        ,tk_wall        ,tk_gimp        ,dz_roofsno     ,&
@@ -118,9 +118,11 @@ CONTAINS
   USE MOD_Urban_BEM
   USE MOD_Urban_LUCY, only: LUCY
   USE MOD_Eroot, only: eroot
+  USE MOD_SoilSurfaceResistance
 #ifdef vanGenuchten_Mualem_SOIL_MODEL
   USE MOD_Hydro_SoilFunction, only : soil_psi_from_vliq
 #endif
+ USE MOD_Namelist, only: DEF_RSS_SCHEME
 
   IMPLICIT NONE
 
@@ -220,7 +222,8 @@ CONTAINS
         dkdry     (1:nl_soil), &! thermal conductivity of dry soil [W/m-K]
         dksatu    (1:nl_soil), &! thermal conductivity of saturated unfrozen soil [W/m-K]
         dksatf    (1:nl_soil), &! thermal conductivity of saturated frozen soil [W/m-K]
-
+        hksati    (1:nl_soil), &! hydraulic conductivity at saturation [mm h2o/s]
+        
         BA_alpha  (1:nl_soil), &! alpha in Balland and Arp(2005) thermal conductivity scheme
         BA_beta   (1:nl_soil), &! beta in Balland and Arp(2005) thermal conductivity scheme
         cv_roof(1:nl_roof) ,&! heat capacity of roof [J/(m2 K)]
@@ -468,7 +471,7 @@ CONTAINS
         olrb       ,&! olrg assuming blackbody emission [W/m2]
         psit       ,&! negative potential of soil
 
-        rsr        ,&! soil resistance
+        rss        ,&! soil resistance
         qroof      ,&! roof specific humudity [kg/kg]
         qgimp      ,&! ground impervious road specific humudity [kg/kg]
         qgper      ,&! ground pervious specific humudity [kg/kg]
@@ -650,8 +653,8 @@ CONTAINS
       qred = 1.
       CALL qsadv(tgper,forc_psrf,eg,degdT,qsatg,qsatgdT)
 
-      ! initialization for rsr
-      rsr = 0.
+      ! initialization for rss
+      rss = 0.
 
       IF (patchtype <=1 ) THEN          !soil ground
          wx = (wliq_gpersno(1)/denh2o + wice_gpersno(1)/denice)/dz_gpersno(1)
@@ -686,7 +689,7 @@ CONTAINS
             ENDIF
 
             ! Sellers et al., 1992
-            rsr = (1-fsno_gper)*exp(8.206-4.255*fac)
+            ! rss = (1-fsno_gper)*exp(8.206-4.255*fac)
          ENDIF
       ENDIF
 
@@ -704,6 +707,25 @@ CONTAINS
       CALL qsadv(troof,forc_psrf,eg,degdT,qsatg,qsatgdT)
       qroof    = qsatg
       dqroofdT = qsatgdT
+            ! calculate soil surface resistance (rss)
+      ! ------------------------------------------------
+      !NOTE: (1) DEF_RSS_SCHEME=0 means no rss considered
+      !      (2) Do NOT calculate rss for the first timestep
+      IF (DEF_RSS_SCHEME>0 .and. rss/=spval) THEN
+
+         !NOTE: If the beta scheme is used, the rss is not soil resistance,
+         !but soil beta factor (soil wetness relative to field capacity [0-1]).
+         CALL SoilSurfaceResistance (nl_soil,forc_rhoair,hksati,porsl,psi0, &
+#ifdef Campbell_SOIL_MODEL
+                            bsw, &
+#endif
+#ifdef vanGenuchten_Mualem_SOIL_MODEL
+                            theta_r, alpha_vgm, n_vgm, L_vgm, sc_vgm, fc_vgm, &
+#endif
+                            dz_gpersno,t_gpersno,wliq_gpersno,wice_gpersno,fsno_gper,qgper,rss)
+      ELSE
+         rss = 0.
+      ENDIF
 
 !=======================================================================
 ! [3] caluclate longwave radiation
@@ -852,7 +874,7 @@ CONTAINS
             twsun       ,twsha       ,tgimp       ,tgper       ,&
             qroof       ,qgimp       ,qgper       ,dqroofdT    ,&
             dqgimpdT    ,dqgperdT    ,sigf        ,tleaf       ,&
-            ldew        ,rsr                                   ,&
+            ldew        ,rss                                   ,&
             ! longwave related
             Ainv        ,B           ,B1          ,dBdT        ,&
             SkyVF       ,VegVF                                 ,&
@@ -890,7 +912,7 @@ CONTAINS
             htvp_roof   ,htvp_gimp   ,htvp_gper   ,troof       ,&
             twsun       ,twsha       ,tgimp       ,tgper       ,&
             qroof       ,qgimp       ,qgper       ,dqroofdT    ,&
-            dqgimpdT    ,dqgperdT    ,rsr                      ,&
+            dqgimpdT    ,dqgperdT    ,rss                      ,&
             ! output
             taux        ,tauy        ,fsenroof    ,fsenwsun    ,&
             fsenwsha    ,fsengimp    ,fsengper    ,fevproof    ,&
