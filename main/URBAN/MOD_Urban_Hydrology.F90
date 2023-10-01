@@ -35,7 +35,7 @@ CONTAINS
         lake_icefrac   ,scv_lake       ,snowdp_lake    ,imelt_lake     ,&
         fioldl         ,w_old                                          ,&
         ! irrigation
-        idate          ,fveg           ,lai            ,patchlonr      ,&     
+        idate          ,fveg           ,lai            ,patchlonr      ,&
 #if(defined CaMa_Flood)
         flddepth       ,fldfrc         ,qinfl_fld                      ,&
 #endif
@@ -49,7 +49,7 @@ CONTAINS
         ! output
         rsur           ,rnof           ,qinfl          ,zwt            ,&
         wa             ,qcharge        ,&
-        urb_qflx_irrig ,&
+        urb_irrig      ,&
         smp            ,hk             ,&
         errw_rsub      )
 
@@ -62,7 +62,7 @@ CONTAINS
   USE MOD_Precision
   USE MOD_Vars_Global
   USE MOD_Const_Physical, only: denice, denh2o, tfrz
-  USE MOD_Urban_Irrigation, only: UrbanIrrigationFluxes 
+  USE MOD_Urban_Irrigation, only: UrbanIrrigation
   USE MOD_SoilSnowHydrology
   USE MOD_Lake
 
@@ -126,7 +126,7 @@ CONTAINS
         sm_gper          ,&! snow melt (mm h2o/s)
         w_old            ,&! liquid water mass of the column at the previous time step (mm)
         fveg             ,&!
-        lai              ,&!  
+        lai              ,&!
         patchlonr          !
 #if(defined CaMa_Flood)
   real(r8), INTENT(inout) :: flddepth  ! inundation water depth [mm]
@@ -194,7 +194,7 @@ CONTAINS
         rnof             ,&! total runoff (mm h2o/s)
         qinfl            ,&! infiltration rate (mm h2o/s)
         qcharge          ,&! groundwater recharge (positive to aquifer) [mm/s]
-        urb_qflx_irrig     !
+        urb_irrig          !
   REAL(r8), intent(out) :: &
         smp(1:nl_soil)   ,&! soil matrix potential [mm]
         hk (1:nl_soil)   ,&! hydraulic conductivity [mm h2o/m]
@@ -226,20 +226,20 @@ CONTAINS
 !=======================================================================
 ! [1] for pervious road, the same as soil
 !=======================================================================
-      
-      urb_rain_irrig = 0.
-      urb_qflx_irrig = 0.
-      CALL UrbanIrrigationFluxes( lbp,nl_soil ,    idate    ,    deltim   ,    fveg ,      lai ,  patchlonr,&
-                                  dz_gpersno  ,    z_gpersno,    t_gpersno,    porsl,      psi0,  bsw,&
-                                  wliq_gpersno,&
-                                  urb_qflx_irrig)
 
-      IF (urb_qflx_irrig > 0.) THEN
-          urb_rain_irrig  = pgper_rain +  urb_qflx_irrig
+      urb_rain_irrig = 0.
+      urb_irrig = 0.
+      CALL UrbanIrrigation( lbp,nl_soil ,    idate    ,    deltim   ,    fveg ,      lai ,  patchlonr,&
+                            dz_gpersno  ,    z_gpersno,    t_gpersno,    porsl,      psi0,  bsw,&
+                            wliq_gpersno,&
+                            urb_irrig)
+
+      IF (urb_irrig > 0.) THEN
+          urb_rain_irrig  = pgper_rain +  urb_irrig
       ELSE
-          urb_rain_irrig  = pgper_rain  
-      ENDIF     
-      write(*,*) urb_qflx_irrig 
+          urb_rain_irrig  = pgper_rain
+      ENDIF
+      write(*,*) urb_irrig
       CALL WATER ( ipatch,patchtype   ,lbp         ,nl_soil   ,deltim    ,&
              z_gpersno   ,dz_gpersno  ,zi_gpersno  ,&
              bsw         ,porsl       ,psi0        ,hksati    ,rootr     ,&
@@ -257,7 +257,7 @@ CONTAINS
              mss_dst1    ,mss_dst2    ,mss_dst3    ,mss_dst4     &
 ! END SNICAR model variables
             )
-             
+
 !=======================================================================
 ! [2] for roof and impervious road
 !=======================================================================
