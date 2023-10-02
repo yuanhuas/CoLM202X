@@ -294,8 +294,7 @@ SUBROUTINE CoLMDRIVER (idate,deltim,dolai,doalb,dosst,oro)
         solni(i)        ,srvd(i)         ,srvi(i)         ,srnd(i)         ,&
         srni(i)         ,solvdln(i)      ,solviln(i)      ,solndln(i)      ,&
         solniln(i)      ,srvdln(i)       ,srviln(i)       ,srndln(i)       ,&
-        srniln(i)       ,qcharge(i)      ,&
-        urb_qflx_irrig(u),&
+        srniln(i)       ,qcharge(i)      ,urb_irrig(u)    ,&
         xerr(i)         ,zerr(i)         ,&
 
       ! TUNABLE modle constants

@@ -98,10 +98,7 @@ MODULE MOD_Urban_Vars_TimeVariables
    REAL(r8), allocatable :: urb_green      (:) !fractional of green leaf in urban patch [-]
    REAL(r8), allocatable :: urb_lai        (:) !urban tree LAI [m2/m2]
    REAL(r8), allocatable :: urb_sai        (:) !urban tree SAI [m2/m2]
-   
-   !Urban irrigation
 
-   REAL(r8), allocatable :: urb_qflx_irrig        (:) !urban tree SAI [m2/m2]
 ! PUBLIC MEMBER FUNCTIONS:
    PUBLIC :: allocate_UrbanTimeVariables
    PUBLIC :: deallocate_UrbanTimeVariables
@@ -207,7 +204,6 @@ CONTAINS
             allocate (urb_green                     (numurban))
             allocate (urb_lai                       (numurban))
             allocate (urb_sai                       (numurban))
-            allocate (urb_qflx_irrig                       (numurban))
 
          ENDIF
       ENDIF
@@ -297,7 +293,6 @@ CONTAINS
       call ncio_read_vector (file_restart, 'urb_green'  , landurban, urb_green  ) !
       call ncio_read_vector (file_restart, 'tree_lai'   , landurban, urb_lai    ) !
       call ncio_read_vector (file_restart, 'tree_sai'   , landurban, urb_sai    ) !
-      call ncio_read_vector (file_restart, 'urb_qflx_irrig'   , landurban, urb_qflx_irrig   ) !
    END SUBROUTINE READ_UrbanTimeVariables
 
    SUBROUTINE WRITE_UrbanTimeVariables (file_restart)
@@ -403,7 +398,6 @@ CONTAINS
       call ncio_write_vector (file_restart, 'tree_lai'   , 'urban', landurban, urb_lai    , compress) !
       call ncio_write_vector (file_restart, 'tree_sai'   , 'urban', landurban, urb_sai    , compress) !
       call ncio_write_vector (file_restart, 'urb_green'  , 'urban', landurban, urb_green  , compress) !
-      call ncio_write_vector (file_restart, 'urb_qflx_irrig'  , 'urban', landurban, urb_qflx_irrig  , compress) !
 
    END SUBROUTINE WRITE_UrbanTimeVariables
 
@@ -493,7 +487,6 @@ CONTAINS
             deallocate (urb_green    )
             deallocate (urb_lai      )
             deallocate (urb_sai      )
-            deallocate (urb_qflx_irrig      )
 
 
          ENDIF

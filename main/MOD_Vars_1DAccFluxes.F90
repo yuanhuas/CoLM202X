@@ -115,7 +115,7 @@ module MOD_Vars_1DAccFluxes
 
    REAL(r8), allocatable :: a_troof    (:)  !temperature of roof [K]
    REAL(r8), allocatable :: a_twall    (:)  !temperature of wall [K]
-   REAL(r8), allocatable :: a_urb_qflx_irrig    (:)  !temperature of wall [K]
+   REAL(r8), allocatable :: a_urb_irrig(:)  !urban pervious ground irrigation flux [mm/s]
 #endif
 
 
@@ -452,7 +452,7 @@ contains
 
                allocate (a_troof     (numurban))
                allocate (a_twall     (numurban))
-               allocate (a_urb_qflx_irrig     (numurban))
+               allocate (a_urb_irrig (numurban))
             ENDIF
 #endif
 #ifdef BGC
@@ -794,7 +794,7 @@ contains
 
                deallocate (a_troof     )
                deallocate (a_twall     )
-               deallocate (a_urb_qflx_irrig     )
+               deallocate (a_urb_irrig )
             ENDIF
 #endif
 
@@ -1135,7 +1135,7 @@ contains
 
                a_troof    (:) = spval
                a_twall    (:) = spval
-               a_urb_qflx_irrig (:) = spval           
+               a_urb_irrig(:) = spval
             ENDIF
 #endif
 
@@ -1463,7 +1463,7 @@ contains
                rsub = rnof - rsur
             ELSEWHERE
                rsub = spval
-            END WHERE 
+            END WHERE
 #endif
             call acc1d (rsub    , a_rsub   )
             call acc1d (rnof    , a_rnof   )
@@ -1560,7 +1560,7 @@ contains
 
                CALL acc1d(t_roof    , a_troof     )
                CALL acc1d(t_wall    , a_twall     )
-               CALL acc1d(urb_qflx_irrig    , a_urb_qflx_irrig     )
+               CALL acc1d(urb_irrig , a_urb_irrig )
             ENDIF
 #endif
 

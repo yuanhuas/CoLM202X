@@ -16,7 +16,7 @@ MODULE MOD_GroundFluxes
 !-----------------------------------------------------------------------
 
 
-   subroutine GroundFluxes (zlnd, zsno, hu, ht, hq,&
+   SUBROUTINE GroundFluxes (zlnd, zsno, hu, ht, hq,&
                             hpbl, &
                             us, vs, tm, qm, rhoair, psrf,&
                             ur, thm, th, thv, t_grnd, qg, rss, dqgdT, htvp,&
@@ -38,15 +38,15 @@ MODULE MOD_GroundFluxes
 !                        make a proper update of um.
 !=======================================================================
 
-    use MOD_Precision
-    use MOD_Const_Physical, only: cpair,vonkar,grav
-    use MOD_FrictionVelocity
+    USE MOD_Precision
+    USE MOD_Const_Physical, only: cpair,vonkar,grav
+    USE MOD_FrictionVelocity
     USE mod_namelist, only: DEF_USE_CBL_HEIGHT,DEF_RSS_SCHEME
     USE MOD_TurbulenceLEddy
-    implicit none
+    IMPLICIT NONE
 
 !----------------------- Dummy argument --------------------------------
-    real(r8), INTENT(in) :: &
+    real(r8), intent(in) :: &
           zlnd,     &! roughness length for soil [m]
           zsno,     &! roughness length for snow [m]
 
@@ -75,7 +75,7 @@ MODULE MOD_GroundFluxes
           rss,      &! soil surface resistance for evaporation [s/m]
           htvp       ! latent heat of vapor of water (or sublimation) [j/kg]
 
-    real(r8), INTENT(out) :: &
+    real(r8), intent(out) :: &
           taux,     &! wind stress: E-W [kg/m/s**2]
           tauy,     &! wind stress: N-S [kg/m/s**2]
           fseng,    &! sensible heat flux from ground [W/m2]
@@ -154,22 +154,22 @@ MODULE MOD_GroundFluxes
         dthv  = dth*(1.+0.61*qm)+0.61*th*dqh
         zldis = hu-0.
 
-        call moninobukini(ur,th,thm,thv,dth,dqh,dthv,zldis,z0mg,um,obu)
+        CALL moninobukini(ur,th,thm,thv,dth,dqh,dthv,zldis,z0mg,um,obu)
 
   ! Evaluated stability-dependent variables using moz from prior iteration
         niters=6
 
         !----------------------------------------------------------------
-        ITERATION : do iter = 1, niters         ! begin stability iteration
+        ITERATION : DO iter = 1, niters         ! begin stability iteration
         !----------------------------------------------------------------
            displax = 0.
-           if (DEF_USE_CBL_HEIGHT) then
-             call moninobuk_leddy(hu,ht,hq,displax,z0mg,z0hg,z0qg,obu,um, hpbl, &
+           IF (DEF_USE_CBL_HEIGHT) THEN
+             CALL moninobuk_leddy(hu,ht,hq,displax,z0mg,z0hg,z0qg,obu,um, hpbl, &
                                   ustar,fh2m,fq2m,fm10m,fm,fh,fq)
-           else
-             call moninobuk(hu,ht,hq,displax,z0mg,z0hg,z0qg,obu,um,&
+           ELSE
+             CALL moninobuk(hu,ht,hq,displax,z0mg,z0hg,z0qg,obu,um,&
                             ustar,fh2m,fq2m,fm10m,fm,fh,fq)
-           endif
+           ENDIF
 
            tstar = vonkar/fh*dth
            qstar = vonkar/fq*dqh
@@ -181,31 +181,31 @@ MODULE MOD_GroundFluxes
            thvstar=tstar*(1.+0.61*qm)+0.61*th*qstar
   !        thvstar=tstar+0.61*th*qstar
            zeta=zldis*vonkar*grav*thvstar/(ustar**2*thv)
-           if(zeta >= 0.) then     !stable
+           IF(zeta >= 0.) THEN     !stable
              zeta = min(2.,max(zeta,1.e-6))
-           else                    !unstable
+           ELSE                    !unstable
              zeta = max(-100.,min(zeta,-1.e-6))
-           endif
+           ENDIF
            obu = zldis/zeta
 
-           if(zeta >= 0.)then
+           IF(zeta >= 0.)THEN
              um = max(ur,0.1)
-           else
-             if (DEF_USE_CBL_HEIGHT) then !//TODO: Shaofeng, 2023.05.18
+           ELSE
+             IF (DEF_USE_CBL_HEIGHT) THEN !//TODO: Shaofeng, 2023.05.18
                zii = max(5.*hu,hpbl)
-             endif !//TODO: Shaofeng, 2023.05.18
+             ENDIF !//TODO: Shaofeng, 2023.05.18
              wc = (-grav*ustar*thvstar*zii/thv)**(1./3.)
             wc2 = beta*beta*(wc*wc)
              um = sqrt(ur*ur+wc2)
-           endif
+           ENDIF
 
-           if (obuold*obu < 0.) nmozsgn = nmozsgn+1
-           if(nmozsgn >= 4) EXIT
+           IF (obuold*obu < 0.) nmozsgn = nmozsgn+1
+           IF(nmozsgn >= 4) EXIT
 
            obuold = obu
 
         !----------------------------------------------------------------
-        enddo ITERATION                         ! end stability iteration
+        ENDDO ITERATION                         ! END stability iteration
         !----------------------------------------------------------------
 
   ! Get derivative of fluxes with repect to ground temperature
@@ -215,16 +215,16 @@ MODULE MOD_GroundFluxes
 
   ! 08/23/2019, yuan:
         raih   = rhoair*cpair/rah
-        
+
         IF (dqh < 0.) THEN
            raiw   = rhoair/raw !dew case. no soil resistance
         ELSE
-           IF (DEF_RSS_SCHEME .eq. 4) THEN              
+           IF (DEF_RSS_SCHEME .eq. 4) THEN
               raiw   = rss*rhoair/raw
-           ELSE   
+           ELSE
               raiw   = rhoair/(raw+rss)
-           END IF
-        END IF   
+           ENDIF
+        ENDIF
         cgrnds = raih
         cgrndl = raiw*dqgdT
         cgrnd  = cgrnds + htvp*cgrndl
@@ -243,6 +243,6 @@ MODULE MOD_GroundFluxes
         tref   = thm + vonkar/fh*dth * (fh2m/vonkar - fh/vonkar)
         qref   =  qm + vonkar/fq*dqh * (fq2m/vonkar - fq/vonkar)
 
-   end subroutine GroundFluxes
+   END SUBROUTINE GroundFluxes
 
 END MODULE MOD_GroundFluxes

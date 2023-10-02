@@ -223,7 +223,7 @@ CONTAINS
         dksatu    (1:nl_soil), &! thermal conductivity of saturated unfrozen soil [W/m-K]
         dksatf    (1:nl_soil), &! thermal conductivity of saturated frozen soil [W/m-K]
         hksati    (1:nl_soil), &! hydraulic conductivity at saturation [mm h2o/s]
-        
+
         BA_alpha  (1:nl_soil), &! alpha in Balland and Arp(2005) thermal conductivity scheme
         BA_beta   (1:nl_soil), &! beta in Balland and Arp(2005) thermal conductivity scheme
         cv_roof(1:nl_roof) ,&! heat capacity of roof [J/(m2 K)]
@@ -707,7 +707,8 @@ CONTAINS
       CALL qsadv(troof,forc_psrf,eg,degdT,qsatg,qsatgdT)
       qroof    = qsatg
       dqroofdT = qsatgdT
-            ! calculate soil surface resistance (rss)
+
+      ! calculate soil surface resistance (rss)
       ! ------------------------------------------------
       !NOTE: (1) DEF_RSS_SCHEME=0 means no rss considered
       !      (2) Do NOT calculate rss for the first timestep

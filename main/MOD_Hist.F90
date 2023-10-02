@@ -471,7 +471,7 @@ contains
 #ifdef DataAssimilation
          ! slope factor for subsurface runoff [-]
          IF (p_is_worker) THEN
-            vecacc = fslp_patch 
+            vecacc = fslp_patch
             WHERE(vecacc /= spval) vecacc = vecacc * nac
          ENDIF
          call write_history_variable_2d ( .true., &
@@ -714,8 +714,8 @@ contains
             a_lfevpurbl, file_hist, 'f_lfevpurbl', itime_in_file, sumarea_urb, filter_urb, &
             'latent heat from urban tree [W/m2]','W/m2')
 
-         call write_history_variable_urb_2d ( DEF_hist_vars%urb_qflx_irrig, &
-            a_urb_qflx_irrig, file_hist, 'f_urb_qflx_irrig', itime_in_file, sumarea_urb, filter_urb, &
+         call write_history_variable_urb_2d ( DEF_hist_vars%urb_irrig, &
+            a_urb_irrig, file_hist, 'f_urb_irrig', itime_in_file, sumarea_urb, filter_urb, &
             'urban irrigation rate [mm/s]','mm/s')
 
          ! sensible flux from heat or cool AC [W/m2]
@@ -1171,7 +1171,7 @@ contains
             call write_history_variable_2d ( DEF_hist_vars%sum_irrig_count, &
                a_sum_irrig_count, file_hist, 'f_sum_irrig_count', itime_in_file, sumarea, filter, &
                'total irrigation times at growing season','-')
-         end if    
+         end if
 #endif
 
          ! grain to crop seed carbon
@@ -1927,15 +1927,15 @@ contains
                   end do
                end if
             end if
-   
+
             IF (HistForm == 'Gridded') THEN
                call mp2g_hist%map (VecOnes, sumarea, spv = spval, msk = filter)
             ENDIF
-   
+
             call write_history_variable_2d ( DEF_hist_vars%irrig_method_swheat, &
                a_irrig_method_swheat, file_hist, 'f_irrig_method_swheat', &
                itime_in_file, sumarea, filter,'irrigation method for spring wheat','-')
-   
+
             if (p_is_worker) then
                if (numpatch > 0) then
                   do i=1,numpatch
@@ -1951,15 +1951,15 @@ contains
                   end do
                end if
             end if
-   
+
             IF (HistForm == 'Gridded') THEN
                call mp2g_hist%map (VecOnes, sumarea, spv = spval, msk = filter)
             ENDIF
-   
+
             call write_history_variable_2d ( DEF_hist_vars%irrig_method_wwheat, &
                a_irrig_method_wwheat, file_hist, 'f_irrig_method_wwheat', &
                itime_in_file, sumarea, filter,'irrigation method for winter wheat','-')
-   
+
             if (p_is_worker) then
                if (numpatch > 0) then
                   do i=1,numpatch
@@ -1976,15 +1976,15 @@ contains
                   end do
                end if
             end if
-   
+
             IF (HistForm == 'Gridded') THEN
                call mp2g_hist%map (VecOnes, sumarea, spv = spval, msk = filter)
             ENDIF
-   
+
             call write_history_variable_2d ( DEF_hist_vars%irrig_method_soybean, &
                a_irrig_method_soybean, file_hist, 'f_irrig_method_soybean', &
                itime_in_file, sumarea, filter,'irrigation method for soybean','-')
-   
+
             if (p_is_worker) then
                if (numpatch > 0) then
                   do i=1,numpatch
@@ -2000,15 +2000,15 @@ contains
                   end do
                end if
             end if
-   
+
             IF (HistForm == 'Gridded') THEN
                call mp2g_hist%map (VecOnes, sumarea, spv = spval, msk = filter)
             ENDIF
-   
+
             call write_history_variable_2d ( DEF_hist_vars%irrig_method_cotton, &
                a_irrig_method_cotton, file_hist, 'f_irrig_method_cotton', &
                itime_in_file, sumarea, filter,'irrigation method for cotton','-')
-   
+
             if (p_is_worker) then
                if (numpatch > 0) then
                   do i=1,numpatch
@@ -2024,15 +2024,15 @@ contains
                   end do
                end if
             end if
-   
+
             IF (HistForm == 'Gridded') THEN
                call mp2g_hist%map (VecOnes, sumarea, spv = spval, msk = filter)
             ENDIF
-   
+
             call write_history_variable_2d ( DEF_hist_vars%irrig_method_rice1, &
                a_irrig_method_rice1, file_hist, 'f_irrig_method_rice1', &
                itime_in_file, sumarea, filter,'irrigation method for rice1','-')
-   
+
             if (p_is_worker) then
                if (numpatch > 0) then
                   do i=1,numpatch
@@ -2048,15 +2048,15 @@ contains
                   end do
                end if
             end if
-   
+
             IF (HistForm == 'Gridded') THEN
                call mp2g_hist%map (VecOnes, sumarea, spv = spval, msk = filter)
             ENDIF
-   
+
             call write_history_variable_2d ( DEF_hist_vars%irrig_method_rice2, &
                a_irrig_method_rice2, file_hist, 'f_irrig_method_rice2', &
                itime_in_file, sumarea, filter,'irrigation method for rice2','-')
-   
+
             if (p_is_worker) then
                if (numpatch > 0) then
                   do i=1,numpatch
@@ -2072,15 +2072,15 @@ contains
                   end do
                end if
             end if
-   
+
             IF (HistForm == 'Gridded') THEN
                call mp2g_hist%map (VecOnes, sumarea, spv = spval, msk = filter)
             ENDIF
-   
+
             call write_history_variable_2d ( DEF_hist_vars%irrig_method_sugarcane, &
                a_irrig_method_sugarcane, file_hist, 'f_irrig_method_sugarcane', &
                itime_in_file, sumarea, filter,'irrigation method for sugarcane','-')
-   
+
          end if
 
          if (p_is_worker) then
@@ -3317,7 +3317,7 @@ contains
          if (p_is_worker) then
             if (numpatch > 0) then
 
-               filter(:) = (patchtype <= 4) 
+               filter(:) = (patchtype <= 4)
 
                IF (DEF_forcing%has_missing_value) THEN
                   filter = filter .and. forcmask

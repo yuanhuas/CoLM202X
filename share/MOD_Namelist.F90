@@ -396,7 +396,7 @@ MODULE MOD_Namelist
       LOGICAL :: lfevp_gimp   = .true.
       LOGICAL :: lfevp_gper   = .true.
       LOGICAL :: lfevp_urbl   = .true.
-      LOGICAL :: urb_qflx_irrig   = .true.
+      LOGICAL :: urb_irrig    = .true.
       LOGICAL :: fhac         = .true.
       LOGICAL :: fwst         = .true.
       LOGICAL :: fach         = .true.
@@ -1350,7 +1350,7 @@ CONTAINS
       CALL sync_hist_vars_one (DEF_hist_vars%lfevp_gimp  ,  set_defaults)
       CALL sync_hist_vars_one (DEF_hist_vars%lfevp_gper  ,  set_defaults)
       CALL sync_hist_vars_one (DEF_hist_vars%lfevp_urbl  ,  set_defaults)
-      CALL sync_hist_vars_one (DEF_hist_vars%urb_qflx_irrig      ,  set_defaults)
+      CALL sync_hist_vars_one (DEF_hist_vars%urb_irrig   ,  set_defaults)
       CALL sync_hist_vars_one (DEF_hist_vars%fhac        ,  set_defaults)
       CALL sync_hist_vars_one (DEF_hist_vars%fwst        ,  set_defaults)
       CALL sync_hist_vars_one (DEF_hist_vars%fach        ,  set_defaults)

@@ -668,8 +668,8 @@ CONTAINS
                 cgw = rss / rd
              ELSE
                 cgw = 1. / (rd + rss)
-             END IF
-          END IF
+             ENDIF
+          ENDIF
           cfw = (1.-delta*(1.-fwet))*(lai+sai)/rb + (1.-fwet)*delta* &
                 ( laisun/(rb+rssun) + laisha/(rb+rssha) )
 
