@@ -48,8 +48,7 @@ CONTAINS
 
         ! output
         rsur           ,rnof           ,qinfl          ,zwt            ,&
-        wa             ,qcharge        ,&
-        urb_irrig      ,&
+        wa             ,qcharge        ,urb_irrig      ,&
         smp            ,hk             ,&
         errw_rsub      )
 
@@ -194,7 +193,7 @@ CONTAINS
         rnof             ,&! total runoff (mm h2o/s)
         qinfl            ,&! infiltration rate (mm h2o/s)
         qcharge          ,&! groundwater recharge (positive to aquifer) [mm/s]
-        urb_irrig          !
+        urb_irrig          ! urban irrigation flux on previous ground [mm/s]
   REAL(r8), intent(out) :: &
         smp(1:nl_soil)   ,&! soil matrix potential [mm]
         hk (1:nl_soil)   ,&! hydraulic conductivity [mm h2o/m]
@@ -205,7 +204,6 @@ CONTAINS
   REAL(r8) :: &
         fg               ,&! ground fractional cover [-]
         gwat             ,&! net water input from top (mm/s)
-        urb_rain_irrig   ,&!
         rnof_roof        ,&! total runoff (mm h2o/s)
         rnof_gimp        ,&! total runoff (mm h2o/s)
         rnof_gper        ,&! total runoff (mm h2o/s)
@@ -227,29 +225,24 @@ CONTAINS
 ! [1] for pervious road, the same as soil
 !=======================================================================
 
-      urb_rain_irrig = 0.
       urb_irrig = 0.
-      CALL UrbanIrrigation( lbp,nl_soil ,    idate    ,    deltim   ,    fveg ,      lai ,  patchlonr,&
-                            dz_gpersno  ,    z_gpersno,    t_gpersno,    porsl,      psi0,  bsw,&
-                            wliq_gpersno,&
-                            urb_irrig)
-
-      IF (urb_irrig > 0.) THEN
-          urb_rain_irrig  = pgper_rain +  urb_irrig
-      ELSE
-          urb_rain_irrig  = pgper_rain
+      IF ( DEF_URBAN_IRRIG ) THEN
+         CALL UrbanIrrigation ( lbp,nl_soil ,idate    , deltim   , fveg , lai , patchlonr,&
+                                dz_gpersno  ,z_gpersno, t_gpersno, porsl, psi0, bsw,&
+                                wliq_gpersno,urb_irrig )
       ENDIF
       write(*,*) urb_irrig
+
       CALL WATER ( ipatch,patchtype   ,lbp         ,nl_soil   ,deltim    ,&
              z_gpersno   ,dz_gpersno  ,zi_gpersno  ,&
              bsw         ,porsl       ,psi0        ,hksati    ,rootr     ,&
-             t_gpersno   ,wliq_gpersno,wice_gpersno,smp,hk,urb_rain_irrig,sm_gper,&
+             t_gpersno   ,wliq_gpersno,wice_gpersno,smp,hk,pgper_rain+urb_irrig,sm_gper,&
              etr         ,qseva_gper  ,qsdew_gper  ,qsubl_gper,qfros_gper,&
              rsur_gper   ,rnof_gper   ,qinfl       ,wtfact    ,pondmx    ,&
              ssi         ,wimp        ,smpmin      ,zwt       ,wa        ,&
              qcharge     ,errw_rsub                                       &
 #if(defined CaMa_Flood)
-            ,flddepth    ,fldfrc      ,qinfl_fld                 &
+             ,flddepth   ,fldfrc      ,qinfl_fld                 &
 #endif
 ! SNICAR model variables
              ,forc_aer   ,&

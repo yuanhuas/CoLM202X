@@ -173,5 +173,4 @@ CONTAINS
 
   END Subroutine LUCY
 
-  !TODO-done: write the below to timemanager.F90 @Wenzong
 END MODULE MOD_Urban_LUCY

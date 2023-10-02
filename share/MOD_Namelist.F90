@@ -154,6 +154,7 @@ MODULE MOD_Namelist
    LOGICAL :: DEF_URBAN_TREE   = .true.
    LOGICAL :: DEF_URBAN_WATER  = .true.
    LOGICAL :: DEF_URBAN_LUCY   = .true.
+   logical :: DEF_URBAN_IRRIG  = .true.
 
    ! ------ SOIL parameters and supercool water setting -------
    LOGICAL :: DEF_USE_SOILPAR_UPS_FIT = .true.     ! soil hydraulic parameters are upscaled from rawdata (1km resolution)
@@ -746,6 +747,7 @@ CONTAINS
          DEF_URBAN_TREE,                  &   !add by hua yuan, modeling urban tree or not
          DEF_URBAN_WATER,                 &   !add by hua yuan, modeling urban water or not
          DEF_URBAN_LUCY,                  &
+         DEF_URBAN_IRRIG,                 &
 
          DEF_USE_SOILPAR_UPS_FIT,         &
          DEF_THERMAL_CONDUCTIVITY_SCHEME, &
@@ -1147,6 +1149,7 @@ CONTAINS
       CALL mpi_bcast (DEF_URBAN_TREE,        1, mpi_logical, p_root, p_comm_glb, p_err)
       CALL mpi_bcast (DEF_URBAN_WATER,       1, mpi_logical, p_root, p_comm_glb, p_err)
       CALL mpi_bcast (DEF_URBAN_LUCY,        1, mpi_logical, p_root, p_comm_glb, p_err)
+      CALL mpi_bcast (DEF_URBAN_IRRIG,       1, mpi_logical, p_root, p_comm_glb, p_err)
 
       ! 06/2023, added by weinan
       CALL mpi_bcast (DEF_USE_SOILPAR_UPS_FIT,          1, mpi_logical, p_root, p_comm_glb, p_err)
