@@ -21,7 +21,7 @@ CONTAINS
         froof          ,fgper          ,flake          ,bsw            ,&
         porsl          ,psi0           ,hksati         ,wtfact         ,&
         pondmx         ,ssi            ,wimp           ,smpmin         ,&
-        rootr          ,etr            ,fseng          ,fgrnd          ,&
+        rootr,rootflux ,etr            ,fseng          ,fgrnd          ,&
         t_gpersno      ,t_lakesno      ,t_lake         ,dz_lake        ,&
         z_gpersno      ,z_lakesno      ,zi_gpersno     ,zi_lakesno     ,&
         dz_roofsno     ,dz_gimpsno     ,dz_gpersno     ,dz_lakesno     ,&
@@ -127,6 +127,9 @@ CONTAINS
         fveg             ,&!
         lai              ,&!
         patchlonr          !
+
+  REAL(r8), intent(inout) :: rootflux(1:nl_soil)
+
 #if(defined CaMa_Flood)
   real(r8), INTENT(inout) :: flddepth  ! inundation water depth [mm]
   real(r8), INTENT(in)    :: fldfrc    ! inundation water depth   [0-1]
@@ -194,6 +197,7 @@ CONTAINS
         qinfl            ,&! infiltration rate (mm h2o/s)
         qcharge          ,&! groundwater recharge (positive to aquifer) [mm/s]
         urb_irrig          ! urban irrigation flux on previous ground [mm/s]
+
   REAL(r8), intent(out) :: &
         smp(1:nl_soil)   ,&! soil matrix potential [mm]
         hk (1:nl_soil)   ,&! hydraulic conductivity [mm h2o/m]
@@ -225,6 +229,7 @@ CONTAINS
 ! [1] for pervious road, the same as soil
 !=======================================================================
 
+      rootflux(:) = rootr(:)*etr
       urb_irrig = 0.
       IF ( DEF_URBAN_IRRIG ) THEN
          CALL UrbanIrrigation ( lbp,nl_soil ,idate    , deltim   , fveg , lai , patchlonr,&
@@ -235,10 +240,17 @@ CONTAINS
 
       CALL WATER ( ipatch,patchtype   ,lbp         ,nl_soil   ,deltim    ,&
              z_gpersno   ,dz_gpersno  ,zi_gpersno  ,&
-             bsw         ,porsl       ,psi0        ,hksati    ,rootr     ,&
+             bsw         ,porsl       ,psi0        ,hksati,rootr,rootflux,&
              t_gpersno   ,wliq_gpersno,wice_gpersno,smp,hk,pgper_rain+urb_irrig,sm_gper,&
              etr         ,qseva_gper  ,qsdew_gper  ,qsubl_gper,qfros_gper,&
-             rsur_gper   ,rnof_gper   ,qinfl       ,wtfact    ,pondmx    ,&
+             !NOTE: temporal input, as urban mode doesn't support split soil&snow
+             ! set all the same for soil and snow surface,
+             ! and fsno=0. (no physical meaning here)
+             qseva_gper  ,qsdew_gper  ,qsubl_gper  ,qfros_gper,&
+             qseva_gper  ,qsdew_gper  ,qsubl_gper  ,qfros_gper,&
+             0.          ,& ! fsno, not active
+             rsur_gper   ,&
+             rnof_gper   ,qinfl       ,wtfact      ,pondmx    ,&
              ssi         ,wimp        ,smpmin      ,zwt       ,wa        ,&
              qcharge     ,errw_rsub                                       &
 #if(defined CaMa_Flood)
