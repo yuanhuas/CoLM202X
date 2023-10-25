@@ -106,7 +106,6 @@ MODULE MOD_GroundFluxes
           fm,        &! integral of profile function for momentum
           fh,        &! integral of profile function for heat
           fq          ! integral of profile function for moisture
->>>>>>> master
 
   !------------------------ LOCAL VARIABLES ------------------------------
     integer niters,  &! maximum number of iterations for surface temperature

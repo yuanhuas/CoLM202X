@@ -62,6 +62,7 @@ CONTAINS
   USE MOD_Vars_Global
   USE MOD_Const_Physical, only: denice, denh2o, tfrz
   USE MOD_Urban_Irrigation, only: UrbanIrrigation
+  USE MOD_Namelist, only: DEF_URBAN_IRRIG
   USE MOD_SoilSnowHydrology
   USE MOD_Lake
 
