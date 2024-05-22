@@ -3,7 +3,7 @@
 include include/Makeoptions
 HEADER = include/define.h
 
-INCLUDE_DIR = -Iinclude -I.bld -I${NETCDF_INC}
+INCLUDE_DIR = -Iinclude -I.bld/ -I${NETCDF_INC}
 VPATH = include : share : mksrfdata : mkinidata \
 	: main : main/HYDRO : main/BGC : main/URBAN : main/LULCC : main/DA \
 	: CaMa/src : postprocess : .bld
@@ -31,6 +31,7 @@ OBJS_SHARED =    \
 				  MOD_Const_Physical.o         \
 				  MOD_Const_LC.o               \
 				  MOD_Utils.o                  \
+				  MOD_UserDefFun.o             \
 				  MOD_TimeManager.o            \
 				  MOD_NetCDFSerial.o           \
 				  MOD_SingleSrfdata.o          \
@@ -43,10 +44,13 @@ OBJS_SHARED =    \
 				  MOD_5x5DataReadin.o          \
 				  MOD_Mesh.o                   \
 				  MOD_Pixelset.o               \
-				  MOD_NetCDFVector.o           \
+				  MOD_NetCDFVectorBlk.o        \
+				  MOD_NetCDFVectorOneS.o       \
+				  MOD_NetCDFVectorOneP.o       \
 				  MOD_RangeCheck.o             \
 				  MOD_Mapping_Grid2Pset.o      \
 				  MOD_Mapping_Pset2Grid.o      \
+				  MOD_InterpBilinear.o         \
 				  MOD_AggregationRequestData.o \
 				  MOD_PixelsetShared.o         \
 				  MOD_LandElm.o                \
@@ -141,11 +145,12 @@ OBJS_BASIC =    \
 				 MOD_SoilParametersReadin.o     \
 				 MOD_HtopReadin.o               \
 				 MOD_UrbanReadin.o              \
+				 MOD_BGC_CNSummary.o            \
 				 MOD_IniTimeVariable.o          \
 				 MOD_UrbanIniTimeVariable.o     \
-				 MOD_Hydro_HillslopeNetwork.o   \
-				 MOD_Hydro_RiverLakeNetwork.o   \
-				 MOD_Hydro_RiverDepth.o         \
+				 MOD_ElementNeighbour.o         \
+				 MOD_Catch_HillslopeNetwork.o   \
+				 MOD_Catch_RiverLakeNetwork.o   \
 				 MOD_Initialize.o
 
 
@@ -214,14 +219,11 @@ OBJS_CAMA_T = $(addprefix .bld/,${OBJECTS_CAMA})
 endif
 
 OBJS_MAIN = \
-				MOD_DA_GRACE.o                            \
-				MOD_DataAssimilation.o                    \
-				MOD_Hydro_BasinNeighbour.o                \
-				MOD_Hydro_HillslopeFlow.o                 \
-				MOD_Hydro_SubsurfaceFlow.o                \
-				MOD_Hydro_RiverLakeFlow.o                 \
+				MOD_Catch_HillslopeFlow.o                 \
+				MOD_Catch_SubsurfaceFlow.o                \
+				MOD_Catch_RiverLakeFlow.o                 \
 				MOD_Hydro_Hist.o                          \
-				MOD_Hydro_LateralFlow.o                   \
+				MOD_Catch_LateralFlow.o                   \
 				MOD_BGC_CNCStateUpdate1.o                 \
 				MOD_BGC_CNCStateUpdate2.o                 \
 				MOD_BGC_CNCStateUpdate3.o                 \
@@ -244,7 +246,6 @@ OBJS_MAIN = \
 				MOD_BGC_Veg_CNPhenology.o                 \
 				MOD_BGC_Veg_NutrientCompetition.o         \
 				MOD_BGC_Veg_CNVegStructUpdate.o           \
-				MOD_BGC_CNSummary.o                       \
 				MOD_BGC_CNAnnualUpdate.o                  \
 				MOD_BGC_CNZeroFluxes.o                    \
 				MOD_BGC_CNBalanceCheck.o                  \
@@ -258,6 +259,8 @@ OBJS_MAIN = \
 				MOD_UserSpecifiedForcing.o                \
 				MOD_ForcingDownscaling.o                  \
 				MOD_Forcing.o                             \
+				MOD_DA_GRACE.o                            \
+				MOD_DataAssimilation.o                    \
 				MOD_AssimStomataConductance.o             \
 				MOD_PlantHydraulic.o                      \
 				MOD_FrictionVelocity.o                    \
@@ -267,6 +270,9 @@ OBJS_MAIN = \
 				MOD_LeafTemperature.o                     \
 				MOD_LeafTemperaturePC.o                   \
 				MOD_SoilThermalParameters.o               \
+				MOD_Hydro_VIC_Variables.o                 \
+				MOD_Hydro_VIC.o                           \
+				MOD_Runoff.o                              \
 				MOD_SoilSnowHydrology.o                   \
 				MOD_SnowLayersCombineDivide.o             \
 				MOD_PhaseChange.o                         \
@@ -284,6 +290,7 @@ OBJS_MAIN = \
 				MOD_Thermal.o                             \
 				MOD_Vars_1DAccFluxes.o                    \
 				MOD_CaMa_Vars.o                           \
+				MOD_HistWriteBack.o                       \
 				MOD_HistGridded.o                         \
 				MOD_HistVector.o                          \
 				MOD_HistSingle.o                          \

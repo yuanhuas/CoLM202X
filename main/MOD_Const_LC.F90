@@ -11,7 +11,7 @@ MODULE MOD_Const_LC
 ! !REVISIONS:
 ! Hua Yuan, 08/2019: initial version adapted from IniTimeConst.F90 of CoLM2014
 ! Hua Yuan, 08/2019: added constants values for IGBP land cover types
-! TODO...
+! Xingjie Lu, 05/2023: added Plant Hydraulics Paramters
 !
 ! !USES:
    USE MOD_Precision
@@ -63,19 +63,19 @@ MODULE MOD_Const_LC
    !NOTE: woody wetland 35m?
    ! shrub land 0.5m? grass like land 1m? all set to 0.5
    real(r8), parameter, dimension(N_land_classification) :: htop0_usgs &
-      !=(/ 1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   0.5,&
-      !    0.5,   1.0,  20.0,  17.0,  35.0,  17.0,  20.0,   1.0,&
-      !    1.0,  35.0,   0.5,   1.0,   1.0,   1.0,   1.0,   1.0/)
+     !=(/ 1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   0.5,&
+     !    0.5,   1.0,  20.0,  17.0,  35.0,  17.0,  20.0,   1.0,&
+     !    1.0,  35.0,   0.5,   1.0,   1.0,   1.0,   1.0,   1.0/)
       =(/ 1.0,   0.5,   0.5,   0.5,   0.5,   0.5,   0.5,   0.5,&
           0.5,   0.5,  20.0,  17.0,  35.0,  17.0,  20.0,   0.5,&
           0.5,  17.0,   0.5,   0.5,   0.5,   0.5,   0.5,   0.5/)
 
    ! Look-up table canopy bottom height
+   ! 01/06/2020, yuan: adjust hbop: grass/shrub -> 0, tree->1
    real(r8), parameter, dimension(N_land_classification) :: hbot0_usgs &
-! 01/06/2020, yuan: adjust hbop: grass/shrub -> 0, tree->1
-      !=(/0.01,  0.01,  0.01,  0.01,  0.01,  0.01,  0.01,   0.1,&
-      !    0.1,   0.1,  11.5,   8.5,   1.0,   8.5,  10.0,   0.1,&
-      !    0.1,   1.0,   0.1,  0.01,  0.01,  0.01,  0.01,   0.01/)
+     !=(/0.01,  0.01,  0.01,  0.01,  0.01,  0.01,  0.01,   0.1,&
+     !    0.1,   0.1,  11.5,   8.5,   1.0,   8.5,  10.0,   0.1,&
+     !    0.1,   1.0,   0.1,  0.01,  0.01,  0.01,  0.01,   0.01/)
       =(/ 0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,&
           0.0,   0.0,   1.0,   1.0,   1.0,   1.0,   1.0,   0.0,&
           0.0,   1.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0/)
@@ -87,9 +87,9 @@ MODULE MOD_Const_LC
    ! Look-up table stem area index
    !NOTE: now read from input NetCDF file
    real(r8), parameter, dimension(N_land_classification) :: sai0_usgs &
-      !=(/0.2, 0.2, 0.3, 0.3, 0.5, 0.5, 1.0, 0.5,&
-      !   1.0, 0.5, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0,&
-      !   2.0, 2.0, 0.0, 0.1, 0.1, 0.1, 0.0, 0.0/)
+     !=(/0.2, 0.2, 0.3, 0.3, 0.5, 0.5, 1.0, 0.5,&
+     !   1.0, 0.5, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0,&
+     !   2.0, 2.0, 0.0, 0.1, 0.1, 0.1, 0.0, 0.0/)
       =(/0.2, 0.2, 0.3, 0.3, 0.5, 0.5, 1.0, 0.5,&
          1.0, 0.5, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0,&
          0.2, 2.0, 0.2, 0.2, 0.2, 0.2, 0.0, 0.0/)
@@ -173,6 +173,19 @@ MODULE MOD_Const_LC
 
    ! conductance-photosynthesis slope parameter
    !TODO: no C4, 4.0 may have problem
+   real(r8), parameter, dimension(N_land_classification) :: g1_usgs &
+      = (/4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0,&
+          4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0,&
+          4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0/)
+
+   ! conductance-photosynthesis intercept
+   real(r8), parameter, dimension(N_land_classification) :: g0_usgs &
+      = (/100, 100, 100, 100, 100, 100, 100, 100,&
+          100, 100, 100, 100, 100, 100, 100, 100,&
+          100, 100, 100, 100, 100, 100, 100, 100/)
+
+   ! conductance-photosynthesis slope parameter
+   !TODO: no C4, 4.0 may have problem
    real(r8), parameter, dimension(N_land_classification) :: gradm_usgs &
       = (/9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0,&
           9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0,&
@@ -237,7 +250,7 @@ MODULE MOD_Const_LC
    ! water/glacier ==> grass
    real(r8), parameter, dimension(N_land_classification) :: roota_usgs &
       =(/ 5.558,  5.558,  5.558,  5.558,  8.149,  5.558, 10.740,  7.022,&
-          8.881,  7.920,  5.990,  7.066,  7.344,  7.706,  4.453, 10.740,&
+          8.881,  7.920,  5.990,  7.066,  7.344,  6.706,  4.453, 10.740,&
          10.740,  4.453,  8.992,  8.992,  8.992,  8.992,  4.372, 10.740/)
 
    real(r8), parameter, dimension(N_land_classification) :: rootb_usgs &
@@ -247,28 +260,28 @@ MODULE MOD_Const_LC
 
 ! Plant Hydraulics Paramters
    real(r8), parameter, dimension(N_land_classification) :: kmax_sun0_usgs &
-      = (/0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
+      = (/     0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
           2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
-          2.e-008, 2.e-008, 2.e-008, 0., 2.e-008, 2.e-008,&
-          0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008/)
+          2.e-008, 2.e-008, 2.e-008,      0., 2.e-008, 2.e-008,&
+               0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008/)
 
    real(r8), parameter, dimension(N_land_classification) :: kmax_sha0_usgs &
-      = (/0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
+      = (/     0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
           2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
-          2.e-008, 2.e-008, 2.e-008, 0., 2.e-008, 2.e-008,&
-          0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008/)
+          2.e-008, 2.e-008, 2.e-008,      0., 2.e-008, 2.e-008,&
+               0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008/)
 
    real(r8), parameter, dimension(N_land_classification) :: kmax_xyl0_usgs &
-      = (/0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
+      = (/     0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
           2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
-          2.e-008, 2.e-008, 2.e-008, 0., 2.e-008, 2.e-008,&
-          0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008/)
+          2.e-008, 2.e-008, 2.e-008,      0., 2.e-008, 2.e-008,&
+               0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008/)
 
    real(r8), parameter, dimension(N_land_classification) :: kmax_root0_usgs &
-      = (/0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
+      = (/     0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
           2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
-          2.e-008, 2.e-008, 2.e-008, 0., 2.e-008, 2.e-008,&
-          0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008/)
+          2.e-008, 2.e-008, 2.e-008,      0., 2.e-008, 2.e-008,&
+               0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008/)
 
    ! water potential at 50% loss of sunlit leaf tissue conductance (mmH2O)
    real(r8), parameter, dimension(N_land_classification) :: psi50_sun0_usgs &
@@ -300,10 +313,10 @@ MODULE MOD_Const_LC
 
    ! shape-fitting parameter for vulnerability curve (-)
    real(r8), parameter, dimension(N_land_classification) :: ck0_usgs &
-      = (/0., 3.95, 3.95, 3.95, 3.95, 3.95, &
+      = (/  0., 3.95, 3.95, 3.95, 3.95, 3.95, &
           3.95, 3.95, 3.95, 3.95, 3.95, 3.95, &
-          3.95, 3.95, 3.95, 0., 3.95, 3.95, &
-          0., 3.95, 3.95, 3.95, 0., 0./)
+          3.95, 3.95, 3.95,   0., 3.95, 3.95, &
+            0., 3.95, 3.95, 3.95,   0.,   0./)
 !end plant hydraulic parameters
 #else
 
@@ -341,19 +354,19 @@ MODULE MOD_Const_LC
       =(/17.0,  35.0,  17.0,  20.0,  20.0,   0.5,   0.5,   1.0,&
           1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,&
           1.0 /)
-      !=(/17.0,  35.0,  17.0,  20.0,  20.0,   0.5,   0.5,   0.5,&
-      !    0.5,   0.5,   0.5,   0.5,   1.0,   0.5,   0.5,   0.5,&
-      !    0.5 /)
+     !=(/17.0,  35.0,  17.0,  20.0,  20.0,   0.5,   0.5,   0.5,&
+     !    0.5,   0.5,   0.5,   0.5,   1.0,   0.5,   0.5,   0.5,&
+     !    0.5 /)
 
    ! Look-up table canopy bottom height
+   ! 01/06/2020, yuan: adjust hbop: grass/shrub -> 0, tree->1
    real(r8), parameter, dimension(N_land_classification) :: hbot0_igbp &
-! 01/06/2020, yuan: adjust hbop: grass/shrub -> 0, tree->1
       =(/ 8.5,   1.0,   8.5,  11.5,  10.0,   0.1,   0.1,   0.1,&
           0.1,  0.01,  0.01,  0.01,   0.3,  0.01,  0.01,  0.01,&
           0.01 /)
-      !=(/ 1.0,   1.0,   1.0,   1.0,   1.0,   0.0,   0.0,   0.0,&
-      !    0.1,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,&
-      !    0.0 /)
+     !=(/ 1.0,   1.0,   1.0,   1.0,   1.0,   0.0,   0.0,   0.0,&
+     !    0.1,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,&
+     !    0.0 /)
 
    ! Look-up table vegetation fractional cover
    real(r8), parameter, dimension(N_land_classification) :: fveg0_igbp &
@@ -444,6 +457,18 @@ MODULE MOD_Const_LC
           0.08 /)
 
    ! conductance-photosynthesis slope parameter
+   real(r8), parameter, dimension(N_land_classification) :: g1_igbp &
+      = (/9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0,&
+          9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0,&
+          9.0 /)
+
+   ! conductance-photosynthesis intercept
+   real(r8), parameter, dimension(N_land_classification) :: g0_igbp &
+      = (/100, 100, 100, 100, 100, 100, 100, 100,&
+          100, 100, 100, 100, 100, 100, 100, 100,&
+          100 /)
+
+   ! conductance-photosynthesis slope parameter
    real(r8), parameter, dimension(N_land_classification) :: gradm_igbp &
       = (/9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0,&
           9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0,&
@@ -524,17 +549,17 @@ MODULE MOD_Const_LC
    real(r8), parameter, dimension(N_land_classification) :: kmax_sha0_igbp &
       = (/2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, &
           2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, &
-          2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008     /)
+          2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008  /)
 
    real(r8), parameter, dimension(N_land_classification) :: kmax_xyl0_igbp &
       = (/2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, &
           2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, &
-          2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008     /)
+          2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008  /)
 
    real(r8), parameter, dimension(N_land_classification) :: kmax_root0_igbp &
       = (/2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, &
           2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, &
-          2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008     /)
+          2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008  /)
 
    ! water potential at 50% loss of sunlit leaf tissue conductance (mmH2O)
    real(r8), parameter, dimension(N_land_classification) :: psi50_sun0_igbp &
@@ -564,7 +589,7 @@ MODULE MOD_Const_LC
    real(r8), parameter, dimension(N_land_classification) :: ck0_igbp &
       = (/3.95, 3.95, 3.95, 3.95, 3.95, 3.95, &
           3.95, 3.95, 3.95, 3.95, 3.95, 3.95, &
-          3.95, 3.95, 0.  , 0.  , 0.  /)
+          3.95, 3.95,   0.,   0.,   0.  /)
 !end plant hydraulic parameters
 #endif
 
@@ -581,6 +606,8 @@ MODULE MOD_Const_LC
 
       vmax25,     &! maximum carboxylation rate at 25 C at canopy top
       effcon,     &! quantum efficiency
+      g1,         &! conductance-photosynthesis slope parameter
+      g0,         &! conductance-photosynthesis intercept
       gradm,      &! conductance-photosynthesis slope parameter
       binter,     &! conductance-photosynthesis intercept
       respcp,     &! respiration fraction
@@ -598,10 +625,10 @@ MODULE MOD_Const_LC
 
 ! Plant Hydraulic Parameters
    real(r8), dimension(N_land_classification) :: &
-      kmax_sun,   &
-      kmax_sha,   &
-      kmax_xyl,   &
-      kmax_root,  &
+      kmax_sun,   &! Plant Hydraulics Paramters (TODO@Xingjie Lu, please give more details and below)
+      kmax_sha,   &! Plant Hydraulics Paramters
+      kmax_xyl,   &! Plant Hydraulics Paramters
+      kmax_root,  &! Plant Hydraulics Paramters
       psi50_sun,  &! water potential at 50% loss of sunlit leaf tissue conductance (mmH2O)
       psi50_sha,  &! water potential at 50% loss of shaded leaf tissue conductance (mmH2O)
       psi50_xyl,  &! water potential at 50% loss of xylem tissue conductance (mmH2O)
@@ -630,9 +657,9 @@ CONTAINS
 
    SUBROUTINE Init_LC_Const
 
-      IMPLICIT NONE
+   IMPLICIT NONE
 
-      integer :: i, nsl
+   integer :: i, nsl
 
 #ifdef LULC_USGS
       patchtypes (:) = patchtypes_usgs (:)
@@ -646,6 +673,8 @@ CONTAINS
       chil       (:) = chil_usgs       (:)
       vmax25     (:) = vmax25_usgs     (:) * 1.e-6
       effcon     (:) = effcon_usgs     (:)
+      g1         (:) = g1_usgs         (:)
+      g0         (:) = g0_usgs         (:)
       gradm      (:) = gradm_usgs      (:)
       binter     (:) = binter_usgs     (:)
       respcp     (:) = respcp_usgs     (:)
@@ -692,6 +721,8 @@ ENDIF
       chil       (:) = chil_igbp       (:)
       vmax25     (:) = vmax25_igbp     (:) * 1.e-6
       effcon     (:) = effcon_igbp     (:)
+      g1         (:) = g1_igbp         (:)
+      g0         (:) = g0_igbp         (:)
       gradm      (:) = gradm_igbp      (:)
       binter     (:) = binter_igbp     (:)
       respcp     (:) = respcp_igbp     (:)
@@ -735,30 +766,30 @@ ENDIF
       ! ----------------------------------------------------------
       IF (ROOTFR_SCHEME == 1) THEN
          DO i = 1, N_land_classification
-            rootfr(1,i)=1./(1.+(z_soih(1)*100./d50(i))**beta(i))
-            rootfr(nl_soil,i)=1.-1./(1.+(z_soih(nl_soil-1)*100./d50(i))**beta(i))
+            rootfr(1,i)=1./(1.+(zi_soi(1)*100./d50(i))**beta(i))
+            rootfr(nl_soil,i)=1.-1./(1.+(zi_soi(nl_soil-1)*100./d50(i))**beta(i))
 
             DO nsl=2,nl_soil-1
-               rootfr(nsl,i)=1./(1.+(z_soih(nsl)*100./d50(i))**beta(i)) &
-                  -1./(1.+(z_soih(nsl-1)*100./d50(i))**beta(i))
+               rootfr(nsl,i)=1./(1.+(zi_soi(nsl)*100./d50(i))**beta(i)) &
+                  -1./(1.+(zi_soi(nsl-1)*100./d50(i))**beta(i))
             ENDDO
          ENDDO
       ELSE
          DO i = 1, N_land_classification
             rootfr(1,i) = 1. - 0.5*( &
-                 exp(-roota(i) * z_soih(1)) &
-               + exp(-rootb(i) * z_soih(1)) )
+                 exp(-roota(i) * zi_soi(1)) &
+               + exp(-rootb(i) * zi_soi(1)) )
 
             rootfr(nl_soil,i) = 0.5*( &
-                 exp(-roota(i) * z_soih(nl_soil)) &
-               + exp(-rootb(i) * z_soih(nl_soil)) )
+                 exp(-roota(i) * zi_soi(nl_soil)) &
+               + exp(-rootb(i) * zi_soi(nl_soil)) )
 
             DO nsl = 2, nl_soil-1
                rootfr(nsl,i) = 0.5*( &
-                    exp(-roota(i) * z_soih(nsl-1)) &
-                  + exp(-rootb(i) * z_soih(nsl-1)) &
-                  - exp(-roota(i) * z_soih(nsl)) &
-                  - exp(-rootb(i) * z_soih(nsl)) )
+                    exp(-roota(i) * zi_soi(nsl-1)) &
+                  + exp(-rootb(i) * zi_soi(nsl-1)) &
+                  - exp(-roota(i) * zi_soi(nsl)) &
+                  - exp(-rootb(i) * zi_soi(nsl)) )
             ENDDO
          ENDDO
       ENDIF

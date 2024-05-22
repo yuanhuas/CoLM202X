@@ -2,17 +2,17 @@
 
 MODULE MOD_Urban_Thermal
 
-  USE MOD_Precision
-  IMPLICIT NONE
-  SAVE
-  PRIVATE
+   USE MOD_Precision
+   IMPLICIT NONE
+   SAVE
+   PRIVATE
 
-  PUBLIC :: UrbanTHERMAL
+   PUBLIC :: UrbanTHERMAL
 
 CONTAINS
 
 
- SUBROUTINE UrbanTHERMAL ( &
+   SUBROUTINE UrbanTHERMAL ( &
 
         ! model running information
         ipatch         ,patchtype      ,lbr            ,lbi            ,&
@@ -55,7 +55,8 @@ CONTAINS
         dewmx          ,sqrtdi         ,rootfr         ,effcon         ,&
         vmax25         ,slti           ,hlti           ,shti           ,&
         hhti           ,trda           ,trdm           ,trop           ,&
-        gradm          ,binter         ,extkn                          ,&
+        g1             ,g0             ,gradm          ,binter         ,&
+        extkn          ,&
 
         ! surface status
         fsno_roof      ,fsno_gimp      ,fsno_gper      ,scv_roof       ,&
@@ -102,32 +103,32 @@ CONTAINS
 !
 !=======================================================================
 
-  USE MOD_Precision
-  USE MOD_Vars_Global
-  USE MOD_Const_Physical, only: denh2o,roverg,hvap,hsub,rgas,cpair,&
-                               stefnc,denice,tfrz,vonkar,grav
-  USE MOD_Urban_Shortwave
-  USE MOD_Urban_Longwave
-  USE MOD_Urban_GroundFlux
-  USE MOD_Urban_Flux
-  USE MOD_Urban_RoofTemperature
-  USE MOD_Urban_WallTemperature
-  USE MOD_Urban_PerviousTemperature
-  USE MOD_Urban_ImperviousTemperature
-  USE MOD_Lake
-  USE MOD_Urban_BEM
-  USE MOD_Urban_LUCY, only: LUCY
-  USE MOD_Eroot, only: eroot
-  USE MOD_SoilSurfaceResistance
+   USE MOD_Precision
+   USE MOD_SPMD_Task
+   USE MOD_Vars_Global
+   USE MOD_Const_Physical, only: denh2o,roverg,hvap,hsub,rgas,cpair,&
+                                 stefnc,denice,tfrz,vonkar,grav
+   USE MOD_Urban_Shortwave
+   USE MOD_Urban_Longwave
+   USE MOD_Urban_GroundFlux
+   USE MOD_Urban_Flux
+   USE MOD_Urban_RoofTemperature
+   USE MOD_Urban_WallTemperature
+   USE MOD_Urban_PerviousTemperature
+   USE MOD_Urban_ImperviousTemperature
+   USE MOD_Lake
+   USE MOD_Urban_BEM
+   USE MOD_Urban_LUCY, only: LUCY
+   USE MOD_Eroot, only: eroot
 #ifdef vanGenuchten_Mualem_SOIL_MODEL
-  USE MOD_Hydro_SoilFunction, only : soil_psi_from_vliq
+   USE MOD_Hydro_SoilFunction, only : soil_psi_from_vliq
 #endif
  USE MOD_Namelist, only: DEF_RSS_SCHEME
 
-  IMPLICIT NONE
+   IMPLICIT NONE
 
 !---------------------Argument------------------------------------------
-  INTEGER,  intent(in) :: &
+   integer,  intent(in) :: &
         idate(3)   ,&
         ipatch     ,&! patch index
         patchtype  ,&! land patch type (0=soil, 1=urban or built-up, 2=wetland,
@@ -137,11 +138,11 @@ CONTAINS
         lbp        ,&! lower bound of array
         lbl          ! lower bound of array
 
-  REAL(r8), intent(in) :: &
+   real(r8), intent(in) :: &
         deltim     ,&! seconds in a time step [second]
         patchlatr    ! latitude in radians
 
-  REAL(r8), intent(in) :: &
+   real(r8), intent(in) :: &
         patchlonr       , &! longitude of patch [radian]
         fix_holiday(365), &! Fixed public holidays, holiday(0) or workday(1)
         week_holiday(7) , &! week holidays
@@ -151,7 +152,7 @@ CONTAINS
         pop_den         , &! population density
         vehicle(3)         ! vehicle numbers per thousand people
 
-  REAL(r8), intent(in) :: &
+   real(r8), intent(in) :: &
         ! atmospherical variables and observational height
         forc_hgt_u ,&! observational height of wind [m]
         forc_hgt_t ,&! observational height of temperature [m]
@@ -179,7 +180,7 @@ CONTAINS
         sabgper    ,&! absorbed shortwave radiation by ground snow [W/m2]
         sablake      ! absorbed shortwave radiation by lake [W/m2]
 
-  REAL(r8), intent(in) :: &
+   real(r8), intent(in) :: &
         froof      ,&! roof fractional cover [-]
         flake      ,&! urban lake fractional cover [-]
         hroof      ,&! average building height [m]
@@ -266,11 +267,13 @@ CONTAINS
         trda       ,&! temperature coefficient in gs-a model             [s5]
         trdm       ,&! temperature coefficient in gs-a model             [s6]
         trop       ,&! temperature coefficient in gs-a model
+        g1         ,&! conductance-photosynthesis slope parameter for medlyn model
+        g0         ,&! conductance-photosynthesis intercept for medlyn model
         gradm      ,&! conductance-photosynthesis slope parameter
         binter     ,&! conductance-photosynthesis intercept
         extkn        ! coefficient of leaf nitrogen allocation
 
-  REAL(r8), intent(in) :: &
+   real(r8), intent(in) :: &
         fsno_roof  ,&! fraction of ground covered by snow
         fsno_gimp  ,&! fraction of ground covered by snow
         fsno_gper  ,&! fraction of ground covered by snow
@@ -283,9 +286,9 @@ CONTAINS
         sigf       ,&! fraction of veg cover, excluding snow-covered veg [-]
         extkd        ! diffuse and scattered diffuse PAR extinction coefficient
 
-  real(r8), INTENT(in) :: hpbl       ! atmospheric boundary layer height [m]
+   real(r8), intent(in) :: hpbl       ! atmospheric boundary layer height [m]
 
-  REAL(r8), intent(inout) :: &
+   real(r8), intent(inout) :: &
         fwsun      ,&! fraction of sunlit wall [-]
         lwsun      ,&! net longwave radiation of sunlit wall
         lwsha      ,&! net longwave radiation of shaded wall
@@ -336,7 +339,7 @@ CONTAINS
         meta         ! flux from metabolic
 
        ! Output
-  REAL(r8), intent(out) :: &
+   real(r8), intent(out) :: &
         taux       ,&! wind stress: E-W [kg/m/s**2]
         tauy       ,&! wind stress: N-S [kg/m/s**2]
         fsena      ,&! sensible heat from canopy height to atmosphere [W/m2]
@@ -382,13 +385,13 @@ CONTAINS
         qfros_gper ,&! surface dew added to snow pack (mm h2o /s) [+]
         qfros_lake   ! surface dew added to snow pack (mm h2o /s) [+]
 
-  INTEGER, intent(out) :: &
+   integer, intent(out) :: &
         imelt_roof(lbr:nl_roof)       ,&! flag for melting or freezing [-]
         imelt_gimp(lbi:nl_soil)       ,&! flag for melting or freezing [-]
         imelt_gper(lbp:nl_soil)       ,&! flag for melting or freezing [-]
         imelt_lake(maxsnl+1:nl_soil)    ! flag for melting or freezing [-]
 
-  REAL(r8), intent(out) :: &
+   real(r8), intent(out) :: &
         sm_roof    ,&! rate of snowmelt [kg/(m2 s)]
         sm_gimp    ,&! rate of snowmelt [kg/(m2 s)]
         sm_gper    ,&! rate of snowmelt [kg/(m2 s)]
@@ -417,17 +420,17 @@ CONTAINS
         fq           ! integral of profile function for moisture
 
 ! SNICAR model variables
-  REAL(r8), intent(in)  :: sabg_lyr(lbp:1) !snow layer aborption
-  REAL(r8), intent(out) :: snofrz (lbp:0)  !snow freezing rate (col,lyr) [kg m-2 s-1]
+   real(r8), intent(in)  :: sabg_lyr(lbp:1) !snow layer aborption
+   real(r8), intent(out) :: snofrz (lbp:0)  !snow freezing rate (col,lyr) [kg m-2 s-1]
 ! END SNICAR model variables
 
 !---------------------Local Variables-----------------------------------
 
-  INTEGER :: nurb    ! number of aboveground urban components [-]
+   integer :: nurb    ! number of aboveground urban components [-]
 
-  LOGICAL :: doveg   ! run model with vegetation
+   logical :: doveg   ! run model with vegetation
 
-  REAL(r8) :: &
+   real(r8) :: &
         fg         ,&! ground fraction ( impervious + soil + snow )
         fsenroof   ,&! sensible heat flux from roof [W/m2]
         fsenwsun   ,&! sensible heat flux from sunlit wall [W/m2]
@@ -519,7 +522,7 @@ CONTAINS
         wx         ,&! patitial volume of ice and water of surface layer
         xmf          ! total latent heat of phase change of ground water
 
-  REAL(r8) :: &
+   real(r8) :: &
         taux_lake  ,&! wind stress: E-W [kg/m/s**2]
         tauy_lake  ,&! wind stress: N-S [kg/m/s**2]
         fsena_lake ,&! sensible heat from canopy height to atmosphere [W/m2]
@@ -544,20 +547,20 @@ CONTAINS
         fh_lake    ,&! integral of profile function for heat
         fq_lake      ! integral of profile function for moisture
 
-  REAL(r8) :: z0m_g,z0h_g,zol_g,obu_g,ustar_g,qstar_g,tstar_g
-  REAL(r8) :: fm10m,fm_g,fh_g,fq_g,fh2m,fq2m,um,obu,eb
+   real(r8) :: z0m_g,z0h_g,zol_g,obu_g,ustar_g,qstar_g,tstar_g
+   real(r8) :: fm10m,fm_g,fh_g,fq_g,fh2m,fq2m,um,obu,eb
 
-  ! defination for urban related
-  REAL(r8), allocatable :: Ainv(:,:)  !Inverse of Radiation transfer matrix
-  REAL(r8), allocatable :: X(:)       !solution
-  REAL(r8), allocatable :: dX(:)      !solution
-  REAL(r8), allocatable :: B(:)       !Vectors of incident radition on each surface
-  REAL(r8), allocatable :: B1(:)      !Vectors of incident radition on each surface
-  REAL(r8), allocatable :: dBdT(:)    !Vectors of incident radition on each surface
-  REAL(r8), allocatable :: dT(:)      !Vectors of incident radition on each surface
-  REAL(r8), allocatable :: SkyVF(:)   !View factor to sky
-  REAL(r8), allocatable :: VegVF(:)   !View factor to vegetation
-  REAL(r8), allocatable :: fcover(:)  !fractional cover of roof, wall, ground and veg
+   ! defination for urban related
+   real(r8), allocatable :: Ainv(:,:)  !Inverse of Radiation transfer matrix
+   real(r8), allocatable :: X(:)       !solution
+   real(r8), allocatable :: dX(:)      !solution
+   real(r8), allocatable :: B(:)       !Vectors of incident radition on each surface
+   real(r8), allocatable :: B1(:)      !Vectors of incident radition on each surface
+   real(r8), allocatable :: dBdT(:)    !Vectors of incident radition on each surface
+   real(r8), allocatable :: dT(:)      !Vectors of incident radition on each surface
+   real(r8), allocatable :: SkyVF(:)   !View factor to sky
+   real(r8), allocatable :: VegVF(:)   !View factor to vegetation
+   real(r8), allocatable :: fcover(:)  !fractional cover of roof, wall, ground and veg
 
 !=======================================================================
 ! [1] Initial set and propositional variables
@@ -865,8 +868,9 @@ CONTAINS
             htop        ,hbot        ,lai         ,sai         ,&
             sqrtdi      ,effcon      ,vmax25      ,slti        ,&
             hlti        ,shti        ,hhti        ,trda        ,&
-            trdm        ,trop        ,gradm       ,binter      ,&
-            extkn       ,extkd       ,dewmx       ,etrc        ,&
+            trdm        ,trop        ,g1          ,g0          ,&
+            gradm       ,binter      ,extkn       ,extkd       ,&
+            dewmx       ,etrc        ,&
             ! surface status
             z0h_g       ,obu_g       ,ustar_g     ,zlnd        ,&
             zsno        ,fsno_roof   ,fsno_gimp   ,fsno_gper   ,&
@@ -1064,7 +1068,7 @@ CONTAINS
       fevpgper = fevpgper + dT(4)*cgperl
 
 ! calculation of evaporative potential; flux in kg m-2 s-1.
-! egidif holds the excess energy if all water is evaporated
+! egidif holds the excess energy IF all water is evaporated
 ! during the timestep.  this energy is later added to the sensible heat flux.
 
       ! --- for pervious ground ---
@@ -1305,6 +1309,7 @@ CONTAINS
       IF (olrg < 0) THEN !fordebug
          print*, ipatch, olrg
          write(6,*) ipatch,sabv,sabg,forc_frl,olrg,fsenl,fseng,hvap*fevpl,lfevpa
+         CALL CoLM_stop()
       ENDIF
 
       ! radiative temperature
@@ -1374,7 +1379,7 @@ CONTAINS
 
       deallocate ( fcover )
 
- END SUBROUTINE UrbanTHERMAL
+   END SUBROUTINE UrbanTHERMAL
 
 END MODULE MOD_Urban_Thermal
 ! ---------- EOP ------------
