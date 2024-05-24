@@ -37,7 +37,6 @@ MODULE MOD_Urban_Flux
 !  05/2024, Wenzong Dong: make the code consistant with technical report
 !-----------------------------------------------------------------------
    USE MOD_Precision
-   USE MOD_Namelist, only: DEF_RSS_SCHEME, DEF_VEG_SNOW
    USE MOD_Vars_Global
    USE MOD_Qsadv, only: qsadv
    IMPLICIT NONE
@@ -134,7 +133,6 @@ CONTAINS
         fcover(0:4)    ! coverage of aboveground urban components [-]
 
    real(r8), intent(in) :: &
-        rss,          &! bare soil resistance for evaporation
         z0h_g,        &! roughness length for bare ground, sensible heat [m]
         obug,         &! monin-obukhov length for bare ground (m)
         ustarg,       &! friction velocity for bare ground [m/s]
@@ -165,6 +163,9 @@ CONTAINS
         dqgperdT       ! d(qgper)/dT
 
    ! Output
+   real(r8), intent(inout) :: &
+        rss            ! bare soil resistance for evaporation
+
    real(r8), intent(out) :: &
         taux,         &! wind stress: E-W [kg/m/s**2]
         tauy,         &! wind stress: N-S [kg/m/s**2]
@@ -317,8 +318,11 @@ CONTAINS
 
    ! temporal
    integer i
-   real(r8) h_vec, l_vec, tmpw3, cgw_per, cgw_imp
-   real(r8) bee, tmpw1, tmpw2, fact, facq
+   real(r8) cgw_per, cgw_imp, tmpw1, tmpw2, tmpw3, facq, fact
+   real(r8) aT, bT, cT
+   real(r8) aQ, bQ, cQ
+   real(r8) h_vec, l_vec, H_ahe1, H_ahe2
+   real(r8) bee
    real(r8) fwet_roof, fwet_roof_, fwet_gimp, fwet_gimp_
    real(r8) fwetfac
 
@@ -365,10 +369,10 @@ CONTAINS
 !-----------------------------------------------------------------------
 
       ! set weighting factor
-      fah(1) = 1.; fah(2) = 1.; fah(3) = 1.
-      faw(1) = 1.; faw(2) = 1.; faw(3) = 1.
-      fgh(1) = 1.; fgh(2) = fg; fgh(3) = 1.
-      fgw(1) = 1.; fgw(2) = fg; fgw(3) = 1.
+      ! fah(1) = 1.; fah(2) = 1.; fah(3) = 1.
+      ! faw(1) = 1.; faw(2) = 1.; faw(3) = 1.
+      ! fgh(1) = 1.; fgh(2) = fg; fgh(3) = 1.
+      ! fgw(1) = 1.; fgw(2) = fg; fgw(3) = 1.
 
       ! weighted tg
       tg = tgimp*fgimp + tgper*fgper
@@ -620,42 +624,42 @@ CONTAINS
 
          !NOTE: 0: roof, 1: sunlit wall, 2: shaded wall,
          !      3: impervious road, 4: pervious road, 5: vegetation
-         cfh(:) = 0.
-         cfw(:) = 0.
+         ! cfh(:) = 0.
+         ! cfw(:) = 0.
 
-         DO i = 0, nurb
-            cfh(i) = 1 / rb(i)
+         ! DO i = 0, nurb
+         !    cfh(i) = 1 / rb(i)
 
-            IF (i == 0) THEN !roof
+         !    IF (i == 0) THEN !roof
                ! account for fwet
-               cfw(i) = fwet_roof / rb(i)
-            ELSE
-               cfw(i) = 1 / rb(i)
-            ENDIF
-         ENDDO
+         !       cfw(i) = fwet_roof / rb(i)
+         !    ELSE
+         !       cfw(i) = 1 / rb(i)
+         !    ENDIF
+         ! ENDDO
 
          ! For simplicity, there is no water exchange on the wall
-         cfw(1:2) = 0.
+         ! cfw(1:2) = 0.
 
          ! initialization
-         cah(:) = 0.
-         caw(:) = 0.
-         cgh(:) = 0.
-         cgw(:) = 0.
+         ! cah(:) = 0.
+         ! caw(:) = 0.
+         ! cgh(:) = 0.
+         ! cgw(:) = 0.
 
          ! conductance for each layer
-         DO i = 3, 2, -1
-            IF (i == 3) THEN
-               cah(i) = 1. / rah
-               caw(i) = 1. / raw
-            ELSE
-               cah(i) = 1. / rd(i+1)
-               caw(i) = 1. / rd(i+1)
-            ENDIF
+         ! DO i = 3, 2, -1
+         !    IF (i == 3) THEN
+         !       cah(i) = 1. / rah
+         !       caw(i) = 1. / raw
+         !    ELSE
+         !       cah(i) = 1. / rd(i+1)
+         !       caw(i) = 1. / rd(i+1)
+         !    ENDIF
 
-            cgh(i) = 1. / rd(i)
-            cgw(i) = 1. / rd(i)
-         ENDDO
+         !    cgh(i) = 1. / rd(i)
+         !    cgw(i) = 1. / rd(i)
+         ! ENDDO
 
          ! claculate wtshi, wtsqi
          ! wtshi(:) = cah(:)*fah(:) + cgh(:)*fgh(:)
@@ -715,44 +719,66 @@ CONTAINS
             ! 06/20/2021, yuan: account for Anthropogenic heat
             ! 92% heat release as SH, Pigeon et al., 2007
 
-            h_vec  = vehc
-            tmpw1  = cah(2)*((cah(3)*thm + cfh(0)*tu(0)*fc(0) + 1/(4*hlr+1)*(Fhac+Fwst)/(rhoair*cpair))/&
-                     (cah(3) + cah(2) + cfh(0)*fc(0)))
-            tmpw2  = (4*hlr/(4*hlr+1)*(Fhac+Fwst)+Fach)/(rhoair*cpair) + (h_vec+meta)/(rhoair*cpair)
-            tmpw3  = cgh(2)*fg*tg + cfh(1)*tu(1)*fc(1) + cfh(2)*tu(2)*fc(2)
-            fact   = 1. - (cah(2)*cah(2)/(cah(3) + cah(2) + cfh(0)*fc(0))/&
-                     (cah(2) + cgh(2)*fg + cfh(1)*fc(1) + cfh(2)*fc(2)))
-            taf(2) = (tmpw1 + tmpw2 + tmpw3) / &
-                     (cah(2) + cgh(2)*fg + cfh(1)*fc(1) + cfh(2)*fc(2)) / &
-                     fact
+            ! h_vec  = vehc
+            ! tmpw1  = cah(2)*((cah(3)*thm + cfh(0)*tu(0)*fc(0) + 1/(4*hlr+1)*(Fhac+Fwst)/(rhoair*cpair))/&
+            !          (cah(3) + cah(2) + cfh(0)*fc(0)))
+            ! tmpw2  = (4*hlr/(4*hlr+1)*(Fhac+Fwst)+Fach)/(rhoair*cpair) + (h_vec+meta)/(rhoair*cpair)
+            ! tmpw3  = cgh(2)*fg*tg + cfh(1)*tu(1)*fc(1) + cfh(2)*tu(2)*fc(2)
+            ! fact   = 1. - (cah(2)*cah(2)/(cah(3) + cah(2) + cfh(0)*fc(0))/&
+            !          (cah(2) + cgh(2)*fg + cfh(1)*fc(1) + cfh(2)*fc(2)))
+            ! taf(2) = (tmpw1 + tmpw2 + tmpw3) / &
+            !          (cah(2) + cgh(2)*fg + cfh(1)*fc(1) + cfh(2)*fc(2)) / &
+            !          fact
+
+            H_ahe1 = 4*hlr/(4*hlr+1)*(Fhac+Fwst) + Fach + h_vec + meta
+            H_ahe2 = 1/(4*hlr+1)*(Fhac+Fwst)
+
+            bT     = 1/(rd(3) * (1/rah+1/rd(3)+fc(0)/rb(0)))
+            cT     = 1/rd(3) + fg/rd(2) + fc(1)/rb(1) + fc(2)/rb(2)
+            aT     = (tu(0)*fc(0)/rb(0) + H_ahe2/(rhoair*cpair) + thm/rah)*bT
+
+            taf(2) = (tg*fg/rd(2) + H_ahe1/(rhoair*cpair) + tu(1)*fc(1)/rb(1) + tu(2)*fc(2)/rb(2) + aT) &
+                     /(cT * (1- bT/(cT*rd(3))))
+            taf(3) = (taf(2)/rd(3) + tu(0)*fc(0)/rb(0) + H_ahe2/(rhoair*cpair) + thm/rah) &
+                     /(1/rah + 1/rd(3) + fc(0)/rb(0))
 
             IF (qgper < qaf(2)) THEN
               ! dew case. no soil resistance
-              cgw_per= cgw(2)
-            ELSE
-              cgw_per= 1/(1/cgw(2)+rss)
+              ! cgw_per= cgw(2)
+              rss    = 0.
+            ! ELSE
+              ! cgw_per= 1/(1/cgw(2)+rss)
             ENDIF
 
-            cgw_imp= fwet_gimp*cgw(2)
+            ! cgw_imp= fwet_gimp*cgw(2)
 
             ! account for soil resistance, qgper and qgimp are calculated separately
-            l_vec  = 0
-            tmpw1  = caw(2)*((caw(3)*qm + cfw(0)*qsatl(0)*fc(0))/&
-                     (caw(3) + caw(2) + cfw(0)*fc(0)))
-            tmpw2  = l_vec/(rhoair)
-            tmpw3  = cgw_per*qgper*fgper*fg + cgw_imp*qgimp*fgimp*fg
-            facq   = 1. - (caw(2)*caw(2)/&
-                     (caw(3) + caw(2) + cfw(0)*fc(0))/&
-                     (caw(2) + cgw_per*fgper*fg + cgw_imp*fgimp*fg))
-            qaf(2) = (tmpw1 + tmpw2 + tmpw3)/&
-                     (caw(2) + cgw_per*fgper*fg + cgw_imp*fgimp*fg)/&
-                     facq
+            ! l_vec  = 0
+            ! tmpw1  = caw(2)*((caw(3)*qm + cfw(0)*qsatl(0)*fc(0))/&
+            !          (caw(3) + caw(2) + cfw(0)*fc(0)))
+            ! tmpw2  = l_vec/(rhoair)
+            ! tmpw3  = cgw_per*qgper*fgper*fg + cgw_imp*qgimp*fgimp*fg
+            ! facq   = 1. - (caw(2)*caw(2)/&
+            !          (caw(3) + caw(2) + cfw(0)*fc(0))/&
+            !          (caw(2) + cgw_per*fgper*fg + cgw_imp*fgimp*fg))
+            ! qaf(2) = (tmpw1 + tmpw2 + tmpw3)/&
+            !          (caw(2) + cgw_per*fgper*fg + cgw_imp*fgimp*fg)/&
+            !          facq
 
-            tmpw1  = 1/(4*hlr+1)*(Fhac+Fwst)/(rhoair*cpair)
-            taf(3) = (cah(3)*thm + cah(2)*taf(2) + cfh(0)*tu(0)*fc(0) + tmpw1)/&
-                     (cah(3) + cah(2) + cfh(0)*fc(0))
-            qaf(3) = (caw(3)*qm  + caw(2)*qaf(2) + cfw(0)*qsatl(0)*fc(0))/&
-                     (caw(3) + caw(2) + cfw(0)*fc(0))
+            ! tmpw1  = 1/(4*hlr+1)*(Fhac+Fwst)/(rhoair*cpair)
+            ! taf(3) = (cah(3)*thm + cah(2)*taf(2) + cfh(0)*tu(0)*fc(0) + tmpw1)/&
+            !          (cah(3) + cah(2) + cfh(0)*fc(0))
+            ! qaf(3) = (caw(3)*qm  + caw(2)*qaf(2) + cfw(0)*qsatl(0)*fc(0))/&
+            !          (caw(3) + caw(2) + cfw(0)*fc(0))
+
+            cQ     = 1/rd(3) + fg*fgper/(rd(2)+rss) + fwet_gimp*fg*fgimp/rd(2)
+            bQ     = 1/(rd(3) * (1/raw+1/rd(3)+fwet_roof*fc(0)/rb(0)))
+            aQ     = (qsatl(0)*fwet_roof*fc(0)/rb(0) + qm/raw)*bQ
+
+            qaf(2) = (qgper*fgper*fg/(rd(2)+rss) + qgimp*fwet_gimp*fgimp*fg/rd(2) + aQ) &
+                     / (cQ * (1-bQ/(cQ*rd(3))))
+            qaf(3) = (qaf(2)/rd(3) + qsatl(0)*fwet_roof*fc(0)/rb(0) + qm/raw) &
+                     / (1/raw + 1/rd(3) + fwet_roof*fc(0)/rb(0))
          ENDIF
 
          !------------------------------------------------
@@ -822,39 +848,57 @@ CONTAINS
       rib = min(5.,zol*ustar**2/(vonkar**2/fh*um**2))
 
       ! sensible heat fluxes
-      fsenroof = rhoair*cpair*cfh(0)*(troof-taf(3))
-      fsenwsun = rhoair*cpair*cfh(1)*(twsun-taf(2))
-      fsenwsha = rhoair*cpair*cfh(2)*(twsha-taf(2))
+      fsenroof = rhoair*cpair/rb(0)*(troof-taf(3))
+      fsenwsun = rhoair*cpair/rb(1)*(twsun-taf(2))
+      fsenwsha = rhoair*cpair/rb(2)*(twsha-taf(2))
 
       ! latent heat fluxes
-      fevproof = rhoair*cfw(0)*(qsatl(0)-qaf(3))
-      fevproof = fevproof*fwet_roof
+      fevproof = rhoair*fwet_roof/rb(0)*(qsatl(0)-qaf(3))
+      ! fevproof = fevproof*fwet_roof
+
+      !---------------------------------------------------------
+      bT     = 1/(rd(3) * (1/rah+1/rd(3)+fc(0)/rb(0)))
+      cT     = 1/rd(3) + fg/rd(2) + fc(1)/rb(1) + fc(2)/rb(2)
+
+      cQ     = 1/rd(3) + fg*fgper/(rd(2)+rss) + fwet_gimp*fg*fgimp/rd(2)
+      bQ     = 1/(rd(3) * (1/raw+1/rd(3)+fwet_roof*fc(0)/rb(0)))
+
+      cwalls = rhoair*cpair/rb(1) &
+               *(1.-fc(1)/(cT*rb(1)*(1-bT/(cT*rd(3)))))
+      croofs = rhoair*cpair/rb(0) &
+               *(1.-fc(0)*bT/(cT*rb(0)*rd(3)*(1/rah+1/rd(3)+fc(0)/rb(0))*(1-bT/(cT*rd(3))))-fc(0)/(rb(0)*(1/rah+1/rd(3)+fc(0)/rb(0))))
+
+      croofl = rhoair*fwet_roof/rb(0)*qsatldT(0) &
+               *(1.-fwet_roof*fc(0)*bQ/(cQ*rb(0)*rd(3)*(1/raw+1/rd(3)+fwet_roof*fc(0)/rb(0))*(1-bQ/(cQ*rd(3)))) &
+               -fwet_roof*fc(0)/(rb(0)*(1/raw+1/rd(3)+fwet_roof*fc(0)/rb(0))))
+      croof  = croofs + croofl*htvp_roof
+      !---------------------------------------------------------
 
       ! fact   = 1. - wta0(2)*wtg0(3)
       ! facq   = 1. - wtaq0(2)*wtgq0(3)
       ! deduce: croofs = rhoair*cpair*cfh(0)*(1.-wtg0(3)*wta0(2)*wtl0(0)/fact-wtl0(0))
       ! croofs = rhoair*cpair*cfh(0)*(1.-wtl0(0)/fact)
       ! cwalls = rhoair*cpair*cfh(1)*(1.-wtl0(1)/fact)
-      fact   = 1.-(cah(2)*cah(2)/(cah(3)+cah(2)+cfh(0)*fc(0)) &
-               /(cah(2)+cgh(2)*fg+cfh(1)*fc(1)+cfh(2)*fc(2)))
-      facq   = 1.-(caw(2)*caw(2) &
-               /(caw(3)+caw(2)+cfw(0)*fc(0)) &
-               /(caw(2)+cgw_per*fgper*fg+cgw_imp*fgimp*fg))
-      croofs = rhoair*cpair*cfh(0) &
-               *(1.-cgh(3)/(cah(3)+cgh(3)+cfh(0)*fc(0)) &
-               *cah(2)/(cah(2)+cgh(2)*fg+cfh(1)*fc(1)+cfh(2)*fc(2)) &
-               *cfh(0)*fc(0)/(cah(3)+cgh(3)+cfh(0)*fc(0))/fact &
-               -cfh(0)*fc(0)/(cah(3)+cgh(3)+cfh(0)*fc(0)))
-      cwalls = rhoair*cpair*cfh(1)*(1.-cfh(1)*fc(1)/(cgh(3)+cgh(2)*fg+cfh(1)*fc(1)+cfh(2)*fc(2)/fact))
+      ! fact   = 1.-(cah(2)*cah(2)/(cah(3)+cah(2)+cfh(0)*fc(0)) &
+      !          /(cah(2)+cgh(2)*fg+cfh(1)*fc(1)+cfh(2)*fc(2)))
+      ! facq   = 1.-(caw(2)*caw(2) &
+      !          /(caw(3)+caw(2)+cfw(0)*fc(0)) &
+      !          /(caw(2)+cgw_per*fgper*fg+cgw_imp*fgimp*fg))
+      ! croofs = rhoair*cpair*cfh(0) &
+      !          *(1.-cgh(3)/(cah(3)+cgh(3)+cfh(0)*fc(0)) &
+      !          *cah(2)/(cah(2)+cgh(2)*fg+cfh(1)*fc(1)+cfh(2)*fc(2)) &
+      !          *cfh(0)*fc(0)/(cah(3)+cgh(3)+cfh(0)*fc(0))/fact &
+      !          -cfh(0)*fc(0)/(cah(3)+cgh(3)+cfh(0)*fc(0)))
+      ! cwalls = rhoair*cpair*cfh(1)*(1.-cfh(1)*fc(1)/(cgh(3)+cgh(2)*fg+cfh(1)*fc(1)+cfh(2)*fc(2)/fact))
       ! deduce: croofl = rhoair*cfw(0)*(1.-wtgq0(3)*wtaq0(2)*wtlq0(0)/facq-wtlq0(0))*qsatldT(0)
       ! croofl = rhoair*cfw(0)*(1.-wtlq0(0)/facq)*qsatldT(0)
-      croofl = rhoair*cfw(0)*(1.-cfw(0)*fc(0)/(caw(3)+cgw(3)+cfw(0)*fc(0))-cgw(3) &
-               /(caw(3)+cgw(3)+cfw(0)*fc(0)) &
-               /(cgw(3)+cgw_per*fgper*fg+cgw_imp*fgimp*fg)* &
-               cfw(0)*fc(0)*cgw(3)/(caw(3)+cgw(3)+cfw(0)*fc(0))/facq)*qsatldT(0)
-      croofl = croofl*fwet_roof
+      ! croofl = rhoair*cfw(0)*(1.-cfw(0)*fc(0)/(caw(3)+cgw(3)+cfw(0)*fc(0))-cgw(3) &
+      !          /(caw(3)+cgw(3)+cfw(0)*fc(0)) &
+      !          /(cgw(3)+cgw_per*fgper*fg+cgw_imp*fgimp*fg)* &
+      !          cfw(0)*fc(0)*cgw(3)/(caw(3)+cgw(3)+cfw(0)*fc(0))/facq)*qsatldT(0)
+      ! croofl = croofl*fwet_roof
 
-      croof = croofs + croofl*htvp_roof
+      ! croof = croofs + croofl*htvp_roof
 
 #if(defined CoLMDEBUG)
 #endif
@@ -872,11 +916,11 @@ CONTAINS
 ! fluxes from urban ground to canopy space
 !-----------------------------------------------------------------------
 
-      fsengper = cpair*rhoair*cgh(2)*(tgper-taf(2))
-      fsengimp = cpair*rhoair*cgh(2)*(tgimp-taf(2))
+      fsengper = cpair*rhoair/rd(2)*(tgper-taf(2))
+      fsengimp = cpair*rhoair/rd(2)*(tgimp-taf(2))
 
-      fevpgper = rhoair*cgw_per*(qgper-qaf(2))
-      fevpgimp = rhoair*cgw_imp*(qgimp-qaf(2))
+      fevpgper = rhoair/(rd(2)+rss)*(qgper-qaf(2))
+      fevpgimp = rhoair/rd(2)      *(qgimp-qaf(2))
       fevpgimp = fevpgimp*fwet_gimp
 
 !-----------------------------------------------------------------------
@@ -887,20 +931,30 @@ CONTAINS
       ! cgperl = rhoair*cgw(2)*(1.-wtgq0(2)/facq)*dqgperdT
       ! cgimpl = rhoair*cgw(2)*(1.-wtgq0(2)/facq)*dqgimpdT
 
-      cgrnds = cpair*rhoair*cgh(2) &
-               *(1.-cgh(2)*fg/(cgh(3)+cgh(2)*fg+cfh(1)*fc(1)+cfh(2)*fc(2))/fact)
-      cgperl = rhoair*cgw_per*(dqgperdT &
-               - (dqgperdT*cgw_per*fgper*fg) &
-               /(caw(2) + cgw_per*fgper*fg + cgw_imp*fgimp*fg) &
-               /facq)
-      cgimpl = rhoair*cgw_imp*(dqgimpdT &
-               - (dqgimpdT*cgw_imp*fgimp*fg) &
-               /(caw(2) + cgw_per*fgper*fg + cgw_imp*fgimp*fg) &
-               /facq)
-      cgimpl = cgimpl*fwet_gimp
+      !--------------------------------------------
+      cgrnds = cpair*rhoair/rd(2)*(1.-fg/(cT*rd(2)*(1-bT/(cT*rd(3)))))
+
+      cgperl = rhoair/(rd(2)+rss)    *dqgperdT*(1-fg*fgper/(cQ*(rd(2)+rss)*(1-bQ/(cQ*rd(3)))))
+      cgimpl = rhoair*fwet_gimp/rd(2)*dqgimpdT*(1-fwet_gimp*fg*fgimp/(cQ*rd(2)*(1-bQ/(cQ*rd(3)))))
 
       cgimp  = cgrnds + cgimpl*htvp_gimp
       cgper  = cgrnds + cgperl*htvp_gper
+      !--------------------------------------------
+
+      ! cgrnds = cpair*rhoair*cgh(2) &
+      !          *(1.-cgh(2)*fg/(cgh(3)+cgh(2)*fg+cfh(1)*fc(1)+cfh(2)*fc(2))/fact)
+      ! cgperl = rhoair*cgw_per*(dqgperdT &
+      !          - (dqgperdT*cgw_per*fgper*fg) &
+      !          /(caw(2) + cgw_per*fgper*fg + cgw_imp*fgimp*fg) &
+      !          /facq)
+      ! cgimpl = rhoair*cgw_imp*(dqgimpdT &
+      !          - (dqgimpdT*cgw_imp*fgimp*fg) &
+      !          /(caw(2) + cgw_per*fgper*fg + cgw_imp*fgimp*fg) &
+      !          /facq)
+      ! cgimpl = cgimpl*fwet_gimp
+
+      ! cgimp  = cgrnds + cgimpl*htvp_gimp
+      ! cgper  = cgrnds + cgperl*htvp_gper
 
 !-----------------------------------------------------------------------
 ! 2 m height air temperature above apparent sink height
@@ -939,8 +993,7 @@ CONTAINS
          twsun          ,twsha          ,tgimp          ,tgper          ,&
          qroof          ,qgimp          ,qgper          ,dqroofdT       ,&
          dqgimpdT       ,dqgperdT       ,sigf           ,tl             ,&
-         ldew           ,ldew_rain      ,ldew_snow      ,fwet_snow      ,&
-         dheatl         ,rss                                            ,&
+         ldew           ,rss                                            ,&
          ! Longwave information
          Ainv           ,B              ,B1             ,dBdT           ,&
          SkyVF          ,VegVF                                          ,&
@@ -960,8 +1013,7 @@ CONTAINS
 !=======================================================================
 
    USE MOD_Precision
-   USE MOD_Const_Physical, only: vonkar,grav,hvap,cpair,stefnc,cpliq, cpice, &
-                                 hfus, tfrz, denice, denh2o
+   USE MOD_Const_Physical, only: vonkar,grav,hvap,cpair,stefnc
    USE MOD_FrictionVelocity
    USE MOD_CanopyLayerProfile
    USE MOD_AssimStomataConductance
@@ -1048,7 +1100,6 @@ CONTAINS
 
    ! Status of surface
    real(r8), intent(in) :: &
-        rss,          &! bare soil resistance for evaporation
         z0h_g,        &! roughness length for bare ground, sensible heat [m]
         obug,         &! monin-obukhov length for bare ground (m)
         ustarg,       &! friction velocity for bare ground [m/s]
@@ -1080,14 +1131,9 @@ CONTAINS
         sigf           !
 
    real(r8), intent(inout) :: &
+        rss,          &! bare soil resistance for evaporation
         tl,           &! leaf temperature [K]
-        ldew,         &! depth of water on foliage [mm]
-        ldew_rain,    &! depth of rain on foliage [mm]
-        ldew_snow      ! depth of snow on foliage [mm]
-
-   real(r8), intent(out) :: &
-        fwet_snow,    &! vegetation snow fractional cover [-]
-        dheatl         ! vegetation heat change [W/m2]
+        ldew           ! depth of water on foliage [mm]
 
    real(r8), intent(in)    :: Ainv(5,5)  !Inverse of Radiation transfer matrix
    real(r8), intent(in)    :: SkyVF (5)  !View factor to sky
@@ -1212,7 +1258,6 @@ CONTAINS
    real(r8) irab, dirab_dtl, fsenl_dtl, fevpl_dtl
    real(r8) z0mg, z0hg, z0qg, cint(3)
    real(r8) fevpl_bef, fevpl_noadj, dtl_noadj, erre
-   real(r8) qevpl, qdewl, qsubl, qfrol, qmelt, qfrz
 
 !----------------------- defination for 3d run ------------------------ !
    integer, parameter :: nlay = 3
@@ -1252,8 +1297,7 @@ CONTAINS
         fai,          &! frontal area index for urban
         faiv,         &! frontal area index for trees
         lsai,         &! lai+sai
-        fwet,         &! fractional wet area of foliage [-]
-        fdry,         &! fraction of foliage that is green and dry [-]
+        fwet,         &! fractional wet area
         delta,        &! 0 or 1
         alpha,        &! exponential extinction factor for u/k decline within urban
         alphav         ! exponential extinction factor for u/k decline within trees
@@ -1305,11 +1349,13 @@ CONTAINS
         wtlql          ! sum of normalized heat conductance for air and leaf
 
    real(r8) :: &
+        rv  ,         &! aerodynamic resistance between layers [s/m]
         ra2m,         &! aerodynamic resistance between 2m and bottom layer [s/m]
         rd2m           ! aerodynamic resistance between bottom layer and ground [s/m]
 
    ! temporal
    integer i
+   real(r8) aT, bT, cT, aQ, bQ, cQ, H_ahe1, H_ahe2
    real(r8) bee, cf, tmpw1, tmpw2, tmpw3, tmpw4, fact, facq, taftmp
    real(r8) B_5, B1_5, dBdT_5, X(5), dX(5)
    real(r8) fwet_roof, fwet_roof_, fwet_gimp, fwet_gimp_
@@ -1358,11 +1404,6 @@ CONTAINS
       clai = 0.0
       lsai = lai + sai
 
-      ! 0.2mm*LSAI, account for leaf (plus dew) heat capacity
-      IF ( DEF_VEG_SNOW ) THEN
-         clai = 0.2*(lai+sai)*cpliq + ldew_rain*cpliq + ldew_snow*cpice
-      ENDIF
-
       ! index 0:roof, 1:sunlit wall, 2:shaded wall, 3: vegetation
       tu(0) = troof; tu(1) = twsun; tu(2) = twsha; tu(3) = tl
 
@@ -1378,7 +1419,7 @@ CONTAINS
       B1_5   = B1(5)
       dBdT_5 = dBdT(5)
 
-      CALL dewfraction (sigf,lai,sai,dewmx,ldew,ldew_rain,ldew_snow,fwet,fdry)
+      CALL dewfraction (sigf,lai,sai,dewmx,ldew,fwet)
 
       qsatl(0) = qroof
       qsatldT(0) = dqroofDT
@@ -1398,10 +1439,10 @@ CONTAINS
 !-----------------------------------------------------------------------
 
       ! set weghting factor
-      fah(1) = 1.; fah(2) = 1.; fah(3) = 1.
-      faw(1) = 1.; faw(2) = 1.; faw(3) = 1.
-      fgh(1) = 1.; fgh(2) = 1.; fgh(3) = 1.
-      fgw(1) = 1.; fgw(2) = 1.; fgw(3) = 1.
+      ! fah(1) = 1.; fah(2) = 1.; fah(3) = 1.
+      ! faw(1) = 1.; faw(2) = 1.; faw(3) = 1.
+      ! fgh(1) = 1.; fgh(2) = 1.; fgh(3) = 1.
+      ! fgw(1) = 1.; fgw(2) = 1.; fgw(3) = 1.
 
       ! weighted tg and qg
       tg = tgimp*fgimp + tgper*fgper
@@ -1445,7 +1486,7 @@ CONTAINS
       fwetfac = fgimp*fwet_gimp + fgper
       qg = (qgimp*fgimp*fwet_gimp + qgper*fgper) / fwetfac
 
-      fgw(2) = fg*fwetfac
+      ! fgw(2) = fg*fwetfac
 
 !-----------------------------------------------------------------------
 ! initial for fluxes profile
@@ -1780,68 +1821,70 @@ CONTAINS
 ! dimensional and non-dimensional sensible and latent heat conductances
 ! for canopy and soil flux calculations.
 !-----------------------------------------------------------------------
+         
+         ! cfh(:) = 0.
+         ! cfw(:) = 0.
 
-         cfh(:) = 0.
-         cfw(:) = 0.
+         ! DO i = 0, nurb
 
-         DO i = 0, nurb
+         !    IF (i == 3) THEN
 
-            IF (i == 3) THEN
+         !       clev = canlev(i)
+         !       delta = 0.0
+         !       IF (qsatl(i)-qaf(clev) .gt. 0.) delta = 1.0
 
-               clev = canlev(i)
-               delta = 0.0
-               IF (qsatl(i)-qaf(clev) .gt. 0.) delta = 1.0
+         !       ! calculate sensible heat conductance
+         !       cfh(i) = lsai / rb(i)
 
-               ! calculate sensible heat conductance
-               cfh(i) = lsai / rb(i)
+         !       ! for building walls, cfw=0., no water transfer
+         !       ! for canopy, keep the same but for one leaf
+         !       ! calculate latent heat conductance
+         !       cfw(i) = (1.-delta*(1.-fwet))*lsai/rb(i) + &
+         !          (1.-fwet)*delta* ( lai/(rb(i)+rs) )
+         !    ELSE
+         !       cfh(i) = 1 / rb(i)
 
-               ! for building walls, cfw=0., no water transfer
-               ! for canopy, keep the same but for one leaf
-               ! calculate latent heat conductance
-               cfw(i) = (1.-delta*(1.-fwet))*lsai/rb(i) + &
-                  (1.-fwet)*delta* ( lai/(rb(i)+rs) )
-            ELSE
-               cfh(i) = 1 / rb(i)
+         !       IF (i == 0) THEN !roof
+         !          ! account for fwet
+         !          cfw(i) = fwet_roof / rb(i)
+         !       ELSE
+         !          cfw(i) = 1 / rb(i)
+         !       ENDIF
+         !    ENDIF
+         ! ENDDO
 
-               IF (i == 0) THEN !roof
-                  ! account for fwet
-                  cfw(i) = fwet_roof / rb(i)
-               ELSE
-                  cfw(i) = 1 / rb(i)
-               ENDIF
-            ENDIF
-         ENDDO
-
+         rv = 1/((1.-delta*(1.-fwet))*lsai/rb(3) &
+              +(1.-fwet)*delta* ( lai/(rb(3)+rs) ))
          ! For simplicity, there is no water exchange on the wall
-         cfw(1:2) = 0.
+         ! cfw(1:2) = 0.
 
          ! initialization
-         cah(:) = 0.
-         caw(:) = 0.
-         cgh(:) = 0.
-         cgw(:) = 0.
+         ! cah(:) = 0.
+         ! caw(:) = 0.
+         ! cgh(:) = 0.
+         ! cgw(:) = 0.
 
          ! conductance for each layer
-         DO i = 3, botlay, -1
-            IF (i == 3) THEN
-               cah(i) = 1. / rah
-               caw(i) = 1. / raw
-            ! ELSE IF (i == 2) THEN
-            !    cah(i) = 1e6
-            !    caw(i) = 1e6
-            ELSE
-               cah(i) = 1. / rd(i+1)
-               caw(i) = 1. / rd(i+1)
-            ENDIF
+         ! DO i = 3, botlay, -1
+         !    IF (i == 3) THEN
+         !       cah(i) = 1. / rah
+         !       caw(i) = 1. / raw
+         !    ! ELSE IF (i == 2) THEN
+         !    !    cah(i) = 1e6
+         !    !    caw(i) = 1e6
+         !    ELSE
+         !       cah(i) = 1. / rd(i+1)
+         !       caw(i) = 1. / rd(i+1)
+         !    ENDIF
 
-            ! IF (i == 3) THEN
-            !    cgh(i) = 1e6
-            !    cgw(i) = 1e6
-            ! ELSE
-               cgh(i) = 1. / rd(i)
-               cgw(i) = 1. / rd(i)
-            ! ENDIF
-         ENDDO
+         !    ! IF (i == 3) THEN
+         !    !    cgh(i) = 1e6
+         !    !    cgw(i) = 1e6
+         !    ! ELSE
+         !       cgh(i) = 1. / rd(i)
+         !       cgw(i) = 1. / rd(i)
+         !    ! ENDIF
+         ! ENDDO
 
          ! claculate wtshi, wtsqi
          ! wtshi(:) = cah(:)*fah(:) + cgh(:)*fgh(:)
@@ -1902,44 +1945,69 @@ CONTAINS
             ! 06/20/2021, yuan: account for Anthropogenic heat
             ! 92% heat release as SH, Pigeon et al., 2007
 
-            h_vec  = vehc!
-            tmpw1  = cah(2)*((cah(3)*thm + cfh(0)*tu(0)*fc(0) + 1/(4*hlr+1)*(Fhac+Fwst)/(rhoair*cpair))/&
-                     (cah(3) + cah(2) + cfh(0)*fc(0)))
-            tmpw2  = (4*hlr/(4*hlr+1)*(Fhac+Fwst)+Fach)/(rhoair*cpair) + (h_vec+meta)/(rhoair*cpair)
-            tmpw3  = cgh(2)*fg*tg + cfh(1)*tu(1)*fc(1) + cfh(2)*tu(2)*fc(2) + cfh(3)*tu(3)*fc(3)
-            fact   = 1. - (cah(2)*cah(2)/(cah(3) + cah(2) + cfh(0)*fc(0))/&
-                     (cah(2) + cgh(2)*fg + cfh(1)*fc(1) + cfh(2)*fc(2) + cfh(3)*fc(3)))
-            taf(2) = (tmpw1 + tmpw2 + tmpw3) / &
-                     (cah(2) + cgh(2)*fg + cfh(1)*fc(1) + cfh(2)*fc(2) + cfh(3)*fc(3)) / &
-                     fact
+            ! h_vec  = vehc!
+            ! tmpw1  = cah(2)*((cah(3)*thm + cfh(0)*tu(0)*fc(0) + 1/(4*hlr+1)*(Fhac+Fwst)/(rhoair*cpair))/&
+            !          (cah(3) + cah(2) + cfh(0)*fc(0)))
+            ! tmpw2  = (4*hlr/(4*hlr+1)*(Fhac+Fwst)+Fach)/(rhoair*cpair) + (h_vec+meta)/(rhoair*cpair)
+            ! tmpw3  = cgh(2)*fg*tg + cfh(1)*tu(1)*fc(1) + cfh(2)*tu(2)*fc(2) + cfh(3)*tu(3)*fc(3)
+            ! fact   = 1. - (cah(2)*cah(2)/(cah(3) + cah(2) + cfh(0)*fc(0))/&
+            !          (cah(2) + cgh(2)*fg + cfh(1)*fc(1) + cfh(2)*fc(2) + cfh(3)*fc(3)))
+            ! taf(2) = (tmpw1 + tmpw2 + tmpw3) / &
+            !          (cah(2) + cgh(2)*fg + cfh(1)*fc(1) + cfh(2)*fc(2) + cfh(3)*fc(3)) / &
+            !          fact
+
+
+            H_ahe1 = 4*hlr/(4*hlr+1)*(Fhac+Fwst) + Fach + h_vec + meta
+            H_ahe2 = 1/(4*hlr+1)*(Fhac+Fwst)
+
+            bT     = 1/(rd(3) * (1/rah+1/rd(3)+fc(0)/rb(0)))
+            cT     = 1/rd(3) + fg/rd(2) + fc(1)/rb(1) + fc(2)/rb(2) +fc(3)*lsai/rb(3)
+            aT     = (tu(0)*fc(0)/rb(0) + H_ahe2/(rhoair*cpair) + thm/rah)*bT
+
+            taf(2) = (tg*fg/rd(2) + H_ahe1/(rhoair*cpair) + tu(1)*fc(1)/rb(1) + tu(2)*fc(2)/rb(2) + tu(3)*fc(3)*lsai/rb(3) + aT) &
+                     /(cT * (1- bT/(cT*rd(3))))
+            taf(3) = (taf(2)/rd(3) + tu(0)*fc(0)/rb(0) + H_ahe2/(rhoair*cpair) + thm/rah) &
+                     /(1/rah + 1/rd(3) + fc(0)/rb(0))
+
 
             IF (qgper < qaf(2)) THEN
               ! dew case. no soil resistance
-              cgw_per= cgw(2)
-            ELSE
-              cgw_per= 1/(1/cgw(2)+rss)
+              ! cgw_per= cgw(2)
+              rss    = 0
+            ! ELSE
+              ! cgw_per= 1/(1/cgw(2)+rss)
             ENDIF
 
-            cgw_imp= fwet_gimp*cgw(2)
+            ! cgw_imp= fwet_gimp*cgw(2)
 
             ! account for soil resistance, qgper and qgimp are calculated separately
-            l_vec  = 0
-            tmpw1  = caw(2)*((caw(3)*qm + cfw(0)*qsatl(0)*fc(0))/&
-                     (caw(3) + caw(2) + cfw(0)*fc(0)))
-            tmpw2  = l_vec/(rhoair)
-            tmpw3  = cgw_per*qgper*fgper*fg + cgw_imp*qgimp*fgimp*fg + cfw(3)*qsatl(3)*fc(3)
-            facq   = 1. - (caw(2)*caw(2)/&
-                     (caw(3) + caw(2) + cfw(0)*fc(0))/&
-                     (caw(2) + cgw_per*fgper*fg + cgw_imp*fgimp*fg + cfw(3)*fc(3)))
-            qaf(2) = (tmpw1 + tmpw2 + tmpw3)/&
-                     (caw(2) + cgw_per*fgper*fg + cgw_imp*fgimp*fg + cfw(3)*fc(3))/&
-                     facq
+            ! l_vec  = 0
+            ! tmpw1  = caw(2)*((caw(3)*qm + cfw(0)*qsatl(0)*fc(0))/&
+            !          (caw(3) + caw(2) + cfw(0)*fc(0)))
+            ! tmpw2  = l_vec/(rhoair)
+            ! tmpw3  = cgw_per*qgper*fgper*fg + cgw_imp*qgimp*fgimp*fg + cfw(3)*qsatl(3)*fc(3)
+            ! facq   = 1. - (caw(2)*caw(2)/&
+            !          (caw(3) + caw(2) + cfw(0)*fc(0))/&
+            !          (caw(2) + cgw_per*fgper*fg + cgw_imp*fgimp*fg + cfw(3)*fc(3)))
+            ! qaf(2) = (tmpw1 + tmpw2 + tmpw3)/&
+            !          (caw(2) + cgw_per*fgper*fg + cgw_imp*fgimp*fg + cfw(3)*fc(3))/&
+            !          facq
 
-            tmpw1  = 1/(4*hlr+1)*(Fhac+Fwst)/(rhoair*cpair)
-            taf(3) = (cah(3)*thm + cah(2)*taf(2) + cfh(0)*tu(0)*fc(0) + tmpw1)/&
-                     (cah(3) + cah(2) + cfh(0)*fc(0))
-            qaf(3) = (caw(3)*qm  + caw(2)*qaf(2) + cfw(0)*qsatl(0)*fc(0))/&
-                     (caw(3) + caw(2) + cfw(0)*fc(0))
+            ! tmpw1  = 1/(4*hlr+1)*(Fhac+Fwst)/(rhoair*cpair)
+            ! taf(3) = (cah(3)*thm + cah(2)*taf(2) + cfh(0)*tu(0)*fc(0) + tmpw1)/&
+            !          (cah(3) + cah(2) + cfh(0)*fc(0))
+            ! qaf(3) = (caw(3)*qm  + caw(2)*qaf(2) + cfw(0)*qsatl(0)*fc(0))/&
+            !          (caw(3) + caw(2) + cfw(0)*fc(0))
+
+
+            cQ     = 1/rd(3) + fg*fgper/(rd(2)+rss) + fwet_gimp*fg*fgimp/rd(2) + fc(3)/rv
+            bQ     = 1/(rd(3) * (1/raw+1/rd(3)+fwet_roof*fc(0)/rb(0)))
+            aQ     = (qsatl(0)*fwet_roof*fc(0)/rb(0) + qm/raw)*bQ
+
+            qaf(2) = (qgper*fgper*fg/(rd(2)+rss) + qgimp*fwet_gimp*fgimp*fg/rd(2) + qsatl(3)*fc(3)/rv + aQ) &
+                     / (cQ * (1-bQ/(cQ*rd(3))))
+            qaf(3) = (qaf(2)/rd(3) + qsatl(0)*fwet_roof*fc(0)/rb(0) + qm/raw) &
+                     / (1/raw + 1/rd(3) + fwet_roof*fc(0)/rb(0))
          ENDIF
 
          IF (numlay .eq. 3) THEN
@@ -2024,15 +2092,17 @@ CONTAINS
          i = 3
 
 ! sensible heat fluxes and their derivatives
-         fsenl = rhoair * cpair * cfh(i) * (tl - taf(botlay))
+         fsenl = rhoair * cpair * lsai/rb(3) * (tl - taf(botlay))
 
          ! 09/24/2017: why fact/facq here? bugs? YES
          ! 09/25/2017: re-written, check it clearfully
          ! 11/25/2021: re-written, double check
          IF (botlay == 2) THEN
             ! fsenl_dtl = rhoair * cpair * cfh(i) * (1.-wtl0(i)/fact)
-            fsenl_dtl = rhoair * cpair * cfh(3) &
-                        *(1.-cfh(3)*fc(3)/(cgh(3)+cgh(2)*fg+cfh(1)*fc(1)+cfh(2)*fc(2)+cfh(3)*fc(3))/fact)
+            ! fsenl_dtl = rhoair * cpair * cfh(3) &
+            !             *(1.-cfh(3)*fc(3)/(cgh(3)+cgh(2)*fg+cfh(1)*fc(1)+cfh(2)*fc(2)+cfh(3)*fc(3))/fact)
+            fsenl_dtl = rhoair * cpair * lsai/rb(3) &
+                        *(1.-lsai*fc(3)/(rb(3)*cT*(1-bT/(cT*rd(3)))))
          ELSE
             fsenl_dtl = rhoair * cpair * cfh(i) * (1.-wta0(1)*wtg0(2)*wtl0(i)/fact-wtl0(i))
          ENDIF
@@ -2045,8 +2115,11 @@ CONTAINS
          IF (botlay == 2) THEN
             ! etr_dtl = rhoair * (1.-fwet) * delta * lai/(rb(i)+rs) &
             !         * (1.-wtlq0(i)/facq)*qsatldT(i)
+            ! etr_dtl = rhoair * (1.-fwet) * delta * lai/(rb(3)+rs) &
+            !           *(1.-cfw(3)*fc(3)/(cgw(3)+cgw_per*fgper*fg+cgw_imp*fgimp*fg+cfw(3)*fc(3))/facq) &
+            !           *qsatldT(3)
             etr_dtl = rhoair * (1.-fwet) * delta * lai/(rb(3)+rs) &
-                      *(1.-cfw(3)*fc(3)/(cgw(3)+cgw_per*fgper*fg+cgw_imp*fgimp*fg+cfw(3)*fc(3))/facq) &
+                      *(1.-fc(3)/(cQ*rv*(1-bQ/(cQ*rd(3))))) &
                       *qsatldT(3)
          ELSE
             etr_dtl = rhoair * (1.-fwet) * delta * lai/(rb(i)+rs) &
@@ -2064,8 +2137,11 @@ CONTAINS
          IF (botlay == 2) THEN
             ! evplwet_dtl = rhoair * (1.-delta*(1.-fwet)) * lsai/rb(i) &
             !             * (1.-wtlq0(i)/facq)*qsatldT(i)
+            ! evplwet_dtl = rhoair * (1.-delta*(1.-fwet)) * lsai/rb(3) &
+            !               *(1.-cfw(3)*fc(3)/(cgw(3)+cgw_per*fgper*fg+cgw_imp*fgimp*fg+cfw(3)*fc(3))/facq) &
+            !               *qsatldT(3)
             evplwet_dtl = rhoair * (1.-delta*(1.-fwet)) * lsai/rb(3) &
-                          *(1.-cfw(3)*fc(3)/(cgw(3)+cgw_per*fgper*fg+cgw_imp*fgimp*fg+cfw(3)*fc(3))/facq) &
+                          *(1.-fc(3)/(cQ*rv*(1-bQ/(cQ*rd(3))))) &
                           *qsatldT(3)
          ELSE
             evplwet_dtl = rhoair * (1.-delta*(1.-fwet)) * lsai/rb(i) &
@@ -2105,7 +2181,7 @@ CONTAINS
 
          ! solve for leaf temperature
          dtl(it) = (sabv + irab - fsenl - hvap*fevpl) &
-            / (clai/deltim - dirab_dtl + fsenl_dtl + hvap*fevpl_dtl)
+            / (lsai*clai/deltim - dirab_dtl + fsenl_dtl + hvap*fevpl_dtl)
          dtl_noadj = dtl(it)
 
          ! check magnitude of change in leaf temperature limit to maximum allowed value
@@ -2177,44 +2253,67 @@ CONTAINS
             ! 06/20/2021, yuan: account for AH
             ! 92% heat release as SH, Pigeon et al., 2007
 
-            h_vec  = vehc
-            tmpw1  = cah(2)*((cah(3)*thm + cfh(0)*tu(0)*fc(0) + 1/(4*hlr+1)*(Fhac+Fwst)/(rhoair*cpair))/&
-                     (cah(3) + cah(2) + cfh(0)*fc(0)))
-            tmpw2  = (4*hlr/(4*hlr+1)*(Fhac+Fwst)+Fach)/(rhoair*cpair) + (h_vec+meta)/(rhoair*cpair)
-            tmpw3  = cgh(2)*fg*tg + cfh(1)*tu(1)*fc(1) + cfh(2)*tu(2)*fc(2) + cfh(3)*tu(3)*fc(3)
-            fact   = 1. - (cah(2)*cah(2)/(cah(3) + cah(2) + cfh(0)*fc(0))/&
-                     (cah(2) + cgh(2)*fg + cfh(1)*fc(1) + cfh(2)*fc(2) + cfh(3)*fc(3)))
-            taf(2) = (tmpw1 + tmpw2 + tmpw3) / &
-                     (cah(2) + cgh(2)*fg + cfh(1)*fc(1) + cfh(2)*fc(2) + cfh(3)*fc(3)) / &
-                     fact
+            ! h_vec  = vehc
+            ! tmpw1  = cah(2)*((cah(3)*thm + cfh(0)*tu(0)*fc(0) + 1/(4*hlr+1)*(Fhac+Fwst)/(rhoair*cpair))/&
+            !          (cah(3) + cah(2) + cfh(0)*fc(0)))
+            ! tmpw2  = (4*hlr/(4*hlr+1)*(Fhac+Fwst)+Fach)/(rhoair*cpair) + (h_vec+meta)/(rhoair*cpair)
+            ! tmpw3  = cgh(2)*fg*tg + cfh(1)*tu(1)*fc(1) + cfh(2)*tu(2)*fc(2) + cfh(3)*tu(3)*fc(3)
+            ! fact   = 1. - (cah(2)*cah(2)/(cah(3) + cah(2) + cfh(0)*fc(0))/&
+            !          (cah(2) + cgh(2)*fg + cfh(1)*fc(1) + cfh(2)*fc(2) + cfh(3)*fc(3)))
+            ! taf(2) = (tmpw1 + tmpw2 + tmpw3) / &
+            !          (cah(2) + cgh(2)*fg + cfh(1)*fc(1) + cfh(2)*fc(2) + cfh(3)*fc(3)) / &
+            !          fact
+
+            H_ahe1 = 4*hlr/(4*hlr+1)*(Fhac+Fwst) + Fach + h_vec + meta
+            H_ahe2 = 1/(4*hlr+1)*(Fhac+Fwst)
+
+            bT     = 1/(rd(3) * (1/rah+1/rd(3)+fc(0)/rb(0)))
+            cT     = 1/rd(3) + fg/rd(2) + fc(1)/rb(1) + fc(2)/rb(2) +fc(3)*lsai/rb(3)
+            aT     = (tu(0)*fc(0)/rb(0) + H_ahe2/(rhoair*cpair) + thm/rah)*bT
+
+            taf(2) = (tg*fg/rd(2) + H_ahe1/(rhoair*cpair) + tu(1)*fc(1)/rb(1) + tu(2)*fc(2)/rb(2) + tu(3)*fc(3)*lsai/rb(3) + aT) &
+                     /(cT * (1- bT/(cT*rd(3))))
+            taf(3) = (taf(2)/rd(3) + tu(0)*fc(0)/rb(0) + H_ahe2/(rhoair*cpair) + thm/rah) &
+                     /(1/rah + 1/rd(3) + fc(0)/rb(0))
 
             IF (qgper < qaf(2)) THEN
               ! dew case. no soil resistance
-              cgw_per= cgw(2)
-            ELSE
-              cgw_per= 1/(1/cgw(2)+rss)
+              ! cgw_per= cgw(2)
+              rss    = 0
+            ! ELSE
+              ! cgw_per= 1/(1/cgw(2)+rss)
             ENDIF
 
-            cgw_imp= fwet_gimp*cgw(2)
+            ! cgw_imp= fwet_gimp*cgw(2)
 
             ! account for soil resistance, qgper and qgimp are calculated separately
-            l_vec  = 0
-            tmpw1  = caw(2)*((caw(3)*qm + cfw(0)*qsatl(0)*fc(0))/&
-                     (caw(3) + caw(2) + cfw(0)*fc(0)))
-            tmpw2  = l_vec/(rhoair)
-            tmpw3  = cgw_per*qgper*fgper*fg + cgw_imp*qgimp*fgimp*fg + cfw(3)*qsatl(3)*fc(3)
-            facq   = 1. - (caw(2)*caw(2)/&
-                     (caw(3) + caw(2) + cfw(0)*fc(0))/&
-                     (caw(2) + cgw_per*fgper*fg + cgw_imp*fgimp*fg + cfw(3)*fc(3)))
-            qaf(2) = (tmpw1 + tmpw2 + tmpw3)/&
-                     (caw(2) + cgw_per*fgper*fg + cgw_imp*fgimp*fg + cfw(3)*fc(3))/&
-                     facq
+            ! l_vec  = 0
+            ! tmpw1  = caw(2)*((caw(3)*qm + cfw(0)*qsatl(0)*fc(0))/&
+            !          (caw(3) + caw(2) + cfw(0)*fc(0)))
+            ! tmpw2  = l_vec/(rhoair)
+            ! tmpw3  = cgw_per*qgper*fgper*fg + cgw_imp*qgimp*fgimp*fg + cfw(3)*qsatl(3)*fc(3)
+            ! facq   = 1. - (caw(2)*caw(2)/&
+            !          (caw(3) + caw(2) + cfw(0)*fc(0))/&
+            !          (caw(2) + cgw_per*fgper*fg + cgw_imp*fgimp*fg + cfw(3)*fc(3)))
+            ! qaf(2) = (tmpw1 + tmpw2 + tmpw3)/&
+            !          (caw(2) + cgw_per*fgper*fg + cgw_imp*fgimp*fg + cfw(3)*fc(3))/&
+            !          facq
 
-            tmpw1  = 1/(4*hlr+1)*(Fhac+Fwst)/(rhoair*cpair)
-            taf(3) = (cah(3)*thm + cah(2)*taf(2) + cfh(0)*tu(0)*fc(0) + tmpw1)/&
-                     (cah(3) + cah(2) + cfh(0)*fc(0))
-            qaf(3) = (caw(3)*qm  + caw(2)*qaf(2) + cfw(0)*qsatl(0)*fc(0))/&
-                     (caw(3) + caw(2) + cfw(0)*fc(0))
+            ! tmpw1  = 1/(4*hlr+1)*(Fhac+Fwst)/(rhoair*cpair)
+            ! taf(3) = (cah(3)*thm + cah(2)*taf(2) + cfh(0)*tu(0)*fc(0) + tmpw1)/&
+            !          (cah(3) + cah(2) + cfh(0)*fc(0))
+            ! qaf(3) = (caw(3)*qm  + caw(2)*qaf(2) + cfw(0)*qsatl(0)*fc(0))/&
+            !          (caw(3) + caw(2) + cfw(0)*fc(0))
+
+            cQ     = 1/rd(3) + fg*fgper/(rd(2)+rss) + fwet_gimp*fg*fgimp/rd(2) + fc(3)/rv
+            bQ     = 1/(rd(3) * (1/raw+1/rd(3)+fwet_roof*fc(0)/rb(0)))
+            aQ     = (qsatl(0)*fwet_roof*fc(0)/rb(0) + qm/raw)*bQ
+
+            qaf(2) = (qgper*fgper*fg/(rd(2)+rss) + qgimp*fwet_gimp*fgimp*fg/rd(2) + qsatl(3)*fc(3)/rv + aQ) &
+                     / (cQ * (1-bQ/(cQ*rd(3))))
+            qaf(3) = (qaf(2)/rd(3) + qsatl(0)*fwet_roof*fc(0)/rb(0) + qm/raw) &
+                     / (1/raw + 1/rd(3) + fwet_roof*fc(0)/rb(0))
+
          ENDIF
 
          IF (numlay .eq. 3) THEN
@@ -2393,7 +2492,7 @@ CONTAINS
 
       fsenl = fsenl + fsenl_dtl*dtl(it-1) &
          ! add the imbalanced energy below due to T adjustment to sensibel heat
-         + (dtl_noadj-dtl(it-1)) * (clai/deltim - dirab_dtl &
+         + (dtl_noadj-dtl(it-1)) * (lsai*clai/deltim - dirab_dtl &
          + fsenl_dtl + hvap*fevpl_dtl) &
          ! add the imbalanced energy below due to q adjustment to sensibel heat
          + hvap*erre
@@ -2417,84 +2516,17 @@ CONTAINS
 
       ldew = max(0., ldew-evplwet*deltim)
 
-      ! account for vegetation snow and update ldew_rain, ldew_snow, ldew
-      IF ( DEF_VEG_SNOW ) THEN
-         IF (tl > tfrz) THEN
-            qevpl = max (evplwet, 0.)
-            qdewl = abs (min (evplwet, 0.) )
-            qsubl = 0.
-            qfrol = 0.
-
-            IF (qevpl > ldew_rain/deltim) THEN
-               qsubl = qevpl - ldew_rain/deltim
-               qevpl = ldew_rain/deltim
-            ENDIF
-         ELSE
-            qevpl = 0.
-            qdewl = 0.
-            qsubl = max (evplwet, 0.)
-            qfrol = abs (min (evplwet, 0.) )
-
-            IF (qsubl > ldew_snow/deltim) THEN
-               qevpl = qsubl - ldew_snow/deltim
-               qsubl = ldew_snow/deltim
-            ENDIF
-         ENDIF
-
-         ldew_rain = ldew_rain + (qdewl-qevpl)*deltim
-         ldew_snow = ldew_snow + (qfrol-qsubl)*deltim
-
-         ldew = ldew_rain + ldew_snow
-      ENDIF
-
-      IF ( DEF_VEG_SNOW ) THEN
-         ! update fwet_snow
-         fwet_snow = 0
-         IF(ldew_snow > 0.) THEN
-            fwet_snow = ((10./(48.*(lai+sai)))*ldew_snow)**.666666666666
-            ! Check for maximum limit of fwet_snow
-            fwet_snow = min(fwet_snow,1.0)
-         ENDIF
-
-         ! phase change
-
-         qmelt = 0.
-         qfrz  = 0.
-
-         !TODO: double check below
-         IF (ldew_snow.gt.1.e-6 .and. tl.gt.tfrz) THEN
-            qmelt = min(ldew_snow/deltim,(tl-tfrz)*cpice*ldew_snow/(deltim*hfus))
-            ldew_snow = max(0.,ldew_snow - qmelt*deltim)
-            ldew_rain = max(0.,ldew_rain + qmelt*deltim)
-            !NOTE: There may be some problem, energy imbalance
-            !      However, detailed treatment could be somewhat trivial
-            tl = fwet_snow*tfrz + (1.-fwet_snow)*tl  !Niu et al., 2004
-         ENDIF
-
-         IF (ldew_rain.gt.1.e-6 .and. tl.lt.tfrz) THEN
-            qfrz  = min(ldew_rain/deltim,(tfrz-tl)*cpliq*ldew_rain/(deltim*hfus))
-            ldew_rain = max(0.,ldew_rain - qfrz*deltim)
-            ldew_snow = max(0.,ldew_snow + qfrz*deltim)
-            !NOTE: There may be some problem, energy imbalance
-            !      However, detailed treatment could be somewhat trivial
-            tl = fwet_snow*tfrz + (1.-fwet_snow)*tl  !Niu et al., 2004
-         ENDIF
-      ENDIF
-
-      ! vegetation heat change
-      dheatl = clai/deltim*dtl(it-1)
-
 !-----------------------------------------------------------------------
 ! balance check
 !-----------------------------------------------------------------------
 
       err = sabv + irab + dirab_dtl*dtl(it-1) &
-          - fsenl - hvap*fevpl - dheatl
+          - fsenl - hvap*fevpl
 
 #if(defined CLMDEBUG)
       IF (abs(err) .gt. .2) THEN
          write(6,*) 'energy imbalance in UrbanVegFlux.F90', &
-         i,it-1,err,sabv,irab,fsenl,hvap*fevpl,dheatl
+         i,it-1,err,sabv,irab,fsenl,hvap*fevpl
          CALL CoLM_stop()
       ENDIF
 #endif
@@ -2551,31 +2583,51 @@ CONTAINS
 !-----------------------------------------------------------------------
 
       ! sensible heat fluxes
-      fsenroof = rhoair*cpair*cfh(0)*(troof-taf(3))
-      fsenwsun = rhoair*cpair*cfh(1)*(twsun-taf(2))
-      fsenwsha = rhoair*cpair*cfh(2)*(twsha-taf(2))
+      fsenroof = rhoair*cpair/rb(0)*(troof-taf(3))
+      fsenwsun = rhoair*cpair/rb(1)*(twsun-taf(2))
+      fsenwsha = rhoair*cpair/rb(2)*(twsha-taf(2))
 
       ! latent heat fluxes
-      fevproof = rhoair*cfw(0)*(qsatl(0)-qaf(3))
+      fevproof = rhoair/rb(0)*(qsatl(0)-qaf(3))
       fevproof = fevproof*fwet_roof
+
+
+      !-------------------------------------------
+      bT     = 1/(rd(3) * (1/rah+1/rd(3)+fc(0)/rb(0)))
+      cT     = 1/rd(3) + fg/rd(2) + fc(1)/rb(1) + fc(2)/rb(2) +fc(3)*lsai/rb(3)
+
+      cQ     = 1/rd(3) + fg*fgper/(rd(2)+rss) + fwet_gimp*fg*fgimp/rd(2) + fc(3)/rv
+      bQ     = 1/(rd(3) * (1/raw+1/rd(3)+fwet_roof*fc(0)/rb(0)))
+
+      cwalls = rhoair*cpair/rb(1) &
+               *(1.-fc(1)/(cT*rb(1)*(1-bT/(cT*rd(3)))))
+      croofs = rhoair*cpair/rb(0) &
+               *(1.-fc(0)*bT/(cT*rb(0)*rd(3)*(1/rah+1/rd(3)+fc(0)/rb(0))*(1-bT/(cT*rd(3))))-fc(0)/(rb(0)*(1/rah+1/rd(3)+fc(0)/rb(0))))
+
+      croofl = rhoair*fwet_roof/rb(0)*qsatldT(0) &
+               *(1.-fwet_roof*fc(0)*bQ/(cQ*rb(0)*rd(3)*(1/raw+1/rd(3)+fwet_roof*fc(0)/rb(0))*(1-bQ/(cQ*rd(3)))) &
+               -fwet_roof*fc(0)/(rb(0)*(1/raw+1/rd(3)+fwet_roof*fc(0)/rb(0))))
+      croof  = croofs + croofl*htvp_roof
+
+      !-------------------------------------------
 
       ! croofs = rhoair*cpair*cfh(0)*(1.-wtg0(3)*wta0(2)*wtl0(0)/fact-wtl0(0))
       ! cwalls = rhoair*cpair*cfh(1)*(1.-wtl0(1)/fact)
-      croofs = rhoair*cpair*cfh(0) &
-               *(1.-cgh(3)/(cah(3)+cgh(3)+cfh(0)*fc(0)) &
-               *cah(2)/(cah(2)+cgh(2)*fg+cfh(1)*fc(1)+cfh(2)*fc(2)+cfh(3)*fc(3)) &
-               *cfh(0)*fc(0)/(cah(3)+cgh(3)+cfh(0)*fc(0))/fact &
-               -cfh(0)*fc(0)/(cah(3)+cgh(3)+cfh(0)*fc(0)))
-      cwalls = rhoair*cpair*cfh(1) &
-               *(1.-cfh(1)*fc(1)/(cgh(3)+cgh(2)*fg+cfh(1)*fc(1)+cfh(2)*fc(2)+cfh(3)*fc(3))/fact)
+      ! croofs = rhoair*cpair*cfh(0) &
+      !          *(1.-cgh(3)/(cah(3)+cgh(3)+cfh(0)*fc(0)) &
+      !          *cah(2)/(cah(2)+cgh(2)*fg+cfh(1)*fc(1)+cfh(2)*fc(2)+cfh(3)*fc(3)) &
+      !          *cfh(0)*fc(0)/(cah(3)+cgh(3)+cfh(0)*fc(0))/fact &
+      !          -cfh(0)*fc(0)/(cah(3)+cgh(3)+cfh(0)*fc(0)))
+      ! cwalls = rhoair*cpair*cfh(1) &
+      !          *(1.-cfh(1)*fc(1)/(cgh(3)+cgh(2)*fg+cfh(1)*fc(1)+cfh(2)*fc(2)+cfh(3)*fc(3))/fact)
       ! croofl = rhoair*cfw(0)*(1.-wtgq0(3)*wtaq0(2)*wtlq0(0)/facq-wtlq0(0))*qsatldT(0)
-      croofl = rhoair*cfw(0)*(1.-cfw(0)*fc(0)/(caw(3)+cgw(3)+cfw(0)*fc(0))-cgw(3) &
-               /(caw(3)+cgw(3)+cfw(0)*fc(0)) &
-               /(cgw(3)+cgw_per*fgper*fg+cgw_imp*fgimp*fg+cfw(3)*fc(3))* &
-               cfw(0)*fc(0)*cgw(3)/(caw(3)+cgw(3)+cfw(0)*fc(0))/facq)*qsatldT(0)
-      croofl = croofl*fwet_roof
+      ! croofl = rhoair*cfw(0)*(1.-cfw(0)*fc(0)/(caw(3)+cgw(3)+cfw(0)*fc(0))-cgw(3) &
+      !          /(caw(3)+cgw(3)+cfw(0)*fc(0)) &
+      !          /(cgw(3)+cgw_per*fgper*fg+cgw_imp*fgimp*fg+cfw(3)*fc(3))* &
+      !          cfw(0)*fc(0)*cgw(3)/(caw(3)+cgw(3)+cfw(0)*fc(0))/facq)*qsatldT(0)
+      ! croofl = croofl*fwet_roof
 
-      croof = croofs + croofl*htvp_roof
+      ! croof = croofs + croofl*htvp_roof
 
 !-----------------------------------------------------------------------
 ! fluxes from urban ground to canopy space
@@ -2594,20 +2646,25 @@ CONTAINS
 !-----------------------------------------------------------------------
 
       IF (botlay == 2) THEN
+         cgrnds = cpair*rhoair/rd(2)*(1.-fg/(cT*rd(2)*(1-bT/(cT*rd(3)))))
+
+         cgperl = rhoair/(rd(2)+rss)    *dqgperdT*(1-fg*fgper/(cQ*(rd(2)+rss)*(1-bQ/(cQ*rd(3)))))
+         cgimpl = rhoair*fwet_gimp/rd(2)*dqgimpdT*(1-fwet_gimp*fg*fgimp/(cQ*rd(2)*(1-bQ/(cQ*rd(3)))))
+         
          ! cgrnds = cpair*rhoair*cgh(2)*(1.-wtg0(2)/fact)
          ! cgperl = rhoair*cgw(2)*(1.-wtgq0(2)/facq)*dqgperdT
          ! cgimpl = rhoair*cgw(2)*(1.-wtgq0(2)/facq)*dqgimpdT
-         cgrnds = cpair*rhoair*cgh(2) &
-                  *(1.-cgh(2)*fg/(cgh(3)+cgh(2)*fg+cfh(1)*fc(1)+cfh(2)*fc(2)+cfh(3)*fc(3))/fact)
-         cgperl = rhoair*cgw_per*(dqgperdT &
-                  -(dqgperdT*cgw_per*fgper*fg) &
-                  /(caw(2) + cgw_per*fgper*fg + cgw_imp*fgimp*fg + cfw(3)*fc(3)) &
-                  /facq)
-         cgimpl = rhoair*cgw_imp*(dqgimpdT &
-                  -(dqgimpdT*cgw_imp*fgimp*fg) &
-                  /(caw(2) + cgw_per*fgper*fg + cgw_imp*fgimp*fg + cfw(3)*fc(3)) &
-                  /facq)
-         cgimpl = cgimpl*fwet_gimp
+         ! cgrnds = cpair*rhoair*cgh(2) &
+         !          *(1.-cgh(2)*fg/(cgh(3)+cgh(2)*fg+cfh(1)*fc(1)+cfh(2)*fc(2)+cfh(3)*fc(3))/fact)
+         ! cgperl = rhoair*cgw_per*(dqgperdT &
+         !          -(dqgperdT*cgw_per*fgper*fg) &
+         !          /(caw(2) + cgw_per*fgper*fg + cgw_imp*fgimp*fg + cfw(3)*fc(3)) &
+         !          /facq)
+         ! cgimpl = rhoair*cgw_imp*(dqgimpdT &
+         !          -(dqgimpdT*cgw_imp*fgimp*fg) &
+         !          /(caw(2) + cgw_per*fgper*fg + cgw_imp*fgimp*fg + cfw(3)*fc(3)) &
+         !          /facq)
+         ! cgimpl = cgimpl*fwet_gimp
       ELSE !botlay == 1
          cgrnds = cpair*rhoair*cgh(1)*(1.-wta0(1)*wtg0(2)*wtg0(1)/fact-wtg0(1))
          cgperl = rhoair*cgw_per*(1.-wtaq0(1)*wtgq0(2)*wtgq0(1)/facq-wtgq0(1))*dqgperdT
@@ -2629,79 +2686,51 @@ CONTAINS
 !----------------------------------------------------------------------
 
 
-   SUBROUTINE dewfraction (sigf,lai,sai,dewmx,ldew,ldew_rain,ldew_snow,fwet,fdry)
+   SUBROUTINE dewfraction (sigf,lai,sai,dewmx,ldew,fwet)
+
 !=======================================================================
 ! Original author: Yongjiu Dai, September 15, 1999
 !
 ! determine fraction of foliage covered by water and
 ! fraction of foliage that is dry and transpiring
 !
-!
-! REVISIONS:
-!
-! 2024.04.16   Hua Yuan: add option to account for vegetation snow process
-! 2018.06      Hua Yuan: remove sigf, to compatible with PFT
 !=======================================================================
 
    USE MOD_Precision
    IMPLICIT NONE
 
-   real(r8), intent(in)  :: sigf      !fraction of veg cover, excluding snow-covered veg [-]
-   real(r8), intent(in)  :: lai       !leaf area index  [-]
-   real(r8), intent(in)  :: sai       !stem area index  [-]
-   real(r8), intent(in)  :: dewmx     !maximum allowed dew [0.1 mm]
-   real(r8), intent(in)  :: ldew      !depth of water on foliage [kg/m2/s]
-   real(r8), intent(in)  :: ldew_rain !depth of rain on foliage [kg/m2/s]
-   real(r8), intent(in)  :: ldew_snow !depth of snow on foliage [kg/m2/s]
-   real(r8), intent(out) :: fwet      !fraction of foliage covered by water&snow [-]
-   real(r8), intent(out) :: fdry      !fraction of foliage that is green and dry [-]
+   real(r8), intent(in) :: sigf   ! fraction of veg cover, excluding snow-covered veg [-]
+   real(r8), intent(in) :: lai    ! leaf area index  [-]
+   real(r8), intent(in) :: sai    ! stem area index  [-]
+   real(r8), intent(in) :: dewmx  ! maximum allowed dew [0.1 mm]
+   real(r8), intent(in) :: ldew   ! depth of water on foliage [kg/m2/s]
 
-   real(r8) :: lsai                   !lai + sai
-   real(r8) :: dewmxi                 !inverse of maximum allowed dew [1/mm]
-   real(r8) :: vegt                   !sigf*lsai, NOTE: remove sigf
-   real(r8) :: fwet_rain              !fraction of foliage covered by water [-]
-   real(r8) :: fwet_snow              !fraction of foliage covered by snow [-]
+   real(r8), intent(out) :: fwet  ! fraction of foliage covered by water [-]
+
+   real(r8) lsai                  ! lai + sai
+   real(r8) dewmxi                ! inverse of maximum allowed dew [1/mm]
+   real(r8) vegt                  ! sigf*lsai
 !
 !-----------------------------------------------------------------------
 ! Fwet is the fraction of all vegetation surfaces which are wet
 ! including stem area which contribute to evaporation
       lsai = lai + sai
       dewmxi = 1.0/dewmx
-      ! 06/2018, yuan: remove sigf, to compatible with PFT
+       ! why * sigf? may have bugs
+       ! 06/17/2018:
+       ! for ONLY one PFT, there may be no problem
+       ! but for multiple PFTs, bugs exist!!!
+       ! convert the whole area ldew to sigf ldew
       vegt   =  lsai
 
       fwet = 0
       IF (ldew > 0.) THEN
          fwet = ((dewmxi/vegt)*ldew)**.666666666666
-         ! Check for maximum limit of fwet
+
+! Check for maximum limit of fwet
          fwet = min(fwet,1.0)
+
       ENDIF
-
-      ! account for vegetation snow
-      ! calculate fwet_rain, fwet_snow, fwet
-      IF ( DEF_VEG_SNOW ) THEN
-
-         fwet_rain = 0
-         IF(ldew_rain > 0.) THEN
-            fwet_rain = ((dewmxi/vegt)*ldew_rain)**.666666666666
-            ! Check for maximum limit of fwet_rain
-            fwet_rain = min(fwet_rain,1.0)
-         ENDIF
-
-         fwet_snow = 0
-         IF(ldew_snow > 0.) THEN
-            fwet_snow = ((dewmxi/(48.*vegt))*ldew_snow)**.666666666666
-            ! Check for maximum limit of fwet_snow
-            fwet_snow = min(fwet_snow,1.0)
-         ENDIF
-
-         fwet = fwet_rain + fwet_snow - fwet_rain*fwet_snow
-         fwet = min(fwet,1.0)
-      ENDIF
-
-      ! fdry is the fraction of lai which is dry because only leaves can
-      ! transpire. Adjusted for stem area which does not transpire
-      fdry = (1.-fwet)*lai/lsai
 
    END SUBROUTINE dewfraction
 
