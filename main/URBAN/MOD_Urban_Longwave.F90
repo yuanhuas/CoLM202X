@@ -22,7 +22,7 @@ CONTAINS
 
    SUBROUTINE UrbanOnlyLongwave (theta, HW, fb, fgper, H, LW, &
               twsun, twsha, tgimp, tgper, ewall, egimp, egper, &
-              Ainv, B, B1, dBdT, SkyVF, fcover)
+              Ainv, B, B1, dBdT, SkyVF, UrbVF, fcover)
 
 !-----------------------------------------------------------------------
 !                Sun
@@ -84,7 +84,8 @@ CONTAINS
         B1(4),      &! Vectors of incident radition on each surface
         dBdT(4),    &! Vectors of incident radition on each surface
         SkyVF(4),   &! Viewall factor to sky
-        fcover(0:4)  ! View factor to sky
+        UrbVF(4),   &! Viewall factor from sky to wall, ground and veg
+        fcover(0:4)  ! fractional cover of roof, wall, ground and veg
 
    ! Local variables
    !-------------------------------------------------
@@ -204,11 +205,16 @@ CONTAINS
       SkyVF(1:2) = Fws
       SkyVF(3:4) = Fgs
 
-      fcover(0) = fb
-      fcover(1) = 4*fwsun*HL*fb
-      fcover(2) = 4*fwsha*HL*fb
-      fcover(3) = fg*fgimp
-      fcover(4) = fg*fgper
+      UrbVF(1)   = Fsw*fwsun
+      UrbVF(2)   = Fsw*fwsha
+      UrbVF(3)   = Fsg*fgimp
+      UrbVF(4)   = Fsg*fgper
+
+      fcover(0)  = fb
+      fcover(1)  = 4*fwsun*HL*fb
+      fcover(2)  = 4*fwsha*HL*fb
+      fcover(3)  = fg*fgimp
+      fcover(4)  = fg*fgper
 
       !NOTE: the below codes put into the THERMAL.F90
       ! Equation solve
@@ -246,7 +252,7 @@ CONTAINS
 
    SUBROUTINE UrbanVegLongwave (theta, HW, fb, fgper, H, LW, &
               twsun, twsha, tgimp, tgper, ewall, egimp, egper, lai, sai, fv, hv, &
-              ev, Ainv, B, B1, dBdT, SkyVF, VegVF, fcover)
+              ev, Ainv, B, B1, dBdT, SkyVF, VegVF, UrbVF, fcover)
 
 !-----------------------------------------------------------------------
 !              Sun
@@ -305,8 +311,9 @@ CONTAINS
         B1(5),      &! Vectors of incident radition on each surface
         dBdT(5),    &! Vectors of incident radition on each surface
         SkyVF(5),   &! View factor to sky
-        VegVF(5),   &! View factor to sky
-        fcover(0:5)  ! View factor to sky
+        VegVF(5),   &! View factor to veg
+        UrbVF(5),   &! View factor from sky to wall, ground and veg
+        fcover(0:5)  ! fractional cover of roof, wall, ground and veg
 
    ! Local variables
    !-------------------------------------------------
@@ -591,12 +598,18 @@ CONTAINS
       VegVF(3:4) = Fgv
       VegVF(5)   = Fsv
 
-      fcover(0) = fb
-      fcover(1) = 4*fwsun*HL*fb
-      fcover(2) = 4*fwsha*HL*fb
-      fcover(3) = fg*fgimp
-      fcover(4) = fg*fgper
-      fcover(5) = fv
+      UrbVF(1)   = Fsw_*fwsun
+      UrbVF(2)   = Fsw_*fwsha
+      UrbVF(3)   = Fsg_*fgimp
+      UrbVF(4)   = Fsg_*fgper
+      UrbVF(5)   = Fsv
+
+      fcover(0)  = fb
+      fcover(1)  = 4*fwsun*HL*fb
+      fcover(2)  = 4*fwsha*HL*fb
+      fcover(3)  = fg*fgimp
+      fcover(4)  = fg*fgper
+      fcover(5)  = fv
 
       !NOTE: the below codes are put in the leaf temperature iteration process
       ! after each iteration, update the below iterms

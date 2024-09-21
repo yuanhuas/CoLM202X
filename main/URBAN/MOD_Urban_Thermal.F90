@@ -571,6 +571,7 @@ CONTAINS
    real(r8), allocatable :: dT(:)     ! Vectors of incident radition on each surface
    real(r8), allocatable :: SkyVF(:)  ! View factor to sky
    real(r8), allocatable :: VegVF(:)  ! View factor to vegetation
+   real(r8), allocatable :: UrbVF(:)  ! View factor from sky to wall, ground and veg
    real(r8), allocatable :: fcover(:) ! fractional cover of roof, wall, ground and veg
 
 
@@ -751,6 +752,7 @@ CONTAINS
          allocate ( dBdT(5)     )
          allocate ( SkyVF(5)    )
          allocate ( VegVF(5)    )
+         allocate ( UrbVF(5)    )
          allocate ( fcover(0:5) )
          allocate ( dT(0:5)     )
 
@@ -759,7 +761,7 @@ CONTAINS
                                 theta, hwr, froof, fgper, hroof, forc_frl, &
                                 twsun, twsha, tgimp, tgper, ewall, egimp, &
                                 egper, lai, sai, fveg, (htop+hbot)/2., &
-                                ev, Ainv, B, B1, dBdT, SkyVF, VegVF, fcover)
+                                ev, Ainv, B, B1, dBdT, SkyVF, VegVF, UrbVF, fcover)
       ELSE
 
          allocate ( Ainv(4,4)   )
@@ -769,6 +771,7 @@ CONTAINS
          allocate ( B1(4)       )
          allocate ( dBdT(4)     )
          allocate ( SkyVF(4)    )
+         allocate ( UrbVF(4)    )
          allocate ( fcover(0:4) )
          allocate ( dT(0:4)     )
 
@@ -776,7 +779,7 @@ CONTAINS
          CALL UrbanOnlyLongwave ( &
                                  theta, hwr, froof, fgper, hroof, forc_frl, &
                                  twsun, twsha, tgimp, tgper, ewall, egimp, egper, &
-                                 Ainv, B, B1, dBdT, SkyVF, fcover)
+                                 Ainv, B, B1, dBdT, SkyVF, UrbVF, fcover)
 
          ! calculate longwave radiation abs, for UrbanOnlyLongwave
          !-------------------------------------------
@@ -1213,6 +1216,24 @@ CONTAINS
       !t_grnd = troof*fcover(0) + twsun*fcover(1) + twsha*fcover(2) + &
       t_grnd = tgper*fgper + tgimp*(1-fgper)
 
+      ! 09/13/2024, yuan: diagnostic LST
+      !t_grnd = troof*fcover(0) &
+      !       + twsun*fcover(1)*SkyVF(1) + twsha*fcover(2)*SkyVF(2) &
+      !       + tgimp*fcover(3)*SkyVF(3) + tgper*fcover(4)*SkyVF(4)
+      !
+      !IF ( doveg ) THEN
+      !   t_grnd = t_grnd + tleaf*fcover(5)*SkyVF(5)
+      !ENDIF
+
+      ! 09/20/2024, yuan: diagnostic LST
+      t_grnd = troof*froof &
+             + twsun*fg*UrbVF(1) + twsha*fg*UrbVF(2) &
+             + tgimp*fg*UrbVF(3) + tgper*fg*UrbVF(4)
+
+      IF ( doveg ) THEN
+         t_grnd = t_grnd + tleaf*fg*UrbVF(5)
+      ENDIF
+
       !==============================================
       qseva_roof = 0.
       qsubl_roof = 0.
@@ -1381,6 +1402,7 @@ CONTAINS
       deallocate ( B1     )
       deallocate ( dBdT   )
       deallocate ( SkyVF  )
+      deallocate ( UrbVF  )
       deallocate ( dT     )
 
       IF ( doveg ) THEN
