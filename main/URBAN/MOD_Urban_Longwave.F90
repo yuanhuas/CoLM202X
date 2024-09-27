@@ -602,7 +602,7 @@ CONTAINS
       UrbVF(2)   = Fsw_*fwsha
       UrbVF(3)   = Fsg_*fgimp
       UrbVF(4)   = Fsg_*fgper
-      UrbVF(5)   = Fsv
+      UrbVF(5)   = Fsv*(1-Td)
 
       fcover(0)  = fb
       fcover(1)  = 4*fwsun*HL*fb
