@@ -624,6 +624,7 @@ CONTAINS
 
       ! update fwsun
       fwsun = fwsun + dfwsun
+      fwsha = 1. - fwsun
 
       ! temperature and water mass from previous time step
       twsun = t_wallsun( 1 )
@@ -1014,7 +1015,7 @@ CONTAINS
       troof = t_roofsno(lbr)
       tgimp = t_gimpsno(lbi)
       tgper = t_gpersno(lbp)
-      twall = (twsun*fwsun + twsha*fwsha)/(fwsun + fwsha)
+      twall = twsun*fwsun + twsha*fwsha
 
       ! calculate lake temperture and sensible/latent heat fluxes
       CALL laketem ( &
