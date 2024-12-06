@@ -1523,6 +1523,9 @@ CONTAINS
 
       CALL moninobukini(ur,th,thm,thv,dth,dqh,dthv,zldis,z0m,um,obu)
 
+      rs = tref
+      rs_= qref
+
 ! ======================================================================
 !     BEGIN stability iteration
 ! ======================================================================
@@ -1679,46 +1682,46 @@ CONTAINS
 ! stomatal resistances
 !-----------------------------------------------------------------------
 
-         IF (lai > 0.) THEN
-
-            clev = canlev(3)
-            eah = qaf(clev) * psrf / ( 0.622 + 0.378 * qaf(clev) )    !pa
-
-!-----------------------------------------------------------------------
-! note: calculate resistance for leaves
-!-----------------------------------------------------------------------
-
-            CALL stomata (vmax25,effcon ,slti   ,hlti   ,&
-               shti    ,hhti    ,trda   ,trdm   ,trop   ,&
-               g1      ,g0      ,gradm  ,binter ,thm    ,&
-               psrf    ,po2m    ,pco2m  ,pco2a  ,eah    ,&
-               ei(3)   ,tu(3)   ,par    ,&
-               o3coefv ,o3coefg ,lambda_wue     ,&
-               rb(3)/lai,raw    ,rstfac ,cint(:),&
-               assim   ,respc   ,rs     &
-               )
-
-            rs_ = rs
-
-IF ( DEF_URBAN_Irrigation .and. rstfac < rstfac_irrig ) THEN
-            CALL stomata (vmax25,effcon ,slti   ,hlti   ,&
-               shti    ,hhti    ,trda   ,trdm   ,trop   ,&
-               g1      ,g0      ,gradm  ,binter ,thm    ,&
-               psrf    ,po2m    ,pco2m  ,pco2a  ,eah    ,&
-               ei(3)   ,tu(3)   ,par    ,&
-               o3coefv ,o3coefg ,lambda_wue     ,&
-               rb(3)/lai,raw    ,rstfac_irrig   ,cint(:),&
-               assim   ,respc   ,rs     &
-               )
-ENDIF
-         ELSE
-            rs = 2.e4; assim = 0.; respc = 0.
-         ENDIF
-
-! above stomatal resistances are for the canopy, the stomatal rsistances
-! and the "rb" in the following calculations are the average for single leaf. thus,
-         rs = rs * lai
-         rs_= rs_* lai
+!         IF (lai > 0.) THEN
+!
+!            clev = canlev(3)
+!            eah  = qaf(clev) * psrf / ( 0.622 + 0.378 * qaf(clev) )    !pa
+!
+!!-----------------------------------------------------------------------
+!! note: calculate resistance for leaves
+!!-----------------------------------------------------------------------
+!
+!            CALL stomata (vmax25,effcon ,slti   ,hlti   ,&
+!               shti    ,hhti    ,trda   ,trdm   ,trop   ,&
+!               g1      ,g0      ,gradm  ,binter ,thm    ,&
+!               psrf    ,po2m    ,pco2m  ,pco2a  ,eah    ,&
+!               ei(3)   ,tu(3)   ,par    ,&
+!               o3coefv ,o3coefg ,lambda_wue     ,&
+!               rb(3)/lai,raw    ,rstfac ,cint(:),&
+!               assim   ,respc   ,rs     &
+!               )
+!
+!            rs_ = rs
+!
+!IF ( DEF_URBAN_Irrigation .and. rstfac < rstfac_irrig ) THEN
+!            CALL stomata (vmax25,effcon ,slti   ,hlti   ,&
+!               shti    ,hhti    ,trda   ,trdm   ,trop   ,&
+!               g1      ,g0      ,gradm  ,binter ,thm    ,&
+!               psrf    ,po2m    ,pco2m  ,pco2a  ,eah    ,&
+!               ei(3)   ,tu(3)   ,par    ,&
+!               o3coefv ,o3coefg ,lambda_wue     ,&
+!               rb(3)/lai,raw    ,rstfac_irrig   ,cint(:),&
+!               assim   ,respc   ,rs     &
+!               )
+!ENDIF
+!         ELSE
+!            rs = 2.e4; assim = 0.; respc = 0.
+!         ENDIF
+!
+!! above stomatal resistances are for the canopy, the stomatal rsistances
+!! and the "rb" in the following calculations are the average for single leaf. thus,
+!         rs = rs * lai
+!         rs_= rs_* lai
 
 ! calculate latent heat resistances
          clev  = canlev(3)
@@ -2196,6 +2199,55 @@ ENDIF
       zol = zeta
       rib = min(5.,zol*ustar**2/(vonkar**2/fh*um**2))
 
+
+!-----------------------------------------------------------------------
+! stomatal resistances
+!-----------------------------------------------------------------------
+
+         IF (lai > 0.) THEN
+
+            clev = canlev(3)
+            eah  = qaf(clev) * psrf / ( 0.622 + 0.378 * qaf(clev) )    !pa
+
+!-----------------------------------------------------------------------
+! note: calculate resistance for leaves
+!-----------------------------------------------------------------------
+
+            CALL stomata (vmax25,effcon ,slti   ,hlti   ,&
+               shti    ,hhti    ,trda   ,trdm   ,trop   ,&
+               g1      ,g0      ,gradm  ,binter ,thm    ,&
+               psrf    ,po2m    ,pco2m  ,pco2a  ,eah    ,&
+               ei(3)   ,tu(3)   ,par    ,&
+               o3coefv ,o3coefg ,lambda_wue     ,&
+               rb(3)/lai,raw    ,rstfac ,cint(:),&
+               assim   ,respc   ,rs     &
+               )
+
+            rs_ = rs
+
+IF ( DEF_URBAN_Irrigation .and. rstfac < rstfac_irrig ) THEN
+            CALL stomata (vmax25,effcon ,slti   ,hlti   ,&
+               shti    ,hhti    ,trda   ,trdm   ,trop   ,&
+               g1      ,g0      ,gradm  ,binter ,thm    ,&
+               psrf    ,po2m    ,pco2m  ,pco2a  ,eah    ,&
+               ei(3)   ,tu(3)   ,par    ,&
+               o3coefv ,o3coefg ,lambda_wue     ,&
+               rb(3)/lai,raw    ,rstfac_irrig   ,cint(:),&
+               assim   ,respc   ,rs     &
+               )
+ENDIF
+         ELSE
+            rs = 2.e4; assim = 0.; respc = 0.
+         ENDIF
+
+! above stomatal resistances are for the canopy, the stomatal rsistances
+! and the "rb" in the following calculations are the average for single leaf. thus,
+         rs = rs * lai
+         rs_= rs_* lai
+
+         tref = rs
+         qref = rs_
+
 ! canopy fluxes and total assimilation amd respiration
 
       IF (lai .gt. 0.001) THEN
@@ -2479,15 +2531,15 @@ ENDIF
       !qref =  qm + vonkar/(fq)*dqh * (fq2m/vonkar - fq/vonkar)
 
       ! assumption: (tg-t2m):(tg-taf) = 2:(displa+z0m)
-      IF (numlay == 2) THEN
-         tref = ( (displau+z0mu-2.)*tg + 2.*taf(2) ) / (displau+z0mu)
-         qref = ( (displau+z0mu-2.)*qg + 2.*qaf(2) ) / (displau+z0mu)
-      ELSE
-         tref = (((displau+z0mu+displav+z0mv)*0.5-2.)*tg + taf(1) + taf(2) ) &
-              / ( (displau+z0mu+displav+z0mv)*0.5 )
-         qref = (((displau+z0mu+displav+z0mv)*0.5-2.)*qg + qaf(1) + qaf(2) ) &
-              / ( (displau+z0mu+displav+z0mv)*0.5 )
-      ENDIF
+!      IF (numlay == 2) THEN
+!         tref = ( (displau+z0mu-2.)*tg + 2.*taf(2) ) / (displau+z0mu)
+!         qref = ( (displau+z0mu-2.)*qg + 2.*qaf(2) ) / (displau+z0mu)
+!      ELSE
+!         tref = (((displau+z0mu+displav+z0mv)*0.5-2.)*tg + taf(1) + taf(2) ) &
+!              / ( (displau+z0mu+displav+z0mv)*0.5 )
+!         qref = (((displau+z0mu+displav+z0mv)*0.5-2.)*qg + qaf(1) + qaf(2) ) &
+!              / ( (displau+z0mu+displav+z0mv)*0.5 )
+!      ENDIF
 
    END SUBROUTINE UrbanVegFlux
 !----------------------------------------------------------------------

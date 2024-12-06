@@ -115,6 +115,7 @@ CONTAINS
    USE MOD_PlantHydraulic, only: PlantHydraulicStress_twoleaf
    USE MOD_Ozone, only: CalcOzoneStress
    USE MOD_UserSpecifiedForcing, only: HEIGHT_mode
+   USE MOD_Vars_PFTimeVariables
 
    IMPLICIT NONE
 
@@ -931,6 +932,11 @@ CONTAINS
 
       CALL moninobukini(ur,th,thm,thv,dth,dqh,dthv,zldis,z0mv,um,obu)
 
+      ! restore last step stomatal resistances
+      rssun(ps:pe) = tref_p(ps:pe)
+      rssha(ps:pe) = qref_p(ps:pe)
+
+
 ! ======================================================================
 !     BEGIN stability iteration
 ! ======================================================================
@@ -1119,98 +1125,98 @@ CONTAINS
 !-----------------------------------------------------------------------
 ! stomatal resistances
 !-----------------------------------------------------------------------
-
-         DO i = ps, pe
-            p = pftclass(i)
-            IF(fcover(i)>0 .and. lai(i)>0.001) THEN
-
-               rbsun = rb(i) / laisun(i)
-               rbsha = rb(i) / laisha(i)
-
-               clev = canlay(i)
-               eah = qaf(clev) * psrf / ( 0.622 + 0.378 * qaf(clev) )    !pa
-
-               IF (DEF_USE_PLANTHYDRAULICS) THEN
-                  rstfacsun(i) = 1.
-                  rstfacsha(i) = 1.
-               ENDIF
-
-! note: calculate resistance for sunlit/shaded leaves
-!-----------------------------------------------------------------------
-               CALL stomata ( vmax25(i)    ,effcon(i) ,slti(i)   ,hlti(i)   ,&
-                    shti(i)    ,hhti(i)    ,trda(i)   ,trdm(i)   ,trop(i)   ,&
-                    g1(i)      ,g0(i)      ,gradm(i)  ,binter(i) ,thm       ,&
-                    psrf       ,po2m       ,pco2m     ,pco2a     ,eah       ,&
-                    ei(i)      ,tl(i)      ,parsun(i) ,&
-!Ozone stress variables
-                    o3coefv_sun(i),     o3coefg_sun(i),&
-!End ozone stress variables
-                    lambda(i),                         &
-                    rbsun      ,raw        ,rstfacsun(i),cintsun(:,i),&
-                    assimsun(i),respcsun(i),rssun(i)   )
-
-               CALL stomata ( vmax25(i)    ,effcon(i) ,slti(i)   ,hlti(i)   ,&
-                    shti(i)    ,hhti(i)    ,trda(i)   ,trdm(i)   ,trop(i)   ,&
-                    g1(i)      ,g0(i)      ,gradm(i)  ,binter(i) ,thm       ,&
-                    psrf       ,po2m       ,pco2m     ,pco2a     ,eah       ,&
-                    ei(i)      ,tl(i)      ,parsha(i) ,&
-!Ozone stress variables
-                    o3coefv_sun(i),     o3coefg_sun(i),&
-!End ozone stress variables
-!WUE stomata model parameter
-                    lambda(i)                                               ,&
-!WUE stomata model parameter
-                    rbsha      ,raw        ,rstfacsha(i),cintsha(:,i),&
-                    assimsha(i),respcsha(i),rssha(i)   )
-
-               IF (DEF_USE_PLANTHYDRAULICS) THEN
-
-                  gs0sun(i) = min( 1.e6, 1./(rssun(i)*tl(i)/tprcor) )/ laisun(i) * 1.e6
-                  gs0sha(i) = min( 1.e6, 1./(rssha(i)*tl(i)/tprcor) )/ laisha(i) * 1.e6
-
-                  CALL PlantHydraulicStress_twoleaf (nl_soil     ,nvegwcs      ,z_soi        ,&
-                        dz_soi       ,rootfr(:,i)  ,psrf         ,qsatl(i)     ,qaf(clev)    ,&
-                        tl(i)        ,rbsun        ,rss          ,raw        ,sum(rd(1:clev)),&
-                        rstfacsun(i) ,rstfacsha(i) ,cintsun(:,i) ,cintsha(:,i) ,laisun(i)    ,&
-                        laisha(i)    ,rhoair       ,fwet(i)      ,sai(i)       ,kmax_sun(i)  ,&
-                        kmax_sha(i)  ,kmax_xyl(i)  ,kmax_root(i) ,psi50_sun(i) ,psi50_sha(i) ,&
-                        psi50_xyl(i) ,psi50_root(i),htop(i)      ,ck(i)        ,smp          ,&
-                        hk           ,hksati       ,vegwp(:,i)   ,etrsun(i)    ,etrsha(i)    ,&
-                        rootflux(:,i),qg           ,qm           ,gs0sun(i)    ,gs0sha(i)    ,&
-                        k_soil_root  ,k_ax_root    ,gssun(i)     ,gssha(i)                    )
-
-                  etr(i)  = etrsun(i) + etrsha(i)
-                  gssun(i) = gssun(i) * laisun(i)
-                  gssha(i) = gssha(i) * laisha(i)
-
-                  CALL update_photosyn(tl(i), po2m, pco2m, pco2a, parsun(i), psrf, rstfacsun(i), rb(i), gssun(i), &
-                                     effcon(i), vmax25(i), gradm(i), trop(i), slti(i), hlti(i), shti(i), hhti(i), &
-                                     trda(i), trdm(i), cintsun(:,i), assimsun(i), respcsun(i))
-
-                  CALL update_photosyn(tl(i), po2m, pco2m, pco2a, parsha(i), psrf, rstfacsha(i), rb(i), gssha(i), &
-                                     effcon(i), vmax25(i), gradm(i), trop(i), slti(i), hlti(i), shti(i), hhti(i), &
-                                     trda(i), trdm(i), cintsha(:,i), assimsha(i), respcsha(i))
-
-                  ! leaf scale stomata resisitence
-                  rssun(i) = tprcor / tl(i) * 1.e6 /gssun(i)
-                  rssha(i) = tprcor / tl(i) * 1.e6 /gssha(i)
-
-               ENDIF
-
-            ELSE
-               rssun(i) = 2.e4; assimsun(i) = 0.; respcsun(i) = 0.
-               rssha(i) = 2.e4; assimsha(i) = 0.; respcsha(i) = 0.
-               IF (DEF_USE_PLANTHYDRAULICS) THEN
-                  etr(i) = 0.
-                  rootflux(:,i) = 0.
-               ENDIF
-            ENDIF
-         ENDDO
-
-! above stomatal resistances are for the canopy, the stomatal rsistances
-! and the "rb" in the following calculations are the average for single leaf. thus,
-         rssun = rssun * laisun
-         rssha = rssha * laisha
+!
+!         DO i = ps, pe
+!            p = pftclass(i)
+!            IF(fcover(i)>0 .and. lai(i)>0.001) THEN
+!
+!               rbsun = rb(i) / laisun(i)
+!               rbsha = rb(i) / laisha(i)
+!
+!               clev = canlay(i)
+!               eah  = qaf(clev) * psrf / ( 0.622 + 0.378 * qaf(clev) )    !pa
+!
+!               IF (DEF_USE_PLANTHYDRAULICS) THEN
+!                  rstfacsun(i) = 1.
+!                  rstfacsha(i) = 1.
+!               ENDIF
+!
+!! note: calculate resistance for sunlit/shaded leaves
+!!-----------------------------------------------------------------------
+!               CALL stomata ( vmax25(i)    ,effcon(i) ,slti(i)   ,hlti(i)   ,&
+!                    shti(i)    ,hhti(i)    ,trda(i)   ,trdm(i)   ,trop(i)   ,&
+!                    g1(i)      ,g0(i)      ,gradm(i)  ,binter(i) ,thm       ,&
+!                    psrf       ,po2m       ,pco2m     ,pco2a     ,eah       ,&
+!                    ei(i)      ,tl(i)      ,parsun(i) ,&
+!!Ozone stress variables
+!                    o3coefv_sun(i),     o3coefg_sun(i),&
+!!End ozone stress variables
+!                    lambda(i),                         &
+!                    rbsun      ,raw        ,rstfacsun(i),cintsun(:,i),&
+!                    assimsun(i),respcsun(i),rssun(i)   )
+!
+!               CALL stomata ( vmax25(i)    ,effcon(i) ,slti(i)   ,hlti(i)   ,&
+!                    shti(i)    ,hhti(i)    ,trda(i)   ,trdm(i)   ,trop(i)   ,&
+!                    g1(i)      ,g0(i)      ,gradm(i)  ,binter(i) ,thm       ,&
+!                    psrf       ,po2m       ,pco2m     ,pco2a     ,eah       ,&
+!                    ei(i)      ,tl(i)      ,parsha(i) ,&
+!!Ozone stress variables
+!                    o3coefv_sun(i),     o3coefg_sun(i),&
+!!End ozone stress variables
+!!WUE stomata model parameter
+!                    lambda(i)                                               ,&
+!!WUE stomata model parameter
+!                    rbsha      ,raw        ,rstfacsha(i),cintsha(:,i),&
+!                    assimsha(i),respcsha(i),rssha(i)   )
+!
+!               IF (DEF_USE_PLANTHYDRAULICS) THEN
+!
+!                  gs0sun(i) = min( 1.e6, 1./(rssun(i)*tl(i)/tprcor) )/ laisun(i) * 1.e6
+!                  gs0sha(i) = min( 1.e6, 1./(rssha(i)*tl(i)/tprcor) )/ laisha(i) * 1.e6
+!
+!                  CALL PlantHydraulicStress_twoleaf (nl_soil     ,nvegwcs      ,z_soi        ,&
+!                        dz_soi       ,rootfr(:,i)  ,psrf         ,qsatl(i)     ,qaf(clev)    ,&
+!                        tl(i)        ,rbsun        ,rss          ,raw        ,sum(rd(1:clev)),&
+!                        rstfacsun(i) ,rstfacsha(i) ,cintsun(:,i) ,cintsha(:,i) ,laisun(i)    ,&
+!                        laisha(i)    ,rhoair       ,fwet(i)      ,sai(i)       ,kmax_sun(i)  ,&
+!                        kmax_sha(i)  ,kmax_xyl(i)  ,kmax_root(i) ,psi50_sun(i) ,psi50_sha(i) ,&
+!                        psi50_xyl(i) ,psi50_root(i),htop(i)      ,ck(i)        ,smp          ,&
+!                        hk           ,hksati       ,vegwp(:,i)   ,etrsun(i)    ,etrsha(i)    ,&
+!                        rootflux(:,i),qg           ,qm           ,gs0sun(i)    ,gs0sha(i)    ,&
+!                        k_soil_root  ,k_ax_root    ,gssun(i)     ,gssha(i)                    )
+!
+!                  etr(i)  = etrsun(i) + etrsha(i)
+!                  gssun(i) = gssun(i) * laisun(i)
+!                  gssha(i) = gssha(i) * laisha(i)
+!
+!                  CALL update_photosyn(tl(i), po2m, pco2m, pco2a, parsun(i), psrf, rstfacsun(i), rb(i), gssun(i), &
+!                                     effcon(i), vmax25(i), gradm(i), trop(i), slti(i), hlti(i), shti(i), hhti(i), &
+!                                     trda(i), trdm(i), cintsun(:,i), assimsun(i), respcsun(i))
+!
+!                  CALL update_photosyn(tl(i), po2m, pco2m, pco2a, parsha(i), psrf, rstfacsha(i), rb(i), gssha(i), &
+!                                     effcon(i), vmax25(i), gradm(i), trop(i), slti(i), hlti(i), shti(i), hhti(i), &
+!                                     trda(i), trdm(i), cintsha(:,i), assimsha(i), respcsha(i))
+!
+!                  ! leaf scale stomata resisitence
+!                  rssun(i) = tprcor / tl(i) * 1.e6 /gssun(i)
+!                  rssha(i) = tprcor / tl(i) * 1.e6 /gssha(i)
+!
+!               ENDIF
+!
+!            ELSE
+!               rssun(i) = 2.e4; assimsun(i) = 0.; respcsun(i) = 0.
+!               rssha(i) = 2.e4; assimsha(i) = 0.; respcsha(i) = 0.
+!               IF (DEF_USE_PLANTHYDRAULICS) THEN
+!                  etr(i) = 0.
+!                  rootflux(:,i) = 0.
+!               ENDIF
+!            ENDIF
+!         ENDDO
+!
+!! above stomatal resistances are for the canopy, the stomatal rsistances
+!! and the "rb" in the following calculations are the average for single leaf. thus,
+!         rssun = rssun * laisun
+!         rssha = rssha * laisha
 
 !-----------------------------------------------------------------------
 ! dimensional and non-dimensional sensible and latent heat conductances
@@ -1723,6 +1729,106 @@ ENDIF
       z0m  = z0mv
       zol  = zeta
       rib  = min(5.,zol*ustar**2/(vonkar**2/fh*um**2))
+
+
+!-----------------------------------------------------------------------
+! stomatal resistances
+!-----------------------------------------------------------------------
+
+      DO i = ps, pe
+         p = pftclass(i)
+         IF(fcover(i)>0 .and. lai(i)>0.001) THEN
+
+            rbsun = rb(i) / laisun(i)
+            rbsha = rb(i) / laisha(i)
+
+            clev = canlay(i)
+            eah  = qaf(clev) * psrf / ( 0.622 + 0.378 * qaf(clev) )    !pa
+
+            IF (DEF_USE_PLANTHYDRAULICS) THEN
+               rstfacsun(i) = 1.
+               rstfacsha(i) = 1.
+            ENDIF
+
+! note: calculate resistance for sunlit/shaded leaves
+!-----------------------------------------------------------------------
+            CALL stomata ( vmax25(i)    ,effcon(i) ,slti(i)   ,hlti(i)   ,&
+                 shti(i)    ,hhti(i)    ,trda(i)   ,trdm(i)   ,trop(i)   ,&
+                 g1(i)      ,g0(i)      ,gradm(i)  ,binter(i) ,thm       ,&
+                 psrf       ,po2m       ,pco2m     ,pco2a     ,eah       ,&
+                 ei(i)      ,tl(i)      ,parsun(i) ,&
+!Ozone stress variables
+                 o3coefv_sun(i),     o3coefg_sun(i),&
+!End ozone stress variables
+                 lambda(i),                         &
+                 rbsun      ,raw        ,rstfacsun(i),cintsun(:,i),&
+                 assimsun(i),respcsun(i),rssun(i)   )
+
+            CALL stomata ( vmax25(i)    ,effcon(i) ,slti(i)   ,hlti(i)   ,&
+                 shti(i)    ,hhti(i)    ,trda(i)   ,trdm(i)   ,trop(i)   ,&
+                 g1(i)      ,g0(i)      ,gradm(i)  ,binter(i) ,thm       ,&
+                 psrf       ,po2m       ,pco2m     ,pco2a     ,eah       ,&
+                 ei(i)      ,tl(i)      ,parsha(i) ,&
+!Ozone stress variables
+                 o3coefv_sun(i),     o3coefg_sun(i),&
+!End ozone stress variables
+!WUE stomata model parameter
+                 lambda(i)                                               ,&
+!WUE stomata model parameter
+                 rbsha      ,raw        ,rstfacsha(i),cintsha(:,i),&
+                 assimsha(i),respcsha(i),rssha(i)   )
+
+            IF (DEF_USE_PLANTHYDRAULICS) THEN
+
+               gs0sun(i) = min( 1.e6, 1./(rssun(i)*tl(i)/tprcor) )/ laisun(i) * 1.e6
+               gs0sha(i) = min( 1.e6, 1./(rssha(i)*tl(i)/tprcor) )/ laisha(i) * 1.e6
+
+               CALL PlantHydraulicStress_twoleaf (nl_soil     ,nvegwcs      ,z_soi        ,&
+                     dz_soi       ,rootfr(:,i)  ,psrf         ,qsatl(i)     ,qaf(clev)    ,&
+                     tl(i)        ,rbsun        ,rss          ,raw        ,sum(rd(1:clev)),&
+                     rstfacsun(i) ,rstfacsha(i) ,cintsun(:,i) ,cintsha(:,i) ,laisun(i)    ,&
+                     laisha(i)    ,rhoair       ,fwet(i)      ,sai(i)       ,kmax_sun(i)  ,&
+                     kmax_sha(i)  ,kmax_xyl(i)  ,kmax_root(i) ,psi50_sun(i) ,psi50_sha(i) ,&
+                     psi50_xyl(i) ,psi50_root(i),htop(i)      ,ck(i)        ,smp          ,&
+                     hk           ,hksati       ,vegwp(:,i)   ,etrsun(i)    ,etrsha(i)    ,&
+                     rootflux(:,i),qg           ,qm           ,gs0sun(i)    ,gs0sha(i)    ,&
+                     k_soil_root  ,k_ax_root    ,gssun(i)     ,gssha(i)                    )
+
+               etr(i)  = etrsun(i) + etrsha(i)
+               gssun(i) = gssun(i) * laisun(i)
+               gssha(i) = gssha(i) * laisha(i)
+
+               CALL update_photosyn(tl(i), po2m, pco2m, pco2a, parsun(i), psrf, rstfacsun(i), rb(i), gssun(i), &
+                                  effcon(i), vmax25(i), gradm(i), trop(i), slti(i), hlti(i), shti(i), hhti(i), &
+                                  trda(i), trdm(i), cintsun(:,i), assimsun(i), respcsun(i))
+
+               CALL update_photosyn(tl(i), po2m, pco2m, pco2a, parsha(i), psrf, rstfacsha(i), rb(i), gssha(i), &
+                                  effcon(i), vmax25(i), gradm(i), trop(i), slti(i), hlti(i), shti(i), hhti(i), &
+                                  trda(i), trdm(i), cintsha(:,i), assimsha(i), respcsha(i))
+
+               ! leaf scale stomata resisitence
+               rssun(i) = tprcor / tl(i) * 1.e6 /gssun(i)
+               rssha(i) = tprcor / tl(i) * 1.e6 /gssha(i)
+
+            ENDIF
+
+         ELSE
+            rssun(i) = 2.e4; assimsun(i) = 0.; respcsun(i) = 0.
+            rssha(i) = 2.e4; assimsha(i) = 0.; respcsha(i) = 0.
+            IF (DEF_USE_PLANTHYDRAULICS) THEN
+               etr(i) = 0.
+               rootflux(:,i) = 0.
+            ENDIF
+         ENDIF
+      ENDDO
+
+! above stomatal resistances are for the canopy, the stomatal rsistances
+! and the "rb" in the following calculations are the average for single leaf. thus,
+      rssun = rssun * laisun
+      rssha = rssha * laisha
+
+      tref_p(ps:pe) = rssun(ps:pe)
+      qref_p(ps:pe) = rssha(ps:pe)
 
 ! canopy fluxes and total assimilation amd respiration
 
