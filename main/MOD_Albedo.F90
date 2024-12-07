@@ -438,13 +438,13 @@ ENDIF
 
 #ifdef LULC_IGBP_PC
          !NOTE: if patchclass is CROPLAND, using twostream model
-         IF (patchclass(ipatch) == CROPLAND) THEN
-            CALL twostream_wrap (ipatch, czen, albg, albv, tran, ssun, ssha)
-            alb(:,:) = albv(:,:)
-         ELSE
+         !IF (patchclass(ipatch) == CROPLAND) THEN
+         !   CALL twostream_wrap (ipatch, czen, albg, albv, tran, ssun, ssha)
+         !   alb(:,:) = albv(:,:)
+         !ELSE
             CALL ThreeDCanopy_wrap (ipatch, czen, albg, albv, tran, ssun, ssha)
             alb(:,:) = albv(:,:)
-         ENDIF
+         !ENDIF
 #endif
       ENDIF
 
