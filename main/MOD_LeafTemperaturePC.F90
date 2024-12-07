@@ -1,5 +1,6 @@
 #include <define.h>
 
+#if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
 MODULE MOD_LeafTemperaturePC
 
 !-----------------------------------------------------------------------
@@ -2188,3 +2189,4 @@ ENDIF
    END SUBROUTINE dewfraction
 
 END MODULE MOD_LeafTemperaturePC
+#endif
