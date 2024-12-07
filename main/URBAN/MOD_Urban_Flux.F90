@@ -1523,8 +1523,14 @@ CONTAINS
 
       CALL moninobukini(ur,th,thm,thv,dth,dqh,dthv,zldis,z0m,um,obu)
 
-      rs = tref
-      rs_= qref
+      IF (tref==spval .or. qref==spval) THEN
+         rs = 100.
+         rs_= 100.
+      ELSE
+         rs = tref
+         rs_= qref
+      ENDIF
+
 
 ! ======================================================================
 !     BEGIN stability iteration

@@ -934,8 +934,13 @@ CONTAINS
       CALL moninobukini(ur,th,thm,thv,dth,dqh,dthv,zldis,z0mv,um,obu)
 
       ! restore last step stomatal resistances
-      rssun(ps:pe) = tref_p(ps:pe)
-      rssha(ps:pe) = qref_p(ps:pe)
+      IF (any(tref_p(ps:pe)==spval) .or. any(qref_p(ps:pe)==spval)) THEN
+         rssun(ps:pe) = 100.
+         rssha(ps:pe) = 100.
+      ELSE
+         rssun(ps:pe) = tref_p(ps:pe)
+         rssha(ps:pe) = qref_p(ps:pe)
+      ENDIF
 
 
 ! ======================================================================
