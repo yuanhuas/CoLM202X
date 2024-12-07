@@ -942,6 +942,9 @@ CONTAINS
          rssha(ps:pe) = qref_p(ps:pe)
       ENDIF
 
+      ! restore pco2a
+      pco2a = tref
+
 
 ! ======================================================================
 !     BEGIN stability iteration
@@ -1654,20 +1657,20 @@ ENDIF
 
          ENDIF
 
-! update co2 partial pressure within canopy air
-         ! 05/02/2016: may have some problem with gdh2o, however,
-         ! this variable seems never used here. Different height
-         ! level vegetation should have different gdh2o, i.e.,
-         ! different rd(layer) values.
-         gah2o = 1.0/raw * tprcor/thm                     !mol m-2 s-1
-
-         IF (DEF_RSS_SCHEME .eq. 4) THEN
-            gdh2o = rss/rd(botlay) * tprcor/thm           !mol m-2 s-1
-         ELSE
-            gdh2o = 1.0/(rd(botlay)+rss) * tprcor/thm     !mol m-2 s-1
-         ENDIF
-         pco2a = pco2m - 1.37*psrf/max(0.446,gah2o) * &
-                 sum(fcover*(assimsun + assimsha - respcsun - respcsha - rsoil))
+!! update co2 partial pressure within canopy air
+!         ! 05/02/2016: may have some problem with gdh2o, however,
+!         ! this variable seems never used here. Different height
+!         ! level vegetation should have different gdh2o, i.e.,
+!         ! different rd(layer) values.
+!         gah2o = 1.0/raw * tprcor/thm                     !mol m-2 s-1
+!
+!         IF (DEF_RSS_SCHEME .eq. 4) THEN
+!            gdh2o = rss/rd(botlay) * tprcor/thm           !mol m-2 s-1
+!         ELSE
+!            gdh2o = 1.0/(rd(botlay)+rss) * tprcor/thm     !mol m-2 s-1
+!         ENDIF
+!         pco2a = pco2m - 1.37*psrf/max(0.446,gah2o) * &
+!                 sum(fcover*(assimsun + assimsha - respcsun - respcsha - rsoil))
 
 !-----------------------------------------------------------------------
 ! Update monin-obukhov length and wind speed including the stability effect
@@ -1835,6 +1838,24 @@ ENDIF
 
       tref_p(ps:pe) = rssun(ps:pe)
       qref_p(ps:pe) = rssha(ps:pe)
+
+! update co2 partial pressure within canopy air
+      ! 05/02/2016: may have some problem with gdh2o, however,
+      ! this variable seems never used here. Different height
+      ! level vegetation should have different gdh2o, i.e.,
+      ! different rd(layer) values.
+      gah2o = 1.0/raw * tprcor/thm                     !mol m-2 s-1
+
+      IF (DEF_RSS_SCHEME .eq. 4) THEN
+         gdh2o = rss/rd(botlay) * tprcor/thm           !mol m-2 s-1
+      ELSE
+         gdh2o = 1.0/(rd(botlay)+rss) * tprcor/thm     !mol m-2 s-1
+      ENDIF
+      pco2a = pco2m - 1.37*psrf/max(0.446,gah2o) * &
+              sum(fcover*(assimsun + assimsha - respcsun - respcsha - rsoil))
+
+      ! temporal saving
+      tref = pco2a
 
 ! canopy fluxes and total assimilation amd respiration
 
@@ -2110,7 +2131,7 @@ ENDIF
 ! 2 m height air temperature
 !-----------------------------------------------------------------------
 
-      tref = thm + vonkar/(fh-fht)*dth * (fh2m/vonkar - fh/vonkar)
+      !tref = thm + vonkar/(fh-fht)*dth * (fh2m/vonkar - fh/vonkar)
       qref =  qm + vonkar/(fq-fqt)*dqh * (fq2m/vonkar - fq/vonkar)
 
    END SUBROUTINE LeafTemperaturePC

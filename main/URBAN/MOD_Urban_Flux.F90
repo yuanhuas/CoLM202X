@@ -1523,6 +1523,7 @@ CONTAINS
 
       CALL moninobukini(ur,th,thm,thv,dth,dqh,dthv,zldis,z0m,um,obu)
 
+      ! resotre stomatal resistance
       IF (tref==spval .or. qref==spval) THEN
          rs = 100.
          rs_= 100.
@@ -1530,6 +1531,9 @@ CONTAINS
          rs = tref
          rs_= qref
       ENDIF
+
+      ! restore pco2a
+      pco2a = rst
 
 
 ! ======================================================================
@@ -2140,16 +2144,16 @@ ENDIF
 
          fgw(2) = fg*fwetfac
 
-! update co2 partial pressure within canopy air
-         ! 05/02/2016: may have some problem with gdh2o, however,
-         ! this variable seems never used here. Different height
-         ! level vegetation should have different gdh2o, i.e.,
-         ! different rd(layer) values.
-         gah2o = 1.0/raw * tprcor/thm                     !mol m-2 s-1
-         gdh2o = 1.0/rd(botlay) * tprcor/thm              !mol m-2 s-1
-
-         pco2a = pco2m - 1.37*psrf/max(0.446,gah2o) * &
-                 (assim - respc - rsoil)
+!! update co2 partial pressure within canopy air
+!         ! 05/02/2016: may have some problem with gdh2o, however,
+!         ! this variable seems never used here. Different height
+!         ! level vegetation should have different gdh2o, i.e.,
+!         ! different rd(layer) values.
+!         gah2o = 1.0/raw * tprcor/thm                     !mol m-2 s-1
+!         gdh2o = 1.0/rd(botlay) * tprcor/thm              !mol m-2 s-1
+!
+!         pco2a = pco2m - 1.37*psrf/max(0.446,gah2o) * &
+!                 (assim - respc - rsoil)
 
 !-----------------------------------------------------------------------
 ! Update monin-obukhov length and wind speed including the stability effect
@@ -2254,6 +2258,17 @@ ENDIF
          tref = rs
          qref = rs_
 
+! update co2 partial pressure within canopy air
+         ! 05/02/2016: may have some problem with gdh2o, however,
+         ! this variable seems never used here. Different height
+         ! level vegetation should have different gdh2o, i.e.,
+         ! different rd(layer) values.
+         gah2o = 1.0/raw * tprcor/thm                     !mol m-2 s-1
+         gdh2o = 1.0/rd(botlay) * tprcor/thm              !mol m-2 s-1
+
+         pco2a = pco2m - 1.37*psrf/max(0.446,gah2o) * &
+                 (assim - respc - rsoil)
+
 ! canopy fluxes and total assimilation amd respiration
 
       IF (lai .gt. 0.001) THEN
@@ -2265,6 +2280,9 @@ ENDIF
          rst   = 2.0e4
       ENDIF
       respc = respc + rsoil
+
+      ! temporal saving
+      rst = pco2a
 
 IF ( DEF_URBAN_Irrigation ) THEN
       etr_deficit = max(0., etr - etr_)
