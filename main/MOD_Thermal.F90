@@ -112,7 +112,6 @@ CONTAINS
    USE MOD_Eroot
    USE MOD_GroundFluxes
    USE MOD_LeafTemperature
-   USE MOD_LeafTemperaturePC
    USE MOD_GroundTemperature
    USE MOD_Qsadv
    USE MOD_SoilSurfaceResistance
@@ -122,6 +121,7 @@ CONTAINS
    USE MOD_Vars_PFTimeInvariants
    USE MOD_Vars_PFTimeVariables
    USE MOD_Vars_1DPFTFluxes
+   USE MOD_LeafTemperaturePC
 #endif
 #ifdef vanGenuchten_Mualem_SOIL_MODEL
    USE MOD_Hydro_SoilFunction, only: soil_psi_from_vliq
@@ -276,7 +276,7 @@ CONTAINS
        t_soisno(lb:nl_soil),     &! soil temperature [K]
        wice_soisno(lb:nl_soil),  &! ice lens [kg/m2]
        wliq_soisno(lb:nl_soil)    ! liqui water [kg/m2]
-   
+
    real(r8), intent(in) :: &
        smp(1:nl_soil)         ,  &! soil matrix potential [mm]
        hk(1:nl_soil)              ! hydraulic conductivity [mm h2o/s]
