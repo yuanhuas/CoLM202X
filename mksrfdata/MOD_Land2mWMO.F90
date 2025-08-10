@@ -55,6 +55,7 @@ CONTAINS
 
    integer :: npatch_glb
    integer :: numwmo
+	 integer :: insert_num
 
       write(cyear,'(i4.4)') lc_year
       IF (p_is_master) THEN
@@ -139,21 +140,23 @@ CONTAINS
 
             !TODO@Wenzong: there may be problem with ipatch index?
             DO ipatch = spatch, epatch
-               eindex_(ipatch) = landpatch%eindex(ipatch)
-               settyp_(ipatch) = landpatch%settyp(ipatch)
-               ipxstt_(ipatch) = landpatch%ipxstt(ipatch)
-               ipxend_(ipatch) = landpatch%ipxend(ipatch)
-               ielm_  (ipatch) = landpatch%ielm  (ipatch)
+               eindex_(ipatch+insert_num) = landpatch%eindex(ipatch)
+               settyp_(ipatch+insert_num) = landpatch%settyp(ipatch)
+               ipxstt_(ipatch+insert_num) = landpatch%ipxstt(ipatch)
+               ipxend_(ipatch+insert_num) = landpatch%ipxend(ipatch)
+               ielm_  (ipatch+insert_num) = landpatch%ielm  (ipatch)
             ENDDO
 
             !TODO@Wenzong: there may be problem, set 2m wmo patch all the time?
             IF (wmo_source(iset) > 0) THEN
-               eindex_(epatch+1) = landpatch%eindex(epatch)
-               settyp_(epatch+1) = landpatch%settyp(wmo_source(iset))
-               ipxstt_(epatch+1) = -1
-               ipxend_(epatch+1) = -1
-               ielm_  (epatch+1) = landpatch%ielm  (epatch)
+               eindex_(epatch+insert_num+1) = landpatch%eindex(epatch)
+               settyp_(epatch+insert_num+1) = landpatch%settyp(wmo_source(iset))
+               ipxstt_(epatch+insert_num+1) = -1
+               ipxend_(epatch+insert_num+1) = -1
+               ielm_  (epatch+insert_num+1) = landpatch%ielm  (epatch)
                wmopth (iset)     = epatch+1
+
+							 insert_num = insert_num + 1
             ENDIF
          ENDDO
 
