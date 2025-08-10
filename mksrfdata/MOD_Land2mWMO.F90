@@ -55,7 +55,7 @@ CONTAINS
 
    integer :: npatch_glb
    integer :: numwmo
-	integer :: insert_num
+   integer :: insert_num
 
       write(cyear,'(i4.4)') lc_year
       IF (p_is_master) THEN
@@ -126,6 +126,7 @@ CONTAINS
          ENDIF
 
          ! set for new 2 m WMO patch
+         insert_num = 0
          DO iset = 1, numset
             numpth = count(landpatch%eindex==landelm%eindex(iset))
 
@@ -148,7 +149,7 @@ CONTAINS
             ENDDO
 
             !TODO@Wenzong: there may be problem, set 2m wmo patch all the time?
-	!it should be updated when there is a wmo patch in the element
+	        !it should be updated when there is a wmo patch in the element
             IF (wmo_source(iset) > 0) THEN
                eindex_(epatch+insert_num+1) = landpatch%eindex(epatch)
                settyp_(epatch+insert_num+1) = landpatch%settyp(wmo_source(iset))
@@ -156,7 +157,8 @@ CONTAINS
                ipxend_(epatch+insert_num+1) = -1
                ielm_  (epatch+insert_num+1) = landpatch%ielm  (epatch)
                wmopth (iset)     = epatch+1
-	insert_num = insert_num + 1
+	           
+               insert_num = insert_num + 1
             ENDIF
          ENDDO
 
