@@ -201,6 +201,12 @@ CONTAINS
 
       ENDIF
 
+      IF (trim(gridname) == 'colm_30m') THEN
+
+         CALL this%define_by_ndims (1296000,648000)
+
+      ENDIF
+
       IF (trim(gridname) == 'nitrif_2deg') THEN
 
          CALL this%define_by_ndims (144,96)
