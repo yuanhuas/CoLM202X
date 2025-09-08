@@ -60,13 +60,14 @@ CONTAINS
 #endif
    USE MOD_Namelist
    USE MOD_NetCDFBlock
+   USE MOD_5x5DataReadin
    USE MOD_AggregationRequestData
 
    IMPLICIT NONE
 
    integer, intent(in) :: lc_year
    ! Local Variables
-   character(len=256) :: file_patch
+   character(len=256) :: file_patch, dir_5x5, suffix
    character(len=255) :: cyear
    type (block_data_int32_2d) :: patchdata
    integer :: iloc, npxl, ipxl, numset
@@ -94,12 +95,14 @@ CONTAINS
 
 #ifndef LULC_USGS
          ! add parameter input for time year
-         file_patch = trim(DEF_dir_rawdata)//'landtypes/landtype-igbp-modis-'//trim(cyear)//'.nc'
+         dir_5x5 = trim(DEF_dir_rawdata) // '/landcover/glc30/'
+         suffix  = 'LC30m.GLC.'//trim(cyear)
+         CALL read_5x5_data (dir_5x5, suffix, grid_patch, 'LC', patchdata)
 #else
          !TODO: need usgs land cover type data
          file_patch = trim(DEF_dir_rawdata) //'/landtypes/landtype-usgs-update.nc'
-#endif
          CALL ncio_read_block (file_patch, 'landtype', grid_patch, patchdata)
+#endif
 
 #ifdef USEMPI
          CALL aggregation_data_daemon (grid_patch, data_i4_2d_in1 = patchdata)
@@ -140,14 +143,18 @@ CONTAINS
             allocate (types (ipxstt:ipxend))
 
 #ifdef CATCHMENT
-            CALL aggregation_request_data (landhru, iset, grid_patch, zip = .false., &
+            CALL aggregation_request_data (landhru, iset, grid_patch, zip = .true., &
 #else
-            CALL aggregation_request_data (landelm, iset, grid_patch, zip = .false., &
+            CALL aggregation_request_data (landelm, iset, grid_patch, zip = .true., &
 #endif
                data_i4_2d_in1 = patchdata, data_i4_2d_out1 = ibuff)
 
+            IF ( DEF_USE_GLC30 .or. DEF_USE_ESACCI ) THEN
+               types(:) = LC_Map(ibuff)
+            ELSE
+               types(:) = ibuff
+            ENDIF
 
-            types(:) = ibuff
             deallocate (ibuff)
 
 #ifdef CATCHMENT

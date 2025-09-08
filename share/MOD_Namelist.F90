@@ -141,6 +141,11 @@ MODULE MOD_Namelist
    ! NOTE: Please check the LC data year range available
    integer :: DEF_LC_YEAR  = 2005
 
+   ! ----- land cover data -----
+   ! NOTE: default using MODIS MCD12Q1 IGBP land cover data, or choose one below
+   logical :: DEF_USE_GLC30  = .true.
+   logical :: DEF_USE_ESACCI = .false.
+
    ! ----- Subgrid scheme -----
    logical :: DEF_USE_USGS = .false.
    logical :: DEF_USE_IGBP = .false.
@@ -956,6 +961,8 @@ CONTAINS
       DEF_CatchmentMesh_data,                 &
       DEF_file_mesh_filter,                   &
 
+      DEF_USE_GLC30,                          &
+      DEF_USE_ESACCI,                         &
       DEF_USE_LCT,                            &
       DEF_USE_PFT,                            &
       DEF_USE_PC,                             &
@@ -1505,6 +1512,8 @@ CONTAINS
       CALL mpi_bcast (DEF_Srfdata_CompressLevel              ,1   ,mpi_integer   ,p_address_master ,p_comm_glb ,p_err)
 
       ! 07/2023, added by yuan: subgrid setting related
+      CALL mpi_bcast (DEF_USE_GLC30                          ,1   ,mpi_logical   ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_USE_ESACCI                         ,1   ,mpi_logical   ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_USE_LCT                            ,1   ,mpi_logical   ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_USE_PFT                            ,1   ,mpi_logical   ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_USE_PC                             ,1   ,mpi_logical   ,p_address_master ,p_comm_glb ,p_err)
