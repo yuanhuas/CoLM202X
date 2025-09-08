@@ -98,7 +98,7 @@ PROGRAM MKSRFDATA
    real(r8) :: edgew  ! western edge of grid (degrees)
 
    type (grid_type) :: grid_500m, grid_htop, grid_soil, grid_lai, grid_topo, grid_topo_factor
-   type (grid_type) :: grid_urban_5km, grid_urban_500m
+   type (grid_type) :: grid_urban_5km, grid_urban_500m, grid_urban_100m, grid_urban_30m
    type (grid_type) :: grid_twi
 
    integer   :: lc_year, lai_year
@@ -273,9 +273,11 @@ PROGRAM MKSRFDATA
 
       ! add by dong, only test for making urban data
 #ifdef URBAN_MODEL
-      CALL grid_urban%define_by_name      ('colm_500m')
+      CALL grid_urban%define_by_name      ('colm_100m')
       CALL grid_urban_500m%define_by_name ('colm_500m')
       CALL grid_urban_5km%define_by_name  ('colm_5km' )
+      CALL grid_urban_30m%define_by_name  ('colm_30m' )
+      CALL grid_urban_100m%define_by_name ('colm_100m')
 #endif
 
       ! assimilate grids to build pixels
@@ -312,6 +314,8 @@ PROGRAM MKSRFDATA
 
 #ifdef URBAN_MODEL
       CALL pixel%assimilate_grid (grid_urban     )
+      CALL pixel%assimilate_grid (grid_urban_100m)
+      CALL pixel%assimilate_grid (grid_urban_30m )
       CALL pixel%assimilate_grid (grid_urban_500m)
       CALL pixel%assimilate_grid (grid_urban_5km )
 #endif
@@ -349,9 +353,11 @@ PROGRAM MKSRFDATA
       ENDIF
 
 #ifdef URBAN_MODEL
-      CALL pixel%map_to_grid (grid_urban     )
+      CALL pixel%map_to_grid (grid_urban_100m)
       CALL pixel%map_to_grid (grid_urban_500m)
       CALL pixel%map_to_grid (grid_urban_5km )
+      CALL pixel%map_to_grid (grid_urban     )
+      CALL pixel%map_to_grid (grid_urban_30m )
 #endif
 
 
@@ -487,10 +493,12 @@ IF (.not. (skip_rest)) THEN
          CALL Aggregation_TopographyFactors_Simple (grid_topo_factor, &
             trim(DEF_DS_HiresTopographyDataDir), dir_landdata, lc_year)
       ENDIF
-      
+
 #ifdef URBAN_MODEL
       CALL Aggregation_urban (dir_rawdata, dir_landdata, lc_year, &
-                              grid_urban_5km, grid_urban_500m)
+                              grid_urban_5km, grid_urban_500m, &
+                              ! for 30m test
+                              grid_urban_100m, grid_urban_30m)
 #endif
 
       CALL Aggregation_SoilTexture     (grid_soil, dir_rawdata, dir_landdata, lc_year)
