@@ -111,7 +111,9 @@ CONTAINS
 IF (DEF_URBAN_type_scheme == 1) THEN
          CALL read_5x5_data (dir_urban, suffix, grid_urban, 'URBAN_DENSITY_CLASS', data_urb_class)
 ELSE IF (DEF_URBAN_type_scheme == 2) THEN
-         CALL read_5x5_data (dir_urban, suffix, grid_urban, 'LCZ_DOM', data_urb_class)
+         suffix = 'URBTYPE100m_LCZ.Demuzere'
+         dir_urban = trim(DEF_dir_rawdata) // '/urban_type/lcz'
+         CALL read_5x5_data (dir_urban, suffix, grid_urban, 'LCZ', data_urb_class)
 ENDIF
 
 #ifdef USEMPI
