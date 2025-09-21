@@ -1,0 +1,9 @@
+&nl_colm_rawdata
+
+  ! land cover data
+  DEF_rawdata%landcover%dir   = '/landcover/glc/'
+  DEF_rawdata%landcover%gname = 'colm_30m'
+  DEF_rawdata%landcover%fname = 'LC30m.GLC.'
+  DEF_rawdata%landcover%vname = 'LC'
+
+/

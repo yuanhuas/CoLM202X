@@ -1,0 +1,9 @@
+&nl_colm_rawdata
+
+  ! land cover data
+  DEF_rawdata%landcover%dir   = '/landcover/modis/'
+  DEF_rawdata%landcover%gname = 'colm_500m'
+  DEF_rawdata%landcover%fname = 'LC500m.modis_igbp.'
+  DEF_rawdata%landcover%vname = 'LC'
+
+/

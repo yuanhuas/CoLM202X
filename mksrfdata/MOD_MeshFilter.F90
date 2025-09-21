@@ -179,7 +179,7 @@ CONTAINS
    END SUBROUTINE mesh_filter
 
 
-   SUBROUTINE mesh_filter_5x5 (gridf, fdir, fsuf, fvname)
+   SUBROUTINE mesh_filter_5x5 (gridf, dir, fname, vname)
 
    USE MOD_Precision
    USE MOD_Namelist
@@ -194,9 +194,9 @@ CONTAINS
    IMPLICIT NONE
 
    type(grid_type),  intent(in) :: gridf
-   character(len=*), intent(in) :: fdir
-   character(len=*), intent(in) :: fsuf
-   character(len=*), intent(in) :: fvname
+   character(len=*), intent(in) :: dir
+   character(len=*), intent(in) :: fname
+   character(len=*), intent(in) :: vname
 
    ! local variables:
    ! ---------------------------------------------------------------
@@ -214,7 +214,7 @@ CONTAINS
 
       IF (p_is_io) THEN
          CALL allocate_block_data (gridf, datafilter)
-         CALL read_5x5_data (trim(fdir), trim(fsuf), gridf, trim(fvname), datafilter)
+         CALL read_5x5_data (trim(dir), trim(fname), gridf, trim(vname), datafilter)
 
 #ifdef USEMPI
          CALL aggregation_data_daemon (gridf, data_i4_2d_in1 = datafilter)
@@ -225,7 +225,7 @@ CONTAINS
 
          jelm = 0
          DO ielm = 1, numelm
-            CALL aggregation_request_data (landelm, ielm, gridf, zip = .true., &
+            CALL aggregation_request_data (landelm, ielm, gridf, zip = .false., &
                data_i4_2d_in1 = datafilter, data_i4_2d_out1 = ifilter, &
                filledvalue_i4 = -1)
 

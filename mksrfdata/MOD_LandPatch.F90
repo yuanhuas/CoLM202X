@@ -67,7 +67,7 @@ CONTAINS
 
    integer, intent(in) :: lc_year
    ! Local Variables
-   character(len=256) :: file_patch, dir_5x5, suffix
+   character(len=256) :: file_patch, dir_5x5
    character(len=255) :: cyear
    type (block_data_int32_2d) :: patchdata
    integer :: iloc, npxl, ipxl, numset
@@ -95,9 +95,12 @@ CONTAINS
 
 #ifndef LULC_USGS
          ! add parameter input for time year
-         dir_5x5 = trim(DEF_dir_rawdata) // '/landcover/glc30/'
-         suffix  = 'LC30m.GLC.'//trim(cyear)
-         CALL read_5x5_data (dir_5x5, suffix, grid_patch, 'LC', patchdata)
+         dir_5x5 = trim(DEF_dir_rawdata) // trim(DEF_rawdata%landcover%dir)
+         file_patch = trim(DEF_rawdata%landcover%fname) // trim(cyear)
+         CALL read_5x5_data (dir_5x5, file_patch, grid_patch, trim(DEF_rawdata%landcover%vname), patchdata)
+
+         !file_patch = trim(DEF_dir_rawdata)//'landtypes/landtype-igbp-modis-'//trim(cyear)//'.nc'
+         !CALL ncio_read_block (file_patch, 'landtype', grid_patch, patchdata)
 #else
          !TODO: need usgs land cover type data
          file_patch = trim(DEF_dir_rawdata) //'/landtypes/landtype-usgs-update.nc'
