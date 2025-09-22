@@ -15,6 +15,35 @@ MODULE MOD_Namelist
    IMPLICIT NONE
    SAVE
 
+   type datainfo
+      character(len=255) :: dir
+      character(len=255) :: res
+      character(len=255) :: fname
+      character(len=255) :: vname
+   end type datainfo
+
+   type rawdata
+      type(datainfo) landcover
+      !type(datainfo) pft
+      !type(datainfo) htop
+      !type(datainfo) lai_sai
+      !type(datainfo) soil
+      !type(datainfo) topo
+      !type(datainfo) urban_type
+      !type(datainfo) urban_htop
+      !type(datainfo) urban_fveg
+      !type(datainfo) urban_water
+      !type(datainfo) urban_lsai
+      !type(datainfo) urban_lucy
+      !type(datainfo) urban_pop
+      !type(datainfo) urban_roof
+      !type(datainfo) urban_hl
+      !type(datainfo) urban_alb
+   end type rawdata
+
+   type (rawdata) :: DEF_rawdata
+   character(len=256) :: DEF_rawdata_namelist  = 'null'
+
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ! ----- Part 0: CASE name -----
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -962,6 +991,8 @@ CONTAINS
       DEF_CatchmentMesh_data,                 &
       DEF_file_mesh_filter,                   &
 
+      DEF_rawdata_namelist,                   &
+
       DEF_USE_GLC30,                          &
       DEF_USE_ESACCI,                         &
       DEF_USE_LCT,                            &
@@ -1097,6 +1128,8 @@ CONTAINS
    namelist /nl_colm_forcing/ DEF_dir_forcing, DEF_forcing
    namelist /nl_colm_history/ DEF_hist_vars
 
+   namelist /nl_colm_rawdata/ DEF_rawdata
+
       ! ----- open the namelist file -----
       IF (p_is_master) THEN
 
@@ -1107,12 +1140,22 @@ CONTAINS
          ENDIF
          close(10)
 
+         print*, DEF_forcing_namelist
          open(10, status='OLD', file=trim(DEF_forcing_namelist), form="FORMATTED")
          read(10, nml=nl_colm_forcing, iostat=ierr)
          IF (ierr /= 0) THEN
             CALL CoLM_Stop (' ***** ERROR: Problem reading namelist: '// trim(DEF_forcing_namelist))
          ENDIF
          close(10)
+
+         print*, DEF_rawdata_namelist
+         open(10, status='OLD', file=trim(DEF_rawdata_namelist), form="FORMATTED")
+         read(10, nml=nl_colm_rawdata, iostat=ierr)
+         IF (ierr /= 0) THEN
+            CALL CoLM_Stop (' ***** ERROR: Problem reading namelist: '// trim(DEF_rawdata_namelist))
+         ENDIF
+         close(10)
+
 #ifdef SinglePoint
          DEF_forcing%has_missing_value = .false.
 #endif
@@ -1490,6 +1533,11 @@ CONTAINS
       CALL mpi_bcast (DEF_dir_runtime                        ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_dir_output                         ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_dir_forcing                        ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%landcover%dir              ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%landcover%res              ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%landcover%fname            ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%landcover%vname            ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
 
       CALL mpi_bcast (DEF_dir_landdata                       ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_dir_restart                        ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
