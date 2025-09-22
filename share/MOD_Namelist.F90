@@ -29,16 +29,18 @@ MODULE MOD_Namelist
       !type(datainfo) lai_sai
       !type(datainfo) soil
       !type(datainfo) topo
-      !type(datainfo) urban_type
-      !type(datainfo) urban_htop
-      !type(datainfo) urban_fveg
-      !type(datainfo) urban_water
-      !type(datainfo) urban_lsai
-      !type(datainfo) urban_lucy
-      !type(datainfo) urban_pop
-      !type(datainfo) urban_roof
-      !type(datainfo) urban_hl
-      !type(datainfo) urban_alb
+      type(datainfo) urban_type
+      type(datainfo) urban_htop
+      type(datainfo) urban_fveg
+      type(datainfo) urban_flake
+      type(datainfo) urban_lai
+      type(datainfo) urban_sai
+      type(datainfo) urban_lucy
+      type(datainfo) urban_pop
+      type(datainfo) urban_froof
+      type(datainfo) urban_hroof
+      type(datainfo) urban_hl
+      type(datainfo) urban_alb
    end type rawdata
 
    type (rawdata) :: DEF_rawdata

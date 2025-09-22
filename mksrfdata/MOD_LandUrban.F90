@@ -21,9 +21,6 @@ MODULE MOD_LandUrban
 
    IMPLICIT NONE
 
-   ! ---- Instance ----
-   type(grid_type) :: grid_urban
-
    integer :: numurban
    type(pixelset_type) :: landurban
 
@@ -38,7 +35,7 @@ MODULE MOD_LandUrban
 CONTAINS
 
    ! -------------------------------
-   SUBROUTINE landurban_build (lc_year)
+   SUBROUTINE landurban_build (grid_urban, lc_year)
 
    USE MOD_Precision
    USE MOD_Vars_Global
@@ -60,6 +57,8 @@ CONTAINS
    IMPLICIT NONE
 
    integer, intent(in) :: lc_year
+   type(grid_type), intent(in) :: grid_urban
+
    ! Local Variables
    character(len=256) :: dir_urban
    type (block_data_int32_2d) :: data_urb_class ! urban type index

@@ -17,14 +17,13 @@ MODULE MOD_LandCrop
    IMPLICIT NONE
 
    ! ---- Instance ----
-   type(grid_type) :: grid_crop
    integer,  allocatable :: cropclass (:)
    real(r8), allocatable :: cropfrac  (:)
 
 CONTAINS
 
    ! -------------------------------
-   SUBROUTINE landcrop_build (lc_year)
+   SUBROUTINE landcrop_build (grid_crop, lc_year)
 
    USE MOD_SPMD_Task
    USE MOD_Namelist
@@ -42,6 +41,7 @@ CONTAINS
    IMPLICIT NONE
 
    integer, intent(in) :: lc_year
+   type(grid_type), intent(in) :: grid_crop
 
    ! Local Variables
    character(len=255) :: cyear, file_patch, dir_5x5, suffix

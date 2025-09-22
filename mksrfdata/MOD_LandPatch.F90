@@ -30,8 +30,6 @@ MODULE MOD_LandPatch
 
    ! ---- Instance ----
    integer :: numpatch
-   type(grid_type)     :: grid_patch_30m
-   type(grid_type)     :: grid_patch_500m
    type(pixelset_type) :: landpatch
 
    type(subset_type)   :: elm_patch
@@ -46,7 +44,7 @@ MODULE MOD_LandPatch
 CONTAINS
 
    ! -------------------------------
-   SUBROUTINE landpatch_build (lc_year)
+   SUBROUTINE landpatch_build (grid_patch, lc_year)
 
    USE MOD_Precision
    USE MOD_SPMD_Task
@@ -67,6 +65,8 @@ CONTAINS
    IMPLICIT NONE
 
    integer, intent(in) :: lc_year
+   type(grid_type), intent(in) :: grid_patch
+
    ! Local Variables
    character(len=256) :: file_patch, dir_5x5, suffix
    character(len=255) :: cyear
@@ -92,17 +92,13 @@ CONTAINS
 
       IF (p_is_io) THEN
 
-IF (trim(DEF_rawdata%landcover%res)=='30m' ) THEN
-         CALL allocate_block_data(grid_patch_30m , patchdata)
-ELSE
-         CALL allocate_block_data(grid_patch_500m, patchdata)
-ENDIF
+         CALL allocate_block_data(grid_patch, patchdata)
 
 #ifndef LULC_USGS
          ! add parameter input for time year
          dir_5x5 = trim(DEF_rawdata%landcover%dir)
          suffix  = trim(DEF_rawdata%landcover%fname)//trim(cyear)
-         CALL read_5x5_data (dir_5x5, suffix, grid_patch_30m, trim(DEF_rawdata%landcover%vname), patchdata)
+         CALL read_5x5_data (dir_5x5, suffix, grid_patch, trim(DEF_rawdata%landcover%vname), patchdata)
 #else
          !TODO: need usgs land cover type data
          file_patch = trim(DEF_dir_rawdata) //'/landtypes/landtype-usgs-update.nc'
@@ -110,11 +106,7 @@ ENDIF
 #endif
 
 #ifdef USEMPI
-IF (trim(DEF_rawdata%landcover%res)=='30m' ) THEN
-         CALL aggregation_data_daemon (grid_patch_30m, data_i4_2d_in1 = patchdata)
-ELSE
-         CALL aggregation_data_daemon (grid_patch_500m, data_i4_2d_in1 = patchdata)
-ENDIF
+         CALL aggregation_data_daemon (grid_patch, data_i4_2d_in1 = patchdata)
 #endif
       ENDIF
 
@@ -154,7 +146,7 @@ ENDIF
 #ifdef CATCHMENT
             CALL aggregation_request_data (landhru, iset, grid_patch, zip = .true., &
 #else
-            CALL aggregation_request_data (landelm, iset, grid_patch_30m, zip = .true., &
+            CALL aggregation_request_data (landelm, iset, grid_patch, zip = .true., &
 #endif
                data_i4_2d_in1 = patchdata, data_i4_2d_out1 = ibuff)
 
