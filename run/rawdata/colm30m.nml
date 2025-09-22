@@ -1,0 +1,8 @@
+&nl_colm_rawdata
+
+   ! ----- LC -----
+   DEF_rawdata%landcover%dir     = '/tera12/yuanhua/data/CoLMrawdata/landcover/glc/'
+   DEF_rawdata%landcover%res     = '30m'
+   DEF_rawdata%landcover%fname   = 'LC30m.GLC.'
+   DEF_rawdata%landcover%vname   = 'LC'
+/

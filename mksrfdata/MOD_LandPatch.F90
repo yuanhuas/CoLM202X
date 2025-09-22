@@ -30,7 +30,8 @@ MODULE MOD_LandPatch
 
    ! ---- Instance ----
    integer :: numpatch
-   type(grid_type)     :: grid_patch
+   type(grid_type)     :: grid_patch_30m
+   type(grid_type)     :: grid_patch_500m
    type(pixelset_type) :: landpatch
 
    type(subset_type)   :: elm_patch
@@ -91,13 +92,17 @@ CONTAINS
 
       IF (p_is_io) THEN
 
-         CALL allocate_block_data (grid_patch, patchdata)
+IF (trim(DEF_rawdata%landcover%res)=='30m' ) THEN
+         CALL allocate_block_data(grid_patch_30m , patchdata)
+ELSE
+         CALL allocate_block_data(grid_patch_500m, patchdata)
+ENDIF
 
 #ifndef LULC_USGS
          ! add parameter input for time year
-         dir_5x5 = trim(DEF_dir_rawdata) // '/landcover/glc30/'
-         suffix  = 'LC30m.GLC.'//trim(cyear)
-         CALL read_5x5_data (dir_5x5, suffix, grid_patch, 'LC', patchdata)
+         dir_5x5 = trim(DEF_rawdata%landcover%dir)
+         suffix  = trim(DEF_rawdata%landcover%fname)//trim(cyear)
+         CALL read_5x5_data (dir_5x5, suffix, grid_patch_30m, trim(DEF_rawdata%landcover%vname), patchdata)
 #else
          !TODO: need usgs land cover type data
          file_patch = trim(DEF_dir_rawdata) //'/landtypes/landtype-usgs-update.nc'
@@ -105,7 +110,11 @@ CONTAINS
 #endif
 
 #ifdef USEMPI
-         CALL aggregation_data_daemon (grid_patch, data_i4_2d_in1 = patchdata)
+IF (trim(DEF_rawdata%landcover%res)=='30m' ) THEN
+         CALL aggregation_data_daemon (grid_patch_30m, data_i4_2d_in1 = patchdata)
+ELSE
+         CALL aggregation_data_daemon (grid_patch_500m, data_i4_2d_in1 = patchdata)
+ENDIF
 #endif
       ENDIF
 
@@ -145,7 +154,7 @@ CONTAINS
 #ifdef CATCHMENT
             CALL aggregation_request_data (landhru, iset, grid_patch, zip = .true., &
 #else
-            CALL aggregation_request_data (landelm, iset, grid_patch, zip = .true., &
+            CALL aggregation_request_data (landelm, iset, grid_patch_30m, zip = .true., &
 #endif
                data_i4_2d_in1 = patchdata, data_i4_2d_out1 = ibuff)
 

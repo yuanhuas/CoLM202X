@@ -228,7 +228,8 @@ PROGRAM MKSRFDATA
       CALL grid_patch%define_by_name ('colm_1km')
 #endif
 #ifdef LULC_IGBP
-      CALL grid_patch%define_by_name ('colm_30m')
+      CALL grid_patch_30m%define_by_name ('colm_30m')
+      CALL grid_patch_500m%define_by_name ('colm_30m')
 #endif
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
       CALL grid_patch%define_by_name ('colm_500m')
@@ -291,7 +292,8 @@ PROGRAM MKSRFDATA
       CALL pixel%assimilate_grid (grid_hru  )
 #endif
       CALL pixel%assimilate_grid (grid_500m )
-      CALL pixel%assimilate_grid (grid_patch)
+      CALL pixel%assimilate_grid (grid_patch_30m)
+      CALL pixel%assimilate_grid (grid_patch_500m)
 #if (defined CROP)
       CALL pixel%assimilate_grid (grid_crop )
 #endif
@@ -331,7 +333,8 @@ PROGRAM MKSRFDATA
       CALL pixel%map_to_grid (grid_hru  )
 #endif
       CALL pixel%map_to_grid (grid_500m )
-      CALL pixel%map_to_grid (grid_patch)
+      CALL pixel%map_to_grid (grid_patch_30m)
+      CALL pixel%map_to_grid (grid_patch_500m)
 #if (defined CROP)
       CALL pixel%map_to_grid (grid_crop )
 #endif
@@ -370,9 +373,13 @@ PROGRAM MKSRFDATA
          !TODO: distinguish USGS and IGBP land cover
 #ifndef LULC_USGS
          write(cyear,'(i4.4)') lc_year
-         dir_5x5 = trim(DEF_dir_rawdata) // '/landcover/glc30/'
-         suffix  = 'LC30m.GLC.'//trim(cyear)
-         CALL mesh_filter_5x5 (grid_patch, dir_5x5, suffix, 'LC')
+         dir_5x5 = trim(DEF_rawdata%landcover%dir)
+         suffix  = trim(DEF_rawdata%landcover%fname)//trim(cyear)
+IF (trim(DEF_rawdata%landcover%res)=='30m' ) THEN
+         CALL mesh_filter_5x5 (grid_patch_30m , dir_5x5, suffix, trim(DEF_rawdata%landcover%vname))
+ELSE
+         CALL mesh_filter_5x5 (grid_patch_500m, dir_5x5, suffix, trim(DEF_rawdata%landcover%vname))
+ENDIF
 #else
          lndname = trim(DEF_dir_rawdata)//'/landtypes/landtype-usgs-update.nc'
          CALL mesh_filter (grid_patch, lndname, 'landtype')
