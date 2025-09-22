@@ -62,7 +62,7 @@ CONTAINS
    END SUBROUTINE allocate_LulccTransferTrace
 
 
-   SUBROUTINE MAKE_LulccTransferTrace (lc_year)
+   SUBROUTINE MAKE_LulccTransferTrace (grid_patch, lc_year)
 
    USE MOD_Precision
    USE MOD_Namelist
@@ -92,6 +92,7 @@ CONTAINS
    IMPLICIT NONE
 
    integer, intent(in) :: lc_year
+   type(grid_type), intent(in) :: grid_patch
 
 !-------------------------- Local Variables ----------------------------
    character(len=256) :: dir_5x5, suffix, lastyr, thisyr, dir_landdata, lndname
@@ -132,24 +133,21 @@ CONTAINS
       CALL mpi_barrier (p_comm_glb, p_err)
 #endif
 
-      CALL grid_patch_30m%define_by_name ('colm_500m')
-      CALL pixel%assimilate_grid (grid_patch_30m)
-      CALL pixel%map_to_grid (grid_patch_30m)
 
       IF (p_is_io) THEN
-         CALL allocate_block_data (grid_patch_30m, lcdatafr)
+         CALL allocate_block_data (grid_patch, lcdatafr)
          dir_5x5 = trim(DEF_dir_rawdata) // '/plant_15s'
          suffix  = 'MOD'//trim(lastyr)
          ! read the previous year land cover data
          ! TODO: Add IF statement for using different LC products
          ! IF use MODIS data THEN
-         CALL read_5x5_data (dir_5x5, suffix, grid_patch_30m, 'LC', lcdatafr)
+         CALL read_5x5_data (dir_5x5, suffix, grid_patch, 'LC', lcdatafr)
          ! ELSE
          ! 'LC_GLC' is not recomended for IGBP
          !CALL read_5x5_data (dir_5x5, suffix, grid_patch, 'LC_GLC', lcdatafr)
 
 #ifdef USEMPI
-         CALL aggregation_data_daemon (grid_patch_30m, data_i4_2d_in1 = lcdatafr)
+         CALL aggregation_data_daemon (grid_patch, data_i4_2d_in1 = lcdatafr)
 #endif
       ENDIF
 
@@ -195,7 +193,7 @@ CONTAINS
                ENDIF
 
                ! using this year patch mapping to aggregate the previous year land cover data
-               CALL aggregation_request_data (landpatch, ipatch, grid_patch_30m, zip = .true., &
+               CALL aggregation_request_data (landpatch, ipatch, grid_patch, zip = .true., &
                   area = area_one, data_i4_2d_in1 = lcdatafr, data_i4_2d_out1 = lcdatafr_one)
 
                ipxstt = landpatch%ipxstt(ipatch)

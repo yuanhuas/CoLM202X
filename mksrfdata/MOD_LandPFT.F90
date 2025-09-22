@@ -43,7 +43,7 @@ MODULE MOD_LandPFT
 CONTAINS
 
    ! -------------------------------
-   SUBROUTINE landpft_build (lc_year)
+   SUBROUTINE landpft_build (grid_patch, lc_year)
 
    USE MOD_Precision
    USE MOD_SPMD_Task
@@ -62,6 +62,7 @@ CONTAINS
    IMPLICIT NONE
 
    integer, intent(in) :: lc_year
+   type(grid_type), intent(in) :: grid_patch
    ! Local Variables
    character(len=256) :: dir_5x5, suffix, cyear
    type (block_data_real8_3d) :: pctpft
