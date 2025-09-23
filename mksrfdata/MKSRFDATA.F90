@@ -90,7 +90,7 @@ PROGRAM MKSRFDATA
 
    character(len=256) :: nlfile
    character(len=256) :: lndname
-   character(len=256) :: dir_rawdata, dir_5x5, suffix
+   character(len=256) :: dir_rawdata, dir_5x5
    character(len=256) :: dir_landdata
    real(r8) :: edgen  ! northern edge of grid (degrees)
    real(r8) :: edgee  ! eastern edge of grid (degrees)

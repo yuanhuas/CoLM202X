@@ -68,7 +68,7 @@ CONTAINS
    type(grid_type), intent(in) :: grid_patch
 
    ! Local Variables
-   character(len=256) :: file_patch, dir_5x5, suffix
+   character(len=256) :: file_patch, dir_5x5
    character(len=255) :: cyear
    type (block_data_int32_2d) :: patchdata
    integer :: iloc, npxl, ipxl, numset

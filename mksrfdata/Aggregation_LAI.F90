@@ -70,7 +70,7 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
    integer :: start_year, end_year, iy
 
    ! for IGBP data
-   character(len=256) :: dir_5x5, suffix
+   character(len=256) :: dir_5x5, fname
    integer :: month
    type (block_data_real8_2d) :: SAI          ! plant stem area index (m2/m2)
    real(r8), allocatable :: SAI_patches(:), sai_one(:)
@@ -204,16 +204,16 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
 
                IF (p_is_io) THEN
                   IF (DEF_LAI_MONTHLY) THEN
-                     dir_5x5 = trim(dir_rawdata) // '/plant_15s'
+                     dir_5x5 = trim(dir_rawdata) // trim(DEF_rawdata%lai_sai%dir)
                      IF (iy < 2000) THEN
                         ! every 5 years one file
                         write(cyear_bk,'(i4.4)') (iy / 5) * 5
-                        suffix = 'MOD'//trim(cyear_bk)
-                        CALL read_5x5_data_time (dir_5x5, suffix, gridlai, &
+                        fname = trim(DEF_rawdata%lai_sai%fname)//trim(cyear_bk)
+                        CALL read_5x5_data_time (dir_5x5, fname, gridlai, &
                                    'MONTHLY_LC_LAI_'//trim(cyear), itime, LAI)
                      ELSE
-                        suffix = 'MOD'//trim(cyear)
-                        CALL read_5x5_data_time (dir_5x5, suffix, gridlai, &
+                        fname = trim(DEF_rawdata%lai_sai%fname)//trim(cyear)
+                        CALL read_5x5_data_time (dir_5x5, fname, gridlai, &
                                                  'MONTHLY_LC_LAI', itime, LAI)
                      ENDIF
                   ELSE
@@ -296,14 +296,14 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
             allocate (SAI_patches (numpatch))
          ENDIF
 
-         dir_5x5 = trim(dir_rawdata) // '/plant_15s'
+         dir_5x5 = trim(dir_rawdata) // trim(DEF_rawdata%lai_sai%dir)
          DO iy = start_year, end_year
             write(cyear,'(i4.4)') iy
             IF (iy < 2000) THEN
                write(cyear_bk,'(i4.4)') (iy / 5) * 5
-               suffix = 'MOD'//trim(cyear_bk)
+               fname = trim(DEF_rawdata%lai_sai%fname)//trim(cyear_bk)
             ELSE
-               suffix = 'MOD'//trim(cyear)
+               fname = trim(DEF_rawdata%lai_sai%fname)//trim(cyear)
             ENDIF
 
             DO itime = 1, 12
@@ -315,10 +315,10 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
 
                IF (p_is_io) THEN
                   IF (iy < 2000) THEN
-                     CALL read_5x5_data_time (dir_5x5, suffix, gridlai, &
+                     CALL read_5x5_data_time (dir_5x5, fname, gridlai, &
                         'MONTHLY_LC_SAI_'//trim(cyear), itime, SAI)
                   ELSE
-                     CALL read_5x5_data_time (dir_5x5, suffix, gridlai, &
+                     CALL read_5x5_data_time (dir_5x5, fname, gridlai, &
                         'MONTHLY_LC_SAI', itime, SAI)
                   ENDIF
 
@@ -420,16 +420,16 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
          allocate(SAI_pfts    (numpft  ))
       ENDIF
 
-      dir_5x5 = trim(dir_rawdata) // '/plant_15s'
+      dir_5x5 = trim(dir_rawdata) // trim(DEF_rawdata%lai_sai%dir)
       DO iy = start_year, end_year
          write(cyear,'(i4.4)') iy
          CALL system('mkdir -p ' // trim(landdir) // trim(cyear))
 
          IF (iy < 2000) THEN
             write(cyear_bk,'(i4.4)') (iy / 5) * 5
-            suffix = 'MOD'//trim(cyear_bk)
+            fname = trim(DEF_rawdata%lai_sai%fname)//trim(cyear_bk)
          ELSE
-            suffix = 'MOD'//trim(cyear)
+            fname = trim(DEF_rawdata%lai_sai%fname)//trim(cyear)
          ENDIF
 
          IF (p_is_master) THEN
@@ -437,17 +437,17 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
          ENDIF
 
          IF (p_is_io) THEN
-            CALL read_5x5_data_pft (dir_5x5, suffix, gridlai, 'PCT_PFT', pftPCT)
+            CALL read_5x5_data_pft (dir_5x5, fname, gridlai, 'PCT_PFT', pftPCT)
          ENDIF
 
          IF(.not. DEF_USE_LAIFEEDBACK)THEN
             DO month = 1, 12
                IF (p_is_io) THEN
                   IF (iy < 2000) THEN
-                     CALL read_5x5_data_pft_time (dir_5x5, suffix, gridlai, &
+                     CALL read_5x5_data_pft_time (dir_5x5, fname, gridlai, &
                         'MONTHLY_PFT_LAI_'//trim(cyear), month, pftLSAI)
                   ELSE
-                     CALL read_5x5_data_pft_time (dir_5x5, suffix, gridlai, &
+                     CALL read_5x5_data_pft_time (dir_5x5, fname, gridlai, &
                         'MONTHLY_PFT_LAI', month, pftLSAI)
                   ENDIF
 #ifdef USEMPI
@@ -589,10 +589,10 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
          DO month = 1, 12
             IF (p_is_io) THEN
                IF (iy < 2000) THEN
-                  CALL read_5x5_data_pft_time (dir_5x5, suffix, gridlai, &
+                  CALL read_5x5_data_pft_time (dir_5x5, fname, gridlai, &
                      'MONTHLY_PFT_SAI_'//trim(cyear), month, pftLSAI)
                ELSE
-                  CALL read_5x5_data_pft_time (dir_5x5, suffix, gridlai, &
+                  CALL read_5x5_data_pft_time (dir_5x5, fname, gridlai, &
                      'MONTHLY_PFT_SAI', month, pftLSAI)
                ENDIF
 #ifdef USEMPI
