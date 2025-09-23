@@ -97,7 +97,7 @@ PROGRAM MKSRFDATA
    real(r8) :: edges  ! southern edge of grid (degrees)
    real(r8) :: edgew  ! western edge of grid (degrees)
 
-   type (grid_type) :: grid_500m, grid_htop, grid_soil, grid_lai, grid_topo, grid_topo_factor
+   type (grid_type) :: grid_500m, grid_htop, grid_soil, grid_pft, grid_lai, grid_topo, grid_topo_factor
    type (grid_type) :: grid_urban_5km, grid_urban_500m, grid_urban_100m, grid_urban_30m
    type (grid_type) :: grid_twi
 
@@ -233,6 +233,7 @@ PROGRAM MKSRFDATA
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
       CALL grid_patch%define_by_name (trim(DEF_rawdata%landcover%gname))
 #endif
+
 #if (defined CROP)
       ! define grid for crop parameters
       CALL grid_crop%define_from_file (trim(DEF_dir_rawdata)//&
@@ -243,14 +244,17 @@ PROGRAM MKSRFDATA
 #ifdef LULC_USGS
       CALL grid_htop%define_by_name ('colm_1km')
 #else
-      CALL grid_htop%define_by_name ('colm_500m')
+      CALL grid_htop%define_by_name (trim(DEF_rawdata%pft%gname))
 #endif
 
       ! define grid for soil parameters raw data
       CALL grid_soil%define_by_name ('colm_500m')
 
       ! define grid for LAI raw data
-      CALL grid_lai%define_by_name ('colm_500m')
+      CALL grid_pft%define_by_name (trim(DEF_rawdata%pft%gname))
+
+      ! define grid for LAI raw data
+      CALL grid_lai%define_by_name (trim(DEF_rawdata%lai_sai%gname))
 
       ! define grid for topography
       CALL grid_topo%define_by_name ('colm_500m')
@@ -297,6 +301,7 @@ PROGRAM MKSRFDATA
 #endif
       CALL pixel%assimilate_grid (grid_htop )
       CALL pixel%assimilate_grid (grid_soil )
+      CALL pixel%assimilate_grid (grid_pft  )
       CALL pixel%assimilate_grid (grid_lai  )
       CALL pixel%assimilate_grid (grid_topo )
 
@@ -337,6 +342,7 @@ PROGRAM MKSRFDATA
 #endif
       CALL pixel%map_to_grid (grid_htop )
       CALL pixel%map_to_grid (grid_soil )
+      CALL pixel%map_to_grid (grid_pft  )
       CALL pixel%map_to_grid (grid_lai  )
       CALL pixel%map_to_grid (grid_topo )
 
@@ -372,7 +378,7 @@ PROGRAM MKSRFDATA
          write(cyear,'(i4.4)') lc_year
          dir_5x5 = trim(DEF_dir_rawdata) // trim(DEF_rawdata%landcover%dir)
          lndname = trim(DEF_rawdata%landcover%fname) // trim(cyear)
-         CALL mesh_filter_5x5 (grid_patch, dir_5x5, lndname, trim(DEF_rawdata%landcover%vname))
+         CALL mesh_filter_5x5 (grid_patch, dir_5x5, lndname, 'LC')
 
          !lndname = trim(DEF_dir_rawdata)//'/landtypes/landtype-igbp-modis-'//trim(cyear)//'.nc'
          !CALL mesh_filter (grid_patch, lndname, 'landtype')
@@ -465,7 +471,7 @@ PROGRAM MKSRFDATA
 
 IF (.not. (skip_rest)) THEN
 
-      CALL Aggregation_PercentagesPFT  (grid_500m, dir_rawdata, dir_landdata, lc_year)
+      CALL Aggregation_PercentagesPFT  (grid_pft,  dir_rawdata, dir_landdata, lc_year)
 
       CALL Aggregation_LakeDepth       (grid_500m, dir_rawdata, dir_landdata, lc_year)
 

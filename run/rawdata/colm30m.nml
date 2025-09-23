@@ -4,6 +4,21 @@
   DEF_rawdata%landcover%dir   = '/landcover/glc/'
   DEF_rawdata%landcover%gname = 'colm_30m'
   DEF_rawdata%landcover%fname = 'LC30m.GLC.'
-  DEF_rawdata%landcover%vname = 'LC'
+
+  ! pft data
+  DEF_rawdata%pft%dir   = '/vegetation_pft/c2022/'
+  DEF_rawdata%pft%gname = 'colm_500m'
+  DEF_rawdata%pft%fname = 'PFT500m.'
+
+  ! lai and sai data
+  DEF_rawdata%lai_sai%dir   = '/vegetation_lai_sai/c2022/'
+  DEF_rawdata%lai_sai%gname = 'colm_500m'
+  DEF_rawdata%lai_sai%fname = 'LSAI500m.'
+
+  ! htop data
+  DEF_rawdata%htop%dir   = '/vegetation_morphology/tree_height_Simard/'
+  DEF_rawdata%htop%gname = 'colm_1km'
+  DEF_rawdata%htop%fname = 'Htop1km.Simard.'
+
 
 /
