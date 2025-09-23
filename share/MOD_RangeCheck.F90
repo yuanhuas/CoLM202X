@@ -2,63 +2,66 @@
 
 MODULE MOD_RangeCheck
 
-   !-----------------------------------------------------------------------
-   ! DESCRIPTION:
-   !
-   !    Subroutines show the range of values in block data or vector data.
-   !
-   !    Notice that:
-   !    1. "check_block_data"  can only be called by IO     processes.
-   !    2. "check_vector_data" can only be called by worker processes.
-   !
-   ! Created by Shupeng Zhang, May 2023
-   !-----------------------------------------------------------------------
+!-----------------------------------------------------------------------
+! !DESCRIPTION:
+!
+!    Subroutines show the range of values in block data or vector data.
+!
+!    Notice that:
+!    1. "check_block_data"  can only be called by IO     processes.
+!    2. "check_vector_data" can only be called by worker processes.
+!
+!  Created by Shupeng Zhang, May 2023
+!-----------------------------------------------------------------------
 
 #ifdef RangeCheck
+   USE MOD_UserDefFun, only: isnan_ud
    IMPLICIT NONE
 
-   interface check_block_data
+   INTERFACE check_block_data
       MODULE procedure check_block_data_real8_2d
-   END interface check_block_data
+   END INTERFACE check_block_data
 
-   interface check_vector_data
+   INTERFACE check_vector_data
       MODULE procedure check_vector_data_real8_1d
       MODULE procedure check_vector_data_real8_2d
       MODULE procedure check_vector_data_real8_3d
       MODULE procedure check_vector_data_real8_4d
+      MODULE procedure check_vector_data_real8_5d
       MODULE procedure check_vector_data_int32_1d
-   END interface check_vector_data
+   END INTERFACE check_vector_data
 
 CONTAINS
 
    ! ----------
-   SUBROUTINE check_block_data_real8_2d (varname, gdata, spv_in, largevalue)
+   SUBROUTINE check_block_data_real8_2d (varname, gdata, spv_in, limits)
 
-      USE MOD_Precision
-      USE MOD_SPMD_Task
-      USE MOD_Block
-      USE MOD_DataType
-      IMPLICIT NONE
+   USE MOD_Precision
+   USE MOD_SPMD_Task
+   USE MOD_Block
+   USE MOD_DataType
+   USE MOD_Vars_Global, only: spval
+   IMPLICIT NONE
 
-      CHARACTER(len=*), intent(in)   :: varname
-      TYPE(block_data_real8_2d), intent(in) :: gdata
-      REAL(r8), intent(in), optional :: spv_in
-      REAL(r8), intent(in), optional :: largevalue
+   character(len=*), intent(in)   :: varname
+   type(block_data_real8_2d), intent(in) :: gdata
+   real(r8), intent(in), optional :: spv_in
+   real(r8), intent(in), optional :: limits(2)
 
-      ! Local variables
-      REAL(r8) :: gmin, gmax, spv
-      REAL(r8), allocatable :: gmin_all(:), gmax_all(:)
-      LOGICAL,  allocatable :: msk2(:,:)
-      INTEGER :: iblkme, ib, jb, ix, iy
-      LOGICAL :: has_nan
-      character(len=256) :: wfmt, ss, info
+   ! Local variables
+   real(r8) :: gmin, gmax, spv
+   real(r8), allocatable :: gmin_all(:), gmax_all(:)
+   logical,  allocatable :: msk2(:,:)
+   integer :: iblkme, ib, jb, ix, iy
+   logical :: has_nan
+   character(len=256) :: wfmt, exception, str_print
 
       IF (p_is_io) THEN
 
          IF (present(spv_in)) THEN
             spv = spv_in
          ELSE
-            spv = -1.0e36_r8
+            spv = spval
          ENDIF
 
          gmin = spv
@@ -69,7 +72,7 @@ CONTAINS
             ib = gblock%xblkme(iblkme)
             jb = gblock%yblkme(iblkme)
 
-            IF (.not. allocated(gdata%blk(ib,jb)%val)) cycle
+            IF (.not. allocated(gdata%blk(ib,jb)%val)) CYCLE
 
             allocate(msk2 (size(gdata%blk(ib,jb)%val,1), size(gdata%blk(ib,jb)%val,2)))
             msk2 = gdata%blk(ib,jb)%val /= spv
@@ -90,7 +93,7 @@ CONTAINS
 
             DO iy = 1, size(gdata%blk(ib,jb)%val,2)
                DO ix = 1, size(gdata%blk(ib,jb)%val,1)
-                  has_nan = has_nan .or. isnan(gdata%blk(ib,jb)%val(ix,iy))
+                  has_nan = has_nan .or. isnan_ud(gdata%blk(ib,jb)%val(ix,iy))
                ENDDO
             ENDDO
 
@@ -130,78 +133,96 @@ CONTAINS
 #endif
          IF (p_iam_io == p_root) THEN
 
-            info = ''
+            exception = ''
 
             IF (has_nan) THEN
-               info = trim(info) // ' with NAN'
+               exception = trim(exception) // ' with NAN'
             ENDIF
 
-            IF (present(largevalue)) THEN
-               IF (max(abs(gmin),abs(gmax)) > largevalue) THEN
-                  write(ss,'(e12.2)') largevalue
-                  info = trim(info) // ' with value > ' // trim(ss)
+            IF (present(limits)) THEN
+               IF ((gmin < limits(1)) .or. (gmax > limits(2))) THEN
+                  exception = trim(exception) // ' Out of Range!'
                ENDIF
             ENDIF
 
             wfmt = "('Check block  data:', A25, ' is in (', e20.10, ',', e20.10, ')', A)"
-            write(*,wfmt) varname, gmin, gmax, trim(info)
+            write(str_print,wfmt) varname, gmin, gmax, trim(exception)
 
-#if(defined CoLMDEBUG)
-            IF (len_trim(info) > 0) THEN
 #ifdef USEMPI
-               CALL mpi_abort (p_comm_glb, p_err)
-#else
-               STOP
+            CALL mpi_send (exception, 256, MPI_CHARACTER, p_address_master, &
+               mpi_tag_mesg, p_comm_glb, p_err)
+            CALL mpi_send (str_print, 256, MPI_CHARACTER, p_address_master, &
+               mpi_tag_mesg, p_comm_glb, p_err)
 #endif
-            ENDIF
-#endif
-
          ENDIF
+      ENDIF
 
+      IF (p_is_master) THEN
+#ifdef USEMPI
+         CALL mpi_recv (exception, 256, MPI_CHARACTER, p_address_io(p_root), &
+            mpi_tag_mesg, p_comm_glb, p_stat, p_err)
+         CALL mpi_recv (str_print, 256, MPI_CHARACTER, p_address_io(p_root), &
+            mpi_tag_mesg, p_comm_glb, p_stat, p_err)
+#endif
+
+         write(*,'(A)') trim(str_print)
+
+#if (defined CoLMDEBUG)
+         IF (len_trim(exception) > 0) THEN
+            CALL CoLM_stop ()
+         ENDIF
+#endif
       ENDIF
 
    END SUBROUTINE check_block_data_real8_2d
 
 
    ! ----------
-   SUBROUTINE check_vector_data_real8_1d (varname, vdata, spv_in, largevalue)
+   SUBROUTINE check_vector_data_real8_1d (varname, vdata, spv_in, limits)
 
-      USE MOD_Precision
-      USE MOD_SPMD_Task
-      IMPLICIT NONE
+   USE MOD_Precision
+   USE MOD_SPMD_Task
+   USE MOD_Vars_Global, only: spval
+   IMPLICIT NONE
 
-      CHARACTER(len=*), intent(in)   :: varname
-      REAL(r8), intent(in)           :: vdata(:)
-      REAL(r8), intent(in), optional :: spv_in
-      REAL(r8), intent(in), optional :: largevalue
+   character(len=*),      intent(in) :: varname
+   real(r8), allocatable, intent(in) :: vdata(:)
 
-      ! Local variables
-      REAL(r8) :: vmin, vmax, spv
-      REAL(r8), allocatable :: vmin_all(:), vmax_all(:)
-      INTEGER  :: i
-      LOGICAL  :: has_nan
-      character(len=256) :: wfmt, ss, info
+   real(r8), intent(in), optional :: spv_in
+   real(r8), intent(in), optional :: limits(2)
+
+   ! Local variables
+   real(r8) :: vmin, vmax, spv
+   real(r8), allocatable :: vmin_all(:), vmax_all(:)
+   integer  :: i
+   logical  :: has_nan
+   character(len=256) :: wfmt, exception, str_print
 
       IF (p_is_worker) THEN
 
          IF (present(spv_in)) THEN
             spv = spv_in
          ELSE
-            spv = -1.0e36_r8
+            spv = spval
          ENDIF
 
-         IF (any(vdata /= spv)) THEN
-            vmin = minval(vdata, mask = vdata /= spv)
-            vmax = maxval(vdata, mask = vdata /= spv)
+         IF (allocated(vdata)) THEN
+            IF (any(vdata /= spv)) THEN
+               vmin = minval(vdata, mask = vdata /= spv)
+               vmax = maxval(vdata, mask = vdata /= spv)
+            ELSE
+               vmin = spv
+               vmax = spv
+            ENDIF
+
+            has_nan = .false.
+            DO i = lbound(vdata,1), ubound(vdata,1)
+               has_nan = has_nan .or. isnan_ud(vdata(i))
+            ENDDO
          ELSE
-            vmin = spv
-            vmax = spv
+            vmin = spv; vmax = spv
+            has_nan = .false.
          ENDIF
-
-         has_nan = .false.
-         DO i = 1, size(vdata)
-            has_nan = has_nan .or. isnan(vdata(i))
-         ENDDO
 
 #ifdef USEMPI
          IF (p_iam_worker == p_root) THEN
@@ -236,79 +257,97 @@ CONTAINS
 
          IF (p_iam_worker == p_root) THEN
 
-            info = ''
+            exception = ''
 
             IF (has_nan) THEN
-               info = trim(info) // ' with NAN'
+               exception = trim(exception) // ' with NAN'
             ENDIF
 
-            IF (present(largevalue)) THEN
-               IF (max(abs(vmin),abs(vmax)) > largevalue) THEN
-                  write(ss,'(e12.2)') largevalue
-                  info = trim(info) // ' with value > ' // trim(ss)
+            IF (present(limits)) THEN
+               IF ((vmin < limits(1)) .or. (vmax > limits(2))) THEN
+                  exception = trim(exception) // ' Out of Range!'
                ENDIF
             ENDIF
 
             wfmt = "('Check vector data:', A25, ' is in (', e20.10, ',', e20.10, ')', A)"
-            write(*,wfmt) varname, vmin, vmax, trim(info)
+            write(str_print,wfmt) varname, vmin, vmax, trim(exception)
 
-#if(defined CoLMDEBUG)
-            IF (len_trim(info) > 0) THEN
 #ifdef USEMPI
-               CALL mpi_abort (p_comm_glb, p_err)
-#else
-               STOP
+            CALL mpi_send (exception, 256, MPI_CHARACTER, p_address_master, &
+               mpi_tag_mesg, p_comm_glb, p_err)
+            CALL mpi_send (str_print, 256, MPI_CHARACTER, p_address_master, &
+               mpi_tag_mesg, p_comm_glb, p_err)
 #endif
-            ENDIF
-#endif
-
          ENDIF
+      ENDIF
 
+      IF (p_is_master) THEN
+#ifdef USEMPI
+         CALL mpi_recv (exception, 256, MPI_CHARACTER, p_address_worker(p_root), &
+            mpi_tag_mesg, p_comm_glb, p_stat, p_err)
+         CALL mpi_recv (str_print, 256, MPI_CHARACTER, p_address_worker(p_root), &
+            mpi_tag_mesg, p_comm_glb, p_stat, p_err)
+#endif
+
+         write(*,'(A)') trim(str_print)
+
+#if (defined CoLMDEBUG)
+         IF (len_trim(exception) > 0) THEN
+            CALL CoLM_stop ()
+         ENDIF
+#endif
       ENDIF
 
    END SUBROUTINE check_vector_data_real8_1d
 
    ! ----------
-   SUBROUTINE check_vector_data_real8_2d (varname, vdata, spv_in, largevalue)
+   SUBROUTINE check_vector_data_real8_2d (varname, vdata, spv_in, limits)
 
-      USE MOD_Precision
-      USE MOD_SPMD_Task
-      IMPLICIT NONE
+   USE MOD_Precision
+   USE MOD_SPMD_Task
+   USE MOD_Vars_Global, only: spval
+   IMPLICIT NONE
 
-      CHARACTER(len=*), intent(in)   :: varname
-      REAL(r8), intent(in)           :: vdata(:,:)
-      REAL(r8), intent(in), optional :: spv_in
-      REAL(r8), intent(in), optional :: largevalue
+   character(len=*),      intent(in) :: varname
+   real(r8), allocatable, intent(in) :: vdata(:,:)
 
-      ! Local variables
-      REAL(r8) :: vmin, vmax, spv
-      REAL(r8), allocatable :: vmin_all(:), vmax_all(:)
-      INTEGER  :: i, j
-      LOGICAL  :: has_nan
-      character(len=256) :: wfmt, ss, info
+   real(r8), intent(in), optional :: spv_in
+   real(r8), intent(in), optional :: limits(2)
+
+   ! Local variables
+   real(r8) :: vmin, vmax, spv
+   real(r8), allocatable :: vmin_all(:), vmax_all(:)
+   integer  :: i, j
+   logical  :: has_nan
+   character(len=256) :: wfmt, exception, str_print
 
       IF (p_is_worker) THEN
 
          IF (present(spv_in)) THEN
             spv = spv_in
          ELSE
-            spv = -1.0e36_r8
+            spv = spval
          ENDIF
 
-         IF (any(vdata /= spv)) THEN
-            vmin = minval(vdata, mask = vdata /= spv)
-            vmax = maxval(vdata, mask = vdata /= spv)
-         ELSE
-            vmin = spv
-            vmax = spv
-         ENDIF
+         IF (allocated(vdata)) THEN
+            IF (any(vdata /= spv)) THEN
+               vmin = minval(vdata, mask = vdata /= spv)
+               vmax = maxval(vdata, mask = vdata /= spv)
+            ELSE
+               vmin = spv
+               vmax = spv
+            ENDIF
 
-         has_nan = .false.
-         DO j = 1, size(vdata,2)
-            DO i = 1, size(vdata,1)
-               has_nan = has_nan .or. isnan(vdata(i,j))
+            has_nan = .false.
+            DO j = lbound(vdata,2), ubound(vdata,2)
+               DO i = lbound(vdata,1), ubound(vdata,1)
+                  has_nan = has_nan .or. isnan_ud(vdata(i,j))
+               ENDDO
             ENDDO
-         ENDDO
+         ELSE
+            vmin = spv; vmax = spv
+            has_nan = .false.
+         ENDIF
 
 #ifdef USEMPI
          IF (p_iam_worker == p_root) THEN
@@ -343,81 +382,99 @@ CONTAINS
 
          IF (p_iam_worker == p_root) THEN
 
-            info = ''
+            exception = ''
 
             IF (has_nan) THEN
-               info = trim(info) // ' with NAN'
+               exception = trim(exception) // ' with NAN'
             ENDIF
 
-            IF (present(largevalue)) THEN
-               IF (max(abs(vmin),abs(vmax)) > largevalue) THEN
-                  write(ss,'(e12.2)') largevalue
-                  info = trim(info) // ' with value > ' // trim(ss)
+            IF (present(limits)) THEN
+               IF ((vmin < limits(1)) .or. (vmax > limits(2))) THEN
+                  exception = trim(exception) // ' Out of Range!'
                ENDIF
             ENDIF
 
             wfmt = "('Check vector data:', A25, ' is in (', e20.10, ',', e20.10, ')', A)"
-            write(*,wfmt) varname, vmin, vmax, trim(info)
+            write(str_print,wfmt) varname, vmin, vmax, trim(exception)
 
-#if(defined CoLMDEBUG)
-            IF (len_trim(info) > 0) THEN
 #ifdef USEMPI
-               CALL mpi_abort (p_comm_glb, p_err)
-#else
-               STOP
+            CALL mpi_send (exception, 256, MPI_CHARACTER, p_address_master, &
+               mpi_tag_mesg, p_comm_glb, p_err)
+            CALL mpi_send (str_print, 256, MPI_CHARACTER, p_address_master, &
+               mpi_tag_mesg, p_comm_glb, p_err)
 #endif
-            ENDIF
-#endif
-
          ENDIF
+      ENDIF
 
+      IF (p_is_master) THEN
+#ifdef USEMPI
+         CALL mpi_recv (exception, 256, MPI_CHARACTER, p_address_worker(p_root), &
+            mpi_tag_mesg, p_comm_glb, p_stat, p_err)
+         CALL mpi_recv (str_print, 256, MPI_CHARACTER, p_address_worker(p_root), &
+            mpi_tag_mesg, p_comm_glb, p_stat, p_err)
+#endif
+
+         write(*,'(A)') trim(str_print)
+
+#if (defined CoLMDEBUG)
+         IF (len_trim(exception) > 0) THEN
+            CALL CoLM_stop ()
+         ENDIF
+#endif
       ENDIF
 
    END SUBROUTINE check_vector_data_real8_2d
 
    ! ----------
-   SUBROUTINE check_vector_data_real8_3d (varname, vdata, spv_in, largevalue)
+   SUBROUTINE check_vector_data_real8_3d (varname, vdata, spv_in, limits)
 
-      USE MOD_Precision
-      USE MOD_SPMD_Task
-      IMPLICIT NONE
+   USE MOD_Precision
+   USE MOD_SPMD_Task
+   USE MOD_Vars_Global, only: spval
+   IMPLICIT NONE
 
-      CHARACTER(len=*), intent(in)   :: varname
-      REAL(r8), intent(in)           :: vdata(:,:,:)
-      REAL(r8), intent(in), optional :: spv_in
-      REAL(r8), intent(in), optional :: largevalue
+   character(len=*),      intent(in) :: varname
+   real(r8), allocatable, intent(in) :: vdata(:,:,:)
 
-      ! Local variables
-      REAL(r8) :: vmin, vmax, spv
-      REAL(r8), allocatable :: vmin_all(:), vmax_all(:)
-      INTEGER  :: i, j, k
-      LOGICAL  :: has_nan
-      character(len=256) :: wfmt, ss, info
+   real(r8), intent(in), optional :: spv_in
+   real(r8), intent(in), optional :: limits(2)
+
+   ! Local variables
+   real(r8) :: vmin, vmax, spv
+   real(r8), allocatable :: vmin_all(:), vmax_all(:)
+   integer  :: i, j, k
+   logical  :: has_nan
+   character(len=256) :: wfmt, exception, str_print
 
       IF (p_is_worker) THEN
 
          IF (present(spv_in)) THEN
             spv = spv_in
          ELSE
-            spv = -1.0e36_r8
+            spv = spval
          ENDIF
 
-         IF (any(vdata /= spv)) THEN
-            vmin = minval(vdata, mask = vdata /= spv)
-            vmax = maxval(vdata, mask = vdata /= spv)
-         ELSE
-            vmin = spv
-            vmax = spv
-         ENDIF
+         IF (allocated(vdata)) THEN
+            IF (any(vdata /= spv)) THEN
+               vmin = minval(vdata, mask = vdata /= spv)
+               vmax = maxval(vdata, mask = vdata /= spv)
+            ELSE
+               vmin = spv
+               vmax = spv
+            ENDIF
 
-         has_nan = .false.
-         DO k = 1, size(vdata,3)
-            DO j = 1, size(vdata,2)
-               DO i = 1, size(vdata,1)
-                  has_nan = has_nan .or. isnan(vdata(i,j,k))
+            has_nan = .false.
+            DO k = lbound(vdata,3), ubound(vdata,3)
+               DO j = lbound(vdata,2), ubound(vdata,2)
+                  DO i = lbound(vdata,1), ubound(vdata,1)
+                     has_nan = has_nan .or. isnan_ud(vdata(i,j,k))
+                  ENDDO
                ENDDO
             ENDDO
-         ENDDO
+         ELSE
+            vmin = spv; vmax = spv
+            has_nan = .false.
+         ENDIF
 
 #ifdef USEMPI
          IF (p_iam_worker == p_root) THEN
@@ -453,63 +510,206 @@ CONTAINS
 
          IF (p_iam_worker == p_root) THEN
 
-            info = ''
+            exception = ''
 
             IF (has_nan) THEN
-               info = trim(info) // ' with NAN'
+               exception = trim(exception) // ' with NAN'
             ENDIF
 
-            IF (present(largevalue)) THEN
-               IF (max(abs(vmin),abs(vmax)) > largevalue) THEN
-                  write(ss,'(e12.2)') largevalue
-                  info = trim(info) // ' with value > ' // trim(ss)
+            IF (present(limits)) THEN
+               IF ((vmin < limits(1)) .or. (vmax > limits(2))) THEN
+                  exception = trim(exception) // ' Out of Range!'
                ENDIF
             ENDIF
 
             wfmt = "('Check vector data:', A25, ' is in (', e20.10, ',', e20.10, ')', A)"
-            write(*,wfmt) varname, vmin, vmax, trim(info)
+            write(str_print,wfmt) varname, vmin, vmax, trim(exception)
 
-#if(defined CoLMDEBUG)
-            IF (len_trim(info) > 0) THEN
 #ifdef USEMPI
-               CALL mpi_abort (p_comm_glb, p_err)
-#else
-               STOP
+            CALL mpi_send (exception, 256, MPI_CHARACTER, p_address_master, &
+               mpi_tag_mesg, p_comm_glb, p_err)
+            CALL mpi_send (str_print, 256, MPI_CHARACTER, p_address_master, &
+               mpi_tag_mesg, p_comm_glb, p_err)
 #endif
-            ENDIF
-#endif
-
          ENDIF
+      ENDIF
 
+      IF (p_is_master) THEN
+#ifdef USEMPI
+         CALL mpi_recv (exception, 256, MPI_CHARACTER, p_address_worker(p_root), &
+            mpi_tag_mesg, p_comm_glb, p_stat, p_err)
+         CALL mpi_recv (str_print, 256, MPI_CHARACTER, p_address_worker(p_root), &
+            mpi_tag_mesg, p_comm_glb, p_stat, p_err)
+#endif
+
+         write(*,'(A)') trim(str_print)
+
+#if (defined CoLMDEBUG)
+         IF (len_trim(exception) > 0) THEN
+            CALL CoLM_stop ()
+         ENDIF
+#endif
       ENDIF
 
    END SUBROUTINE check_vector_data_real8_3d
 
    ! ----------
-   SUBROUTINE check_vector_data_real8_4d (varname, vdata, spv_in, largevalue)
+   SUBROUTINE check_vector_data_real8_4d (varname, vdata, spv_in, limits)
 
-      USE MOD_Precision
-      USE MOD_SPMD_Task
-      IMPLICIT NONE
+   USE MOD_Precision
+   USE MOD_SPMD_Task
+   USE MOD_Vars_Global, only: spval
+   IMPLICIT NONE
 
-      CHARACTER(len=*), intent(in)   :: varname
-      REAL(r8), intent(in)           :: vdata(:,:,:,:)
-      REAL(r8), intent(in), optional :: spv_in
-      REAL(r8), intent(in), optional :: largevalue
+   character(len=*),      intent(in) :: varname
+   real(r8), allocatable, intent(in) :: vdata(:,:,:,:)
 
-      ! Local variables
-      REAL(r8) :: vmin, vmax, spv
-      REAL(r8), allocatable :: vmin_all(:), vmax_all(:)
-      INTEGER  :: i, j, k, l
-      LOGICAL  :: has_nan
-      character(len=256) :: wfmt, ss, info
+   real(r8), intent(in), optional :: spv_in
+   real(r8), intent(in), optional :: limits(2)
+
+   ! Local variables
+   real(r8) :: vmin, vmax, spv
+   real(r8), allocatable :: vmin_all(:), vmax_all(:)
+   integer  :: i, j, k, l
+   logical  :: has_nan
+   character(len=256) :: wfmt, exception, str_print
 
       IF (p_is_worker) THEN
 
          IF (present(spv_in)) THEN
             spv = spv_in
          ELSE
-            spv = -1.0e36_r8
+            spv = spval
+         ENDIF
+
+         IF (allocated(vdata)) THEN
+            IF (any(vdata /= spv)) THEN
+               vmin = minval(vdata, mask = vdata /= spv)
+               vmax = maxval(vdata, mask = vdata /= spv)
+            ELSE
+               vmin = spv
+               vmax = spv
+            ENDIF
+
+            has_nan = .false.
+            DO l = lbound(vdata,4), ubound(vdata,4)
+               DO k = lbound(vdata,3), ubound(vdata,3)
+                  DO j = lbound(vdata,2), ubound(vdata,2)
+                     DO i = lbound(vdata,1), ubound(vdata,1)
+                        has_nan = has_nan .or. isnan_ud(vdata(i,j,k,l))
+                     ENDDO
+                  ENDDO
+               ENDDO
+            ENDDO
+         ELSE
+            vmin = spv; vmax = spv
+            has_nan = .false.
+         ENDIF
+
+#ifdef USEMPI
+         IF (p_iam_worker == p_root) THEN
+            allocate (vmin_all (0:p_np_worker-1))
+            allocate (vmax_all (0:p_np_worker-1))
+            CALL mpi_gather (vmin, 1, MPI_REAL8, vmin_all, 1, MPI_REAL8, p_root, p_comm_worker, p_err)
+            CALL mpi_gather (vmax, 1, MPI_REAL8, vmax_all, 1, MPI_REAL8, p_root, p_comm_worker, p_err)
+         ELSE
+            CALL mpi_gather (vmin, 1, MPI_REAL8, MPI_RNULL_P, 1, MPI_REAL8, p_root, p_comm_worker, p_err)
+            CALL mpi_gather (vmax, 1, MPI_REAL8, MPI_RNULL_P, 1, MPI_REAL8, p_root, p_comm_worker, p_err)
+         ENDIF
+
+
+         CALL mpi_allreduce (MPI_IN_PLACE, has_nan, 1, MPI_LOGICAL, MPI_LOR, p_comm_worker, p_err)
+
+         IF (p_iam_worker == p_root) THEN
+            IF (any(vmin_all /= spv)) THEN
+               vmin = minval(vmin_all, mask = (vmin_all /= spv))
+            ELSE
+               vmin = spv
+            ENDIF
+
+            IF (any(vmax_all /= spv)) THEN
+               vmax = maxval(vmax_all, mask = (vmax_all /= spv))
+            ELSE
+               vmax = spv
+            ENDIF
+
+            deallocate (vmin_all)
+            deallocate (vmax_all)
+         ENDIF
+#endif
+
+         IF (p_iam_worker == p_root) THEN
+
+            exception = ''
+
+            IF (has_nan) THEN
+               exception = trim(exception) // ' with NAN'
+            ENDIF
+
+            IF (present(limits)) THEN
+               IF ((vmin < limits(1)) .or. (vmax > limits(2))) THEN
+                  exception = trim(exception) // ' Out of Range!'
+               ENDIF
+            ENDIF
+
+            wfmt = "('Check vector data:', A25, ' is in (', e20.10, ',', e20.10, ')', A)"
+            write(str_print,wfmt) varname, vmin, vmax, trim(exception)
+
+#ifdef USEMPI
+            CALL mpi_send (exception, 256, MPI_CHARACTER, p_address_master, &
+               mpi_tag_mesg, p_comm_glb, p_err)
+            CALL mpi_send (str_print, 256, MPI_CHARACTER, p_address_master, &
+               mpi_tag_mesg, p_comm_glb, p_err)
+#endif
+         ENDIF
+      ENDIF
+
+      IF (p_is_master) THEN
+#ifdef USEMPI
+         CALL mpi_recv (exception, 256, MPI_CHARACTER, p_address_worker(p_root), &
+            mpi_tag_mesg, p_comm_glb, p_stat, p_err)
+         CALL mpi_recv (str_print, 256, MPI_CHARACTER, p_address_worker(p_root), &
+            mpi_tag_mesg, p_comm_glb, p_stat, p_err)
+#endif
+
+         write(*,'(A)') trim(str_print)
+
+#if (defined CoLMDEBUG)
+         IF (len_trim(exception) > 0) THEN
+            CALL CoLM_stop ()
+         ENDIF
+#endif
+      ENDIF
+
+   END SUBROUTINE check_vector_data_real8_4d
+
+   
+   ! ----------
+   SUBROUTINE check_vector_data_real8_5d (varname, vdata, spv_in, limits)
+
+   USE MOD_Precision
+   USE MOD_SPMD_Task
+   USE MOD_Vars_Global, only : spval
+   IMPLICIT NONE
+
+   character(len=*), intent(in)   :: varname
+   real(r8), intent(in)           :: vdata(:,:,:,:,:)
+   real(r8), intent(in), optional :: spv_in
+   real(r8), intent(in), optional :: limits(2) 
+
+   ! Local variables
+   real(r8) :: vmin, vmax, spv
+   real(r8), allocatable :: vmin_all(:), vmax_all(:)
+   integer  :: i, j, k, l, m
+   logical  :: has_nan
+   character(len=256) :: wfmt, ss, info
+
+      IF (p_is_worker) THEN
+
+         IF (present(spv_in)) THEN
+            spv = spv_in
+         ELSE
+            spv = spval
          ENDIF
 
          IF (any(vdata /= spv)) THEN
@@ -521,11 +721,13 @@ CONTAINS
          ENDIF
 
          has_nan = .false.
-         DO l = 1, size(vdata,4)
-            DO k = 1, size(vdata,3)
-               DO j = 1, size(vdata,2)
-                  DO i = 1, size(vdata,1)
-                     has_nan = has_nan .or. isnan(vdata(i,j,k,l))
+         DO m = 1, size(vdata,5)
+            DO l = 1, size(vdata,4)
+               DO k = 1, size(vdata,3)
+                  DO j = 1, size(vdata,2)
+                     DO i = 1, size(vdata,1)
+                        has_nan = has_nan .or. isnan_ud(vdata(i,j,k,l,m))
+                     ENDDO
                   ENDDO
                ENDDO
             ENDDO
@@ -571,10 +773,9 @@ CONTAINS
                info = trim(info) // ' with NAN'
             ENDIF
 
-            IF (present(largevalue)) THEN
-               IF (max(abs(vmin),abs(vmax)) > largevalue) THEN
-                  write(ss,'(e12.2)') largevalue
-                  info = trim(info) // ' with value > ' // trim(ss)
+            IF (present(limits)) THEN
+               IF ((vmin < limits(1)) .or. (vmax > limits(2))) THEN
+                  info = trim(info) // ' Out of Range!'
                ENDIF
             ENDIF
 
@@ -583,11 +784,7 @@ CONTAINS
 
 #if(defined CoLMDEBUG)
             IF (len_trim(info) > 0) THEN
-#ifdef USEMPI
-               CALL mpi_abort (p_comm_glb, p_err)
-#else
-               STOP
-#endif
+               CALL CoLM_stop ()
             ENDIF
 #endif
 
@@ -595,68 +792,70 @@ CONTAINS
 
       ENDIF
 
-   END SUBROUTINE check_vector_data_real8_4d
+   END SUBROUTINE check_vector_data_real8_5d
+   
 
    ! ----------
    SUBROUTINE check_vector_data_int32_1d (varname, vdata, spv_in)
 
-      USE MOD_Precision
-      USE MOD_SPMD_Task
-      IMPLICIT NONE
+   USE MOD_Precision
+   USE MOD_SPMD_Task
+   IMPLICIT NONE
 
-      CHARACTER(len=*), intent(in)  :: varname
-      INTEGER, intent(in)           :: vdata(:)
-      INTEGER, intent(in), optional :: spv_in
+   character(len=*),     intent(in)  :: varname
+   integer, allocatable, intent(in)  :: vdata(:)
 
-      ! Local variables
-      INTEGER :: vmin, vmax
-      INTEGER, allocatable :: vmin_all(:), vmax_all(:)
-      character(len=256) :: wfmt
+   integer, intent(in), optional :: spv_in
+
+   ! Local variables
+   integer :: vmin, vmax
+   logical :: isnull
+   logical, allocatable :: null_all(:)
+   integer, allocatable :: vmin_all(:), vmax_all(:)
+   character(len=256) :: wfmt, str_print
 
       IF (p_is_worker) THEN
 
-         IF (present(spv_in)) THEN
-            IF (any(vdata /= spv_in)) THEN
-               vmin = minval(vdata, mask = vdata /= spv_in)
-               vmax = maxval(vdata, mask = vdata /= spv_in)
+         isnull = .not. allocated(vdata)
+
+         IF (.not. isnull) THEN
+            IF (present(spv_in)) THEN
+               IF (any(vdata /= spv_in)) THEN
+                  vmin = minval(vdata, mask = vdata /= spv_in)
+                  vmax = maxval(vdata, mask = vdata /= spv_in)
+               ELSE
+                  vmin = spv_in
+                  vmax = spv_in
+               ENDIF
             ELSE
-               vmin = spv_in
-               vmax = spv_in
+               vmin = minval(vdata)
+               vmax = maxval(vdata)
             ENDIF
-         ELSE
-            vmin = minval(vdata)
-            vmax = maxval(vdata)
          ENDIF
 
 #ifdef USEMPI
          IF (p_iam_worker == p_root) THEN
+            allocate (null_all (0:p_np_worker-1))
             allocate (vmin_all (0:p_np_worker-1))
             allocate (vmax_all (0:p_np_worker-1))
-            CALL mpi_gather (vmin, 1, MPI_INTEGER, vmin_all, 1, MPI_INTEGER, p_root, p_comm_worker, p_err)
-            CALL mpi_gather (vmax, 1, MPI_INTEGER, vmax_all, 1, MPI_INTEGER, p_root, p_comm_worker, p_err)
+            CALL mpi_gather (isnull, 1, MPI_LOGICAL, null_all, 1, MPI_LOGICAL, p_root, p_comm_worker, p_err)
+            CALL mpi_gather (vmin,   1, MPI_INTEGER, vmin_all, 1, MPI_INTEGER, p_root, p_comm_worker, p_err)
+            CALL mpi_gather (vmax,   1, MPI_INTEGER, vmax_all, 1, MPI_INTEGER, p_root, p_comm_worker, p_err)
          ELSE
-            CALL mpi_gather (vmin, 1, MPI_INTEGER, MPI_INULL_P, 1, MPI_INTEGER, p_root, p_comm_worker, p_err)
-            CALL mpi_gather (vmax, 1, MPI_INTEGER, MPI_INULL_P, 1, MPI_INTEGER, p_root, p_comm_worker, p_err)
+            CALL mpi_gather (isnull, 1, MPI_LOGICAL, MPI_LNULL_P, 1, MPI_LOGICAL, p_root, p_comm_worker, p_err)
+            CALL mpi_gather (vmin,   1, MPI_INTEGER, MPI_INULL_P, 1, MPI_INTEGER, p_root, p_comm_worker, p_err)
+            CALL mpi_gather (vmax,   1, MPI_INTEGER, MPI_INULL_P, 1, MPI_INTEGER, p_root, p_comm_worker, p_err)
          ENDIF
 
          IF (p_iam_worker == p_root) THEN
             IF (present(spv_in)) THEN
-               IF (any(vmin_all /= spv_in)) THEN
-                  vmin = minval(vmin_all, mask = (vmin_all /= spv_in))
-               ELSE
-                  vmin = spv_in
-               ENDIF
-
-               IF (any(vmax_all /= spv_in)) THEN
-                  vmax = maxval(vmax_all, mask = (vmax_all /= spv_in))
-               ELSE
-                  vmax = spv_in
-               ENDIF
-            ELSE
-               vmin = minval(vmin_all)
-               vmax = maxval(vmax_all)
+               null_all = null_all .and. (vmin_all == spv_in)
             ENDIF
 
+            vmin = minval(vmin_all, mask = .not. null_all)
+            vmax = maxval(vmax_all, mask = .not. null_all)
+
+            deallocate (null_all)
             deallocate (vmin_all)
             deallocate (vmax_all)
          ENDIF
@@ -664,9 +863,20 @@ CONTAINS
 
          IF (p_iam_worker == p_root) THEN
             wfmt = "('Check vector data:', A25, ' is in (', I20, ',', I20, ')')"
-            write(*,wfmt) varname, vmin, vmax
+            write(str_print,wfmt) varname, vmin, vmax
+#ifdef USEMPI
+            CALL mpi_send (str_print, 256, MPI_CHARACTER, p_address_master, &
+               mpi_tag_mesg, p_comm_glb, p_err)
+#endif
          ENDIF
+      ENDIF
 
+      IF (p_is_master) THEN
+#ifdef USEMPI
+         CALL mpi_recv (str_print, 256, MPI_CHARACTER, p_address_worker(p_root), &
+            mpi_tag_mesg, p_comm_glb, p_stat, p_err)
+#endif
+         write(*,'(A)') trim(str_print)
       ENDIF
 
    END SUBROUTINE check_vector_data_int32_1d

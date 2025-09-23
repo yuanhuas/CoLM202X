@@ -1,22 +1,22 @@
 #include <define.h>
 
 #if (defined UNSTRUCTURED || defined CATCHMENT)
-module MOD_HistVector
+MODULE MOD_HistVector
 
-   !----------------------------------------------------------------------------
-   ! DESCRIPTION:
-   ! 
-   !     Write out vectorized model results to history files.
-   !
-   ! Created by Shupeng Zhang, May 2023
-   !
-   ! TODO...(need complement)
-   !----------------------------------------------------------------------------
+!----------------------------------------------------------------------------
+! !DESCRIPTION:
+!
+!     Write out vectorized model results to history files.
+!
+!  Created by Shupeng Zhang, May 2023
+!
+!  TODO...(need complement)
+!----------------------------------------------------------------------------
 
-   use MOD_Precision
+   USE MOD_Precision
    USE MOD_SPMD_Task
    USE MOD_Namelist
-   USE MOD_Vars_Global, only : spval
+   USE MOD_Vars_Global, only: spval
    USE MOD_Mesh
    USE MOD_LandElm
 #ifdef CATCHMENT
@@ -30,15 +30,15 @@ module MOD_HistVector
    USE MOD_ElmVector
 #endif
 
-contains
-! ----- subroutines ------
+CONTAINS
 
    ! -- write history time --
-   SUBROUTINE hist_vector_write_time (filename, dataname, time, itime_in_file)
-      
+   SUBROUTINE hist_vector_write_time (filename, filelast, dataname, time, itime_in_file)
+
       IMPLICIT NONE
-      
+
       character (len=*), intent(in) :: filename
+      character (len=*), intent(in) :: filelast
       character (len=*), intent(in) :: dataname
       integer, intent(in)  :: time(3)
       integer, intent(out) :: itime_in_file
@@ -46,49 +46,51 @@ contains
       ! Local Variables
       logical :: fexists
 
-      if (p_is_master) then
+      IF (p_is_master) THEN
 
          inquire (file=filename, exist=fexists)
-         if (.not. fexists) then
-            call ncio_create_file (trim(filename))
+         IF ((.not. fexists) .or. (trim(filename) /= trim(filelast))) THEN
+            CALL ncio_create_file (trim(filename))
             CALL ncio_define_dimension(filename, 'time', 0)
 
 #ifdef CATCHMENT
-            call ncio_define_dimension(filename, 'hydrounit', totalnumhru)
+            CALL ncio_define_dimension(filename, 'hydrounit', totalnumhru)
 
-            call ncio_write_serial (filename, 'bsn_hru', eindx_hru, 'hydrounit')
+            CALL ncio_write_serial (filename, 'bsn_hru', eindx_hru, 'hydrounit')
             CALL ncio_put_attr (filename, 'bsn_hru', 'long_name', &
                'basin index of hydrological units in mesh')
 
-            call ncio_write_serial (filename, 'typ_hru' , htype_hru, 'hydrounit')
+            CALL ncio_write_serial (filename, 'typ_hru' , htype_hru, 'hydrounit')
             CALL ncio_put_attr (filename, 'typ_hru' , 'long_name', &
                'index of hydrological units inside basin')
 #else
-            call ncio_define_dimension(filename, 'element', totalnumelm)
-            call ncio_write_serial (filename, 'elmindex', eindex_glb, 'element')
+            CALL ncio_define_dimension(filename, 'element', totalnumelm)
+            CALL ncio_write_serial (filename, 'elmindex', eindex_glb, 'element')
             CALL ncio_put_attr (filename, 'elmindex', 'long_name', &
                'element index in mesh')
 #endif
-         endif
 
-         call ncio_write_time (filename, dataname, time, itime_in_file, DEF_HIST_FREQ)
+            CALL ncio_write_colm_dimension (filename)
+
+         ENDIF
+
+         CALL ncio_write_time (filename, dataname, time, itime_in_file, DEF_HIST_FREQ)
 
       ENDIF
 
-   END SUBROUTINE hist_vector_write_time 
+   END SUBROUTINE hist_vector_write_time
 
-   ! -------
-   subroutine aggregate_to_vector_and_write_2d ( &
+
+   SUBROUTINE aggregate_to_vector_and_write_2d ( &
          acc_vec_patch, file_hist, varname, itime_in_file, filter, &
          longname, units)
 
-      use MOD_Precision
-      use MOD_SPMD_Task
-      use MOD_Namelist
+      USE MOD_Precision
+      USE MOD_SPMD_Task
+      USE MOD_Namelist
       USE MOD_LandPatch
-      use MOD_Vars_1DAccFluxes,  only: nac
-      use MOD_Vars_Global, only: spval
-      implicit none
+      USE MOD_Vars_Global, only: spval
+      IMPLICIT NONE
 
       real(r8), intent(in) :: acc_vec_patch (:)
       character(len=*), intent(in) :: file_hist
@@ -100,17 +102,17 @@ contains
       character(len=*), intent(in) :: units
 
       ! Local variables
-      INTEGER :: numset, totalnumset, iset, istt, iend, iwork, mesg(2), isrc, ndata, compress
-      LOGICAL,  allocatable :: mask(:)
-      REAL(r8), allocatable :: frac(:)
-      REAL(r8), allocatable :: acc_vec(:), rcache(:)
-      REAL(r8) :: sumwt
+      integer :: numset, totalnumset, iset, istt, iend, iwork, mesg(2), isrc, ndata, compress
+      logical,  allocatable :: mask(:)
+      real(r8), allocatable :: frac(:)
+      real(r8), allocatable :: acc_vec(:), rcache(:)
+      real(r8) :: sumwt
 
 #ifdef USEMPI
       CALL mpi_barrier (p_comm_glb, p_err)
 #endif
 
-      if (p_is_worker) then
+      IF (p_is_worker) THEN
 #ifdef CATCHMENT
          numset = numhru
 #else
@@ -143,20 +145,20 @@ contains
 #endif
                      sumwt = sum(frac, mask = mask)
                      acc_vec(iset) = sum(frac * acc_vec_patch(istt:iend), mask = mask)
-                     acc_vec(iset) = acc_vec(iset) / sumwt / nac
+                     acc_vec(iset) = acc_vec(iset) / sumwt
                   ENDIF
                   deallocate(mask)
                   deallocate(frac)
                ENDIF
             ENDDO
-         end if
+         ENDIF
 
 #ifdef USEMPI
          mesg = (/p_iam_glb, numset/)
-         call mpi_send (mesg, 2, MPI_INTEGER, p_root, mpi_tag_mesg, p_comm_glb, p_err)
+         CALL mpi_send (mesg, 2, MPI_INTEGER, p_address_master, mpi_tag_mesg, p_comm_glb, p_err)
          IF (numset > 0) THEN
-            call mpi_send (acc_vec, numset, MPI_REAL8, &
-               p_root, mpi_tag_data, p_comm_glb, p_err)
+            CALL mpi_send (acc_vec, numset, MPI_REAL8, &
+               p_address_master, mpi_tag_data, p_comm_glb, p_err)
          ENDIF
 #endif
       ENDIF
@@ -175,14 +177,14 @@ contains
 
 #ifdef USEMPI
          DO iwork = 0, p_np_worker-1
-            call mpi_recv (mesg, 2, MPI_INTEGER, MPI_ANY_SOURCE, &
+            CALL mpi_recv (mesg, 2, MPI_INTEGER, MPI_ANY_SOURCE, &
                mpi_tag_mesg, p_comm_glb, p_stat, p_err)
 
             isrc  = mesg(1)
             ndata = mesg(2)
             IF (ndata > 0) THEN
                allocate(rcache (ndata))
-               call mpi_recv (rcache, ndata, MPI_REAL8, isrc, &
+               CALL mpi_recv (rcache, ndata, MPI_REAL8, isrc, &
                   mpi_tag_data, p_comm_glb, p_stat, p_err)
 
 #ifdef CATCHMENT
@@ -205,16 +207,16 @@ contains
 
       IF (p_is_master) THEN
 
-         compress = DEF_HIST_COMPRESS_LEVEL
+         compress = DEF_HIST_CompressLevel
 #ifdef CATCHMENT
-         call ncio_write_serial_time (file_hist, varname, itime_in_file, acc_vec, &
+         CALL ncio_write_serial_time (file_hist, varname, itime_in_file, acc_vec, &
             'hydrounit', 'time', compress)
 #else
-         call ncio_write_serial_time (file_hist, varname, itime_in_file, acc_vec, &
+         CALL ncio_write_serial_time (file_hist, varname, itime_in_file, acc_vec, &
             'element', 'time', compress)
 #endif
 
-         IF (itime_in_file == 1) then
+         IF (itime_in_file == 1) THEN
             CALL ncio_put_attr (file_hist, varname, 'long_name', longname)
             CALL ncio_put_attr (file_hist, varname, 'units', units)
             CALL ncio_put_attr (file_hist, varname, 'missing_value', spval)
@@ -228,22 +230,22 @@ contains
       CALL mpi_barrier (p_comm_glb, p_err)
 #endif
 
-   end subroutine aggregate_to_vector_and_write_2d
+   END SUBROUTINE aggregate_to_vector_and_write_2d
 
-   ! -------
-   subroutine aggregate_to_vector_and_write_3d ( &
+
+   SUBROUTINE aggregate_to_vector_and_write_3d ( &
          acc_vec_patch, file_hist, varname, itime_in_file, dim1name, lb1, ndim1, filter, &
          longname, units)
 
-      use MOD_Precision
-      use MOD_SPMD_Task
-      use MOD_Namelist
+      USE MOD_Precision
+      USE MOD_SPMD_Task
+      USE MOD_Namelist
       USE MOD_LandPatch
-      use MOD_Vars_1DAccFluxes,  only: nac
-      use MOD_Vars_Global, only: spval
-      implicit none
+      USE MOD_Vars_1DAccFluxes,  only: nac
+      USE MOD_Vars_Global, only: spval
+      IMPLICIT NONE
 
-      real(r8), intent(in) :: acc_vec_patch (:,:)
+      real(r8), intent(in) :: acc_vec_patch (lb1:,:)
       character(len=*), intent(in) :: file_hist
       character(len=*), intent(in) :: varname
       integer,          intent(in) :: itime_in_file
@@ -256,20 +258,20 @@ contains
       character(len=*), intent(in) :: units
 
       ! Local variables
-      INTEGER :: numset, totalnumset, iset, istt, iend, iwork, mesg(2), isrc, ndata, compress
-      INTEGER :: ub1, i1
-      LOGICAL,  allocatable :: mask(:)
-      REAL(r8), allocatable :: frac(:)
-      REAL(r8), allocatable :: acc_vec(:,:), rcache(:,:)
-      REAL(r8) :: sumwt
+      integer :: numset, totalnumset, iset, istt, iend, iwork, mesg(2), isrc, ndata, compress
+      integer :: ub1, i1
+      logical,  allocatable :: mask(:)
+      real(r8), allocatable :: frac(:)
+      real(r8), allocatable :: acc_vec(:,:), rcache(:,:)
+      real(r8) :: sumwt
 
 #ifdef USEMPI
       CALL mpi_barrier (p_comm_glb, p_err)
 #endif
-            
+
       ub1 = lb1 + ndim1 - 1
 
-      if (p_is_worker) then
+      IF (p_is_worker) THEN
 #ifdef CATCHMENT
          numset = numhru
 #else
@@ -311,14 +313,14 @@ contains
                   deallocate(frac)
                ENDIF
             ENDDO
-         end if
+         ENDIF
 
 #ifdef USEMPI
          mesg = (/p_iam_glb, numset/)
-         call mpi_send (mesg, 2, MPI_INTEGER, p_root, mpi_tag_mesg, p_comm_glb, p_err)
+         CALL mpi_send (mesg, 2, MPI_INTEGER, p_address_master, mpi_tag_mesg, p_comm_glb, p_err)
          IF (numset > 0) THEN
-            call mpi_send (acc_vec, ndim1 * numset, MPI_REAL8, &
-               p_root, mpi_tag_data, p_comm_glb, p_err)
+            CALL mpi_send (acc_vec, ndim1 * numset, MPI_REAL8, &
+               p_address_master, mpi_tag_data, p_comm_glb, p_err)
          ENDIF
 #endif
       ENDIF
@@ -337,14 +339,14 @@ contains
 
 #ifdef USEMPI
          DO iwork = 0, p_np_worker-1
-            call mpi_recv (mesg, 2, MPI_INTEGER, MPI_ANY_SOURCE, &
+            CALL mpi_recv (mesg, 2, MPI_INTEGER, MPI_ANY_SOURCE, &
                mpi_tag_mesg, p_comm_glb, p_stat, p_err)
 
             isrc  = mesg(1)
             ndata = mesg(2)
             IF (ndata > 0) THEN
                allocate(rcache (ndim1,ndata))
-               call mpi_recv (rcache, ndim1*ndata, MPI_REAL8, isrc, &
+               CALL mpi_recv (rcache, ndim1*ndata, MPI_REAL8, isrc, &
                   mpi_tag_data, p_comm_glb, p_stat, p_err)
 
                DO i1 = 1, ndim1
@@ -372,18 +374,18 @@ contains
 
       IF (p_is_master) THEN
 
-         call ncio_define_dimension (file_hist, dim1name, ndim1)
+         CALL ncio_define_dimension (file_hist, dim1name, ndim1)
 
-         compress = DEF_HIST_COMPRESS_LEVEL
+         compress = DEF_HIST_CompressLevel
 #ifdef CATCHMENT
-         call ncio_write_serial_time (file_hist, varname, itime_in_file, acc_vec, &
+         CALL ncio_write_serial_time (file_hist, varname, itime_in_file, acc_vec, &
             dim1name, 'hydrounit', 'time', compress)
 #else
-         call ncio_write_serial_time (file_hist, varname, itime_in_file, acc_vec, &
+         CALL ncio_write_serial_time (file_hist, varname, itime_in_file, acc_vec, &
             dim1name, 'element', 'time', compress)
 #endif
 
-         IF (itime_in_file == 1) then
+         IF (itime_in_file == 1) THEN
             CALL ncio_put_attr (file_hist, varname, 'long_name', longname)
             CALL ncio_put_attr (file_hist, varname, 'units', units)
             CALL ncio_put_attr (file_hist, varname, 'missing_value', spval)
@@ -397,23 +399,22 @@ contains
       CALL mpi_barrier (p_comm_glb, p_err)
 #endif
 
-   end subroutine aggregate_to_vector_and_write_3d
+   END SUBROUTINE aggregate_to_vector_and_write_3d
 
-   ! -------
-   subroutine aggregate_to_vector_and_write_4d ( &
+
+   SUBROUTINE aggregate_to_vector_and_write_4d ( &
          acc_vec_patch, file_hist, varname, itime_in_file,   &
          dim1name, lb1, ndim1, dim2name, lb2, ndim2, filter, &
          longname, units)
 
-      use MOD_Precision
-      use MOD_SPMD_Task
-      use MOD_Namelist
+      USE MOD_Precision
+      USE MOD_SPMD_Task
+      USE MOD_Namelist
       USE MOD_LandPatch
-      use MOD_Vars_1DAccFluxes,  only: nac
-      use MOD_Vars_Global, only: spval
-      implicit none
+      USE MOD_Vars_Global, only: spval
+      IMPLICIT NONE
 
-      real(r8), intent(in) :: acc_vec_patch (:,:,:)
+      real(r8), intent(in) :: acc_vec_patch (lb1:,lb2:,:)
       character(len=*), intent(in) :: file_hist
       character(len=*), intent(in) :: varname
       integer,          intent(in) :: itime_in_file
@@ -426,12 +427,12 @@ contains
       character(len=*), intent(in) :: units
 
       ! Local variables
-      INTEGER :: numset, totalnumset, iset, istt, iend, iwork, mesg(2), isrc, ndata, compress
-      INTEGER :: ub1, i1, ub2, i2
-      LOGICAL,  allocatable :: mask(:)
-      REAL(r8), allocatable :: frac(:)
-      REAL(r8), allocatable :: acc_vec(:,:,:), rcache(:,:,:)
-      REAL(r8) :: sumwt
+      integer :: numset, totalnumset, iset, istt, iend, iwork, mesg(2), isrc, ndata, compress
+      integer :: ub1, i1, ub2, i2
+      logical,  allocatable :: mask(:)
+      real(r8), allocatable :: frac(:)
+      real(r8), allocatable :: acc_vec(:,:,:), rcache(:,:,:)
+      real(r8) :: sumwt
 
 #ifdef USEMPI
       CALL mpi_barrier (p_comm_glb, p_err)
@@ -440,7 +441,7 @@ contains
       ub1 = lb1 + ndim1 - 1
       ub2 = lb2 + ndim2 - 1
 
-      if (p_is_worker) then
+      IF (p_is_worker) THEN
 #ifdef CATCHMENT
          numset = numhru
 #else
@@ -476,7 +477,7 @@ contains
 #endif
                            sumwt = sum(frac, mask = mask)
                            acc_vec(i1,i2,iset) = sum(frac * acc_vec_patch(i1,i2,istt:iend), mask = mask)
-                           acc_vec(i1,i2,iset) = acc_vec(i1,i2,iset) / sumwt / nac
+                           acc_vec(i1,i2,iset) = acc_vec(i1,i2,iset) / sumwt
                         ENDIF
                      ENDDO
                   ENDDO
@@ -484,14 +485,14 @@ contains
                   deallocate(frac)
                ENDIF
             ENDDO
-         end if
+         ENDIF
 
 #ifdef USEMPI
          mesg = (/p_iam_glb, numset/)
-         call mpi_send (mesg, 2, MPI_INTEGER, p_root, mpi_tag_mesg, p_comm_glb, p_err)
+         CALL mpi_send (mesg, 2, MPI_INTEGER, p_address_master, mpi_tag_mesg, p_comm_glb, p_err)
          IF (numset > 0) THEN
-            call mpi_send (acc_vec, ndim1 * ndim2 * numset, MPI_REAL8, &
-               p_root, mpi_tag_data, p_comm_glb, p_err)
+            CALL mpi_send (acc_vec, ndim1 * ndim2 * numset, MPI_REAL8, &
+               p_address_master, mpi_tag_data, p_comm_glb, p_err)
          ENDIF
 #endif
       ENDIF
@@ -510,14 +511,14 @@ contains
 
 #ifdef USEMPI
          DO iwork = 0, p_np_worker-1
-            call mpi_recv (mesg, 2, MPI_INTEGER, MPI_ANY_SOURCE, &
+            CALL mpi_recv (mesg, 2, MPI_INTEGER, MPI_ANY_SOURCE, &
                mpi_tag_mesg, p_comm_glb, p_stat, p_err)
 
             isrc  = mesg(1)
             ndata = mesg(2)
             IF (ndata > 0) THEN
                allocate(rcache (ndim1,ndim2,ndata))
-               call mpi_recv (rcache, ndim1 * ndim2 * ndata, MPI_REAL8, isrc, &
+               CALL mpi_recv (rcache, ndim1 * ndim2 * ndata, MPI_REAL8, isrc, &
                   mpi_tag_data, p_comm_glb, p_stat, p_err)
 
                DO i1 = 1, ndim1
@@ -548,19 +549,19 @@ contains
 
       IF (p_is_master) THEN
 
-         call ncio_define_dimension (file_hist, dim1name, ndim1)
-         call ncio_define_dimension (file_hist, dim2name, ndim2)
+         CALL ncio_define_dimension (file_hist, dim1name, ndim1)
+         CALL ncio_define_dimension (file_hist, dim2name, ndim2)
 
-         compress = DEF_HIST_COMPRESS_LEVEL
+         compress = DEF_HIST_CompressLevel
 #ifdef CATCHMENT
-         call ncio_write_serial_time (file_hist, varname, itime_in_file, acc_vec, &
+         CALL ncio_write_serial_time (file_hist, varname, itime_in_file, acc_vec, &
             dim1name, dim2name, 'hydrounit', 'time', compress)
 #else
-         call ncio_write_serial_time (file_hist, varname, itime_in_file, acc_vec, &
+         CALL ncio_write_serial_time (file_hist, varname, itime_in_file, acc_vec, &
             dim1name, dim2name, 'element', 'time', compress)
 #endif
 
-         IF (itime_in_file == 1) then
+         IF (itime_in_file == 1) THEN
             CALL ncio_put_attr (file_hist, varname, 'long_name', longname)
             CALL ncio_put_attr (file_hist, varname, 'units', units)
             CALL ncio_put_attr (file_hist, varname, 'missing_value', spval)
@@ -574,160 +575,8 @@ contains
       CALL mpi_barrier (p_comm_glb, p_err)
 #endif
 
-   end subroutine aggregate_to_vector_and_write_4d
+   END SUBROUTINE aggregate_to_vector_and_write_4d
 
-   ! -------
-   subroutine aggregate_to_vector_and_write_ln ( &
-         acc_vec_patch, file_hist, varname, itime_in_file, filter, &
-         longname, units)
 
-      use MOD_Precision
-      use MOD_SPMD_Task
-      use MOD_Namelist
-      USE MOD_LandPatch
-      use MOD_Vars_1DAccFluxes,  only: nac_ln
-      use MOD_Vars_Global, only: spval
-      implicit none
-
-      real(r8), intent(in) :: acc_vec_patch (:)
-      character(len=*), intent(in) :: file_hist
-      character(len=*), intent(in) :: varname
-      integer,          intent(in) :: itime_in_file
-      logical, intent(in) :: filter(:)
-
-      character(len=*), intent(in) :: longname
-      character(len=*), intent(in) :: units
-
-      ! Local variables
-      INTEGER :: numset, totalnumset, iset, istt, iend, iwork, mesg(2), isrc, ndata, compress
-      LOGICAL,  allocatable :: mask(:)
-      REAL(r8), allocatable :: frac(:)
-      REAL(r8), allocatable :: acc_vec(:), rcache(:)
-      REAL(r8) :: sumwt
-
-#ifdef USEMPI
-      CALL mpi_barrier (p_comm_glb, p_err)
-#endif
-
-      if (p_is_worker) then
-#ifdef CATCHMENT
-         numset = numhru
-#else
-         numset = numelm
-#endif
-
-         IF (numset > 0) THEN
-
-            allocate (acc_vec (numset))
-            acc_vec(:) = spval
-
-            DO iset = 1, numset
-#ifdef CATCHMENT
-               istt = hru_patch%substt(iset)
-               iend = hru_patch%subend(iset)
-#else
-               istt = elm_patch%substt(iset)
-               iend = elm_patch%subend(iset)
-#endif
-
-               IF ((istt > 0) .and. (iend >= istt)) THEN
-                  allocate (mask(istt:iend))
-                  allocate (frac(istt:iend))
-                  mask = (acc_vec_patch(istt:iend) /= spval) .and. filter(istt:iend) .and. (nac_ln > 0)
-                  IF (any(mask)) THEN
-#ifdef CATCHMENT
-                     frac = hru_patch%subfrc(istt:iend)
-#else
-                     frac = elm_patch%subfrc(istt:iend)
-#endif
-                     sumwt = sum(frac, mask = mask)
-                     acc_vec(iset) = sum(frac * acc_vec_patch(istt:iend) / nac_ln(istt:iend), mask = mask)
-                     acc_vec(iset) = acc_vec(iset) / sumwt
-                  ENDIF
-                  deallocate(mask)
-                  deallocate(frac)
-               ENDIF
-            ENDDO
-         end if
-
-#ifdef USEMPI
-         mesg = (/p_iam_glb, numset/)
-         call mpi_send (mesg, 2, MPI_INTEGER, p_root, mpi_tag_mesg, p_comm_glb, p_err)
-         IF (numset > 0) THEN
-            call mpi_send (acc_vec, numset, MPI_REAL8, &
-               p_root, mpi_tag_data, p_comm_glb, p_err)
-         ENDIF
-#endif
-      ENDIF
-
-      IF (p_is_master) THEN
-
-#ifdef CATCHMENT
-         totalnumset = totalnumhru
-#else
-         totalnumset = totalnumelm
-#endif
-
-         IF (.not. allocated(acc_vec)) THEN
-            allocate (acc_vec (totalnumset))
-         ENDIF
-
-#ifdef USEMPI
-         DO iwork = 0, p_np_worker-1
-            call mpi_recv (mesg, 2, MPI_INTEGER, MPI_ANY_SOURCE, &
-               mpi_tag_mesg, p_comm_glb, p_stat, p_err)
-
-            isrc  = mesg(1)
-            ndata = mesg(2)
-            IF (ndata > 0) THEN
-               allocate(rcache (ndata))
-               call mpi_recv (rcache, ndata, MPI_REAL8, isrc, &
-                  mpi_tag_data, p_comm_glb, p_stat, p_err)
-
-#ifdef CATCHMENT
-               acc_vec(hru_data_address(p_itis_worker(isrc))%val) = rcache
-#else
-               acc_vec(elm_data_address(p_itis_worker(isrc))%val) = rcache
-#endif
-
-               deallocate (rcache)
-            ENDIF
-         ENDDO
-#else
-#ifdef CATCHMENT
-         acc_vec(hru_data_address(0)%val) = acc_vec
-#else
-         acc_vec(elm_data_address(0)%val) = acc_vec
-#endif
-#endif
-      ENDIF
-
-      IF (p_is_master) THEN
-
-         compress = DEF_HIST_COMPRESS_LEVEL
-#ifdef CATCHMENT
-         call ncio_write_serial_time (file_hist, varname, itime_in_file, acc_vec, &
-            'hydrounit', 'time', compress)
-#else
-         call ncio_write_serial_time (file_hist, varname, itime_in_file, acc_vec, &
-            'element', 'time', compress)
-#endif
-
-         IF (itime_in_file == 1) then
-            CALL ncio_put_attr (file_hist, varname, 'long_name', longname)
-            CALL ncio_put_attr (file_hist, varname, 'units', units)
-            CALL ncio_put_attr (file_hist, varname, 'missing_value', spval)
-         ENDIF
-
-      ENDIF
-
-      IF (allocated(acc_vec)) deallocate (acc_vec)
-
-#ifdef USEMPI
-      CALL mpi_barrier (p_comm_glb, p_err)
-#endif
-
-   end subroutine aggregate_to_vector_and_write_ln
-
-end module MOD_HistVector
+END MODULE MOD_HistVector
 #endif

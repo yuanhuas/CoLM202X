@@ -5,3 +5,9 @@ run/log_CaMa.txt
 __pycache__
 *.o
 *.mod
+.vscode
+.bld
+lib
+*.a
+*.x
+*.log

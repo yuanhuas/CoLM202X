@@ -4,19 +4,20 @@ MODULE MOD_Const_LC
 
 !-----------------------------------------------------------------------
 ! !DESCRIPTION:
-! Constant values set for land cover types
+!  Constant values set for land cover types
 !
-! Created by Hua Yuan, 08/2019
+!  Created by Hua Yuan, 08/2019
 !
-! REVISIONS:
-! Hua Yuan, 08/2019: initial version adapted from IniTimeConst.F90 of CoLM2014
-! Hua Yuan, 08/2019: added constants values for IGBP land cover types
-! TODO...
+! !REVISIONS:
+!  08/2019, Hua Yuan: initial version adapted from IniTimeConst.F90 of CoLM2014
+!  08/2019, Hua Yuan: added constants values for IGBP land cover types
+!  05/2023, Xingjie Lu: added Plant Hydraulics Parameters
 !
+!-----------------------------------------------------------------------
 ! !USES:
    USE MOD_Precision
    USE MOD_Vars_Global
-   USE MOD_Namelist, only : DEF_USE_PLANTHYDRAULICS
+   USE MOD_Namelist, only: DEF_USE_PLANTHYDRAULICS
 
    IMPLICIT NONE
    SAVE
@@ -24,7 +25,7 @@ MODULE MOD_Const_LC
 #ifdef LULC_USGS
 
 ! GLCC USGS Land Use/Land Cover System Legend
-!---------------------------
+!-----------------------------------------------------------------------
 ! 0  Ocean
 ! 1  Urban and Built-Up Land
 ! 2  Dryland Cropland and Pasture
@@ -51,6 +52,33 @@ MODULE MOD_Const_LC
 !23  Bare Ground Tundra
 !24  Snow or Ice
 
+   character(len=256) :: patchclassname (0:N_land_classification) = &
+      (/'0 Ocean                                       ', &
+        '1 Urban and Built-Up Land                     ', &
+        '2 Dryland Cropland and Pasture                ', &
+        '3 Irrigated Cropland and Pasture              ', &
+        '4 Mixed Dryland/Irrigated Cropland and Pasture', &
+        '5 Cropland/Grassland Mosaic                   ', &
+        '6 Cropland/Woodland Mosaic                    ', &
+        '7 Grassland                                   ', &
+        '8 Shrubland                                   ', &
+        '9 Mixed Shrubland/Grassland                   ', &
+        '10 Savanna                                    ', &
+        '11 Deciduous Broadleaf Forest                 ', &
+        '12 Deciduous Needleleaf Forest                ', &
+        '13 Evergreen Broadleaf Forest                 ', &
+        '14 Evergreen Needleleaf Forest                ', &
+        '15 Mixed Forest                               ', &
+        '16 Inland Water                               ', &
+        '17 Herbaceous Wetland                         ', &
+        '18 Wooded Wetland                             ', &
+        '19 Barren or Sparsely Vegetated               ', &
+        '20 Herbaceous Tundra                          ', &
+        '21 Wooded Tundra                              ', &
+        '22 Mixed Tundra                               ', &
+        '23 Bare Ground Tundra                         ', &
+        '24 Snow or Ice                                '/)
+
    ! land patch types
    ! 0: soil, 1: urban, 2: wetland, 3: ice, 4: lake
    integer , parameter, dimension(N_land_classification) :: patchtypes_usgs &
@@ -63,19 +91,19 @@ MODULE MOD_Const_LC
    !NOTE: woody wetland 35m?
    ! shrub land 0.5m? grass like land 1m? all set to 0.5
    real(r8), parameter, dimension(N_land_classification) :: htop0_usgs &
-      !=(/ 1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   0.5,&
-      !    0.5,   1.0,  20.0,  17.0,  35.0,  17.0,  20.0,   1.0,&
-      !    1.0,  35.0,   0.5,   1.0,   1.0,   1.0,   1.0,   1.0/)
+     !=(/ 1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   0.5,&
+     !    0.5,   1.0,  20.0,  17.0,  35.0,  17.0,  20.0,   1.0,&
+     !    1.0,  35.0,   0.5,   1.0,   1.0,   1.0,   1.0,   1.0/)
       =(/ 1.0,   0.5,   0.5,   0.5,   0.5,   0.5,   0.5,   0.5,&
           0.5,   0.5,  20.0,  17.0,  35.0,  17.0,  20.0,   0.5,&
           0.5,  17.0,   0.5,   0.5,   0.5,   0.5,   0.5,   0.5/)
 
    ! Look-up table canopy bottom height
+   ! 01/06/2020, yuan: adjust hbot: grass/shrub -> 0, tree->1
    real(r8), parameter, dimension(N_land_classification) :: hbot0_usgs &
-! 01/06/2020, yuan: adjust hbop: grass/shrub -> 0, tree->1
-      !=(/0.01,  0.01,  0.01,  0.01,  0.01,  0.01,  0.01,   0.1,&
-      !    0.1,   0.1,  11.5,   8.5,   1.0,   8.5,  10.0,   0.1,&
-      !    0.1,   1.0,   0.1,  0.01,  0.01,  0.01,  0.01,   0.01/)
+     !=(/0.01,  0.01,  0.01,  0.01,  0.01,  0.01,  0.01,   0.1,&
+     !    0.1,   0.1,  11.5,   8.5,   1.0,   8.5,  10.0,   0.1,&
+     !    0.1,   1.0,   0.1,  0.01,  0.01,  0.01,  0.01,   0.01/)
       =(/ 0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,&
           0.0,   0.0,   1.0,   1.0,   1.0,   1.0,   1.0,   0.0,&
           0.0,   1.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0/)
@@ -87,9 +115,9 @@ MODULE MOD_Const_LC
    ! Look-up table stem area index
    !NOTE: now read from input NetCDF file
    real(r8), parameter, dimension(N_land_classification) :: sai0_usgs &
-      !=(/0.2, 0.2, 0.3, 0.3, 0.5, 0.5, 1.0, 0.5,&
-      !   1.0, 0.5, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0,&
-      !   2.0, 2.0, 0.0, 0.1, 0.1, 0.1, 0.0, 0.0/)
+     !=(/0.2, 0.2, 0.3, 0.3, 0.5, 0.5, 1.0, 0.5,&
+     !   1.0, 0.5, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0,&
+     !   2.0, 2.0, 0.0, 0.1, 0.1, 0.1, 0.0, 0.0/)
       =(/0.2, 0.2, 0.3, 0.3, 0.5, 0.5, 1.0, 0.5,&
          1.0, 0.5, 2.0, 2.0, 2.0, 2.0, 2.0, 0.0,&
          0.2, 2.0, 0.2, 0.2, 0.2, 0.2, 0.0, 0.0/)
@@ -109,13 +137,13 @@ MODULE MOD_Const_LC
            0.010, -0.300,  0.250,  0.010,  0.100,  0.010,  0.125, -0.300,&
           -0.300,  0.100,  0.010, -0.300, -0.300, -0.300, -0.300, -0.300/)
 
-   ! reflectance of green leaf in virsible band
+   ! reflectance of green leaf in visible band
    real(r8), parameter, dimension(N_land_classification) :: rhol_vis_usgs &
       = (/0.105,  0.105,  0.105,  0.105,  0.105,  0.105,  0.105,  0.100,&
           0.100,  0.105,  0.100,  0.070,  0.100,  0.070,  0.070,  0.105,&
           0.105,  0.100,  0.100,  0.105,  0.105,  0.105,  0.105,  0.105/)
 
-   ! reflectance of dead leaf in virsible band
+   ! reflectance of dead leaf in visible band
    real(r8), parameter, dimension(N_land_classification) :: rhos_vis_usgs &
       = (/0.360,  0.360,  0.360,  0.360,  0.360,  0.360,  0.360,  0.160,&
           0.160,  0.360,  0.160,  0.160,  0.160,  0.160,  0.160,  0.360,&
@@ -170,6 +198,19 @@ MODULE MOD_Const_LC
       = (/0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08,&
           0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08,&
           0.08, 0.08, 0.08, 0.05, 0.05, 0.05, 0.05, 0.05/)
+
+   ! conductance-photosynthesis slope parameter
+   !TODO: no C4, 4.0 may have problem
+   real(r8), parameter, dimension(N_land_classification) :: g1_usgs &
+      = (/4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0,&
+          4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0,&
+          4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0/)
+
+   ! conductance-photosynthesis intercept
+   real(r8), parameter, dimension(N_land_classification) :: g0_usgs &
+      = (/100, 100, 100, 100, 100, 100, 100, 100,&
+          100, 100, 100, 100, 100, 100, 100, 100,&
+          100, 100, 100, 100, 100, 100, 100, 100/)
 
    ! conductance-photosynthesis slope parameter
    !TODO: no C4, 4.0 may have problem
@@ -237,7 +278,7 @@ MODULE MOD_Const_LC
    ! water/glacier ==> grass
    real(r8), parameter, dimension(N_land_classification) :: roota_usgs &
       =(/ 5.558,  5.558,  5.558,  5.558,  8.149,  5.558, 10.740,  7.022,&
-          8.881,  7.920,  5.990,  7.066,  7.344,  7.706,  4.453, 10.740,&
+          8.881,  7.920,  5.990,  7.066,  7.344,  6.706,  4.453, 10.740,&
          10.740,  4.453,  8.992,  8.992,  8.992,  8.992,  4.372, 10.740/)
 
    real(r8), parameter, dimension(N_land_classification) :: rootb_usgs &
@@ -245,30 +286,30 @@ MODULE MOD_Const_LC
           2.012,  1.964,  1.955,  1.953,  1.303,  2.175,  1.631,  2.608,&
           2.608,  1.631,  8.992,  8.992,  8.992,  8.992,  0.978,  2.608/)
 
-! Plant Hydraulics Paramters
+   ! Plant Hydraulics Parameters
    real(r8), parameter, dimension(N_land_classification) :: kmax_sun0_usgs &
-      = (/0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
+      = (/     0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
           2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
-          2.e-008, 2.e-008, 2.e-008, 0., 2.e-008, 2.e-008,&
-          0., 2.e-008, 2.e-008, 2.e-008, 0., 0./)
+          2.e-008, 2.e-008, 2.e-008,      0., 2.e-008, 2.e-008,&
+               0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008/)
 
    real(r8), parameter, dimension(N_land_classification) :: kmax_sha0_usgs &
-      = (/0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
+      = (/     0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
           2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
-          2.e-008, 2.e-008, 2.e-008, 0., 2.e-008, 2.e-008,&
-          0., 2.e-008, 2.e-008, 2.e-008, 0., 0./)
+          2.e-008, 2.e-008, 2.e-008,      0., 2.e-008, 2.e-008,&
+               0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008/)
 
    real(r8), parameter, dimension(N_land_classification) :: kmax_xyl0_usgs &
-      = (/0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
+      = (/     0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
           2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
-          2.e-008, 2.e-008, 2.e-008, 0., 2.e-008, 2.e-008,&
-          0., 2.e-008, 2.e-008, 2.e-008, 0., 0./)
+          2.e-008, 2.e-008, 2.e-008,      0., 2.e-008, 2.e-008,&
+               0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008/)
 
    real(r8), parameter, dimension(N_land_classification) :: kmax_root0_usgs &
-      = (/0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
+      = (/     0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
           2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008,&
-          2.e-008, 2.e-008, 2.e-008, 0., 2.e-008, 2.e-008,&
-          0., 2.e-008, 2.e-008, 2.e-008, 0., 0./)
+          2.e-008, 2.e-008, 2.e-008,      0., 2.e-008, 2.e-008,&
+               0., 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008/)
 
    ! water potential at 50% loss of sunlit leaf tissue conductance (mmH2O)
    real(r8), parameter, dimension(N_land_classification) :: psi50_sun0_usgs &
@@ -300,15 +341,22 @@ MODULE MOD_Const_LC
 
    ! shape-fitting parameter for vulnerability curve (-)
    real(r8), parameter, dimension(N_land_classification) :: ck0_usgs &
-      = (/0., 3.95, 3.95, 3.95, 3.95, 3.95, &
+      = (/  0., 3.95, 3.95, 3.95, 3.95, 3.95, &
           3.95, 3.95, 3.95, 3.95, 3.95, 3.95, &
-          3.95, 3.95, 3.95, 0., 3.95, 3.95, &
-          0., 3.95, 3.95, 3.95, 0., 0./)
+          3.95, 3.95, 3.95,   0., 3.95, 3.95, &
+            0., 3.95, 3.95, 3.95,   0.,   0./)
+
+   ! lambda for WUE stomata model
+   real(r8), parameter, dimension(N_land_classification) :: lambda_usgs &
+      = (/1000., 1000., 1000., 1000., 1000., 1000., &
+          1000., 1000., 1000., 1000., 1000., 1000., &
+          1000., 1000., 1000., 1000., 1000., 1000., &
+          1000., 1000., 1000., 1000., 1000., 1000./)
 !end plant hydraulic parameters
 #else
 
 ! MODIS IGBP Land Use/Land Cover System Legend
-!---------------------------
+!-----------------------------------------------------------------------
 ! 0  Ocean
 ! 1  Evergreen Needleleaf Forests
 ! 2  Evergreen Broadleaf Forests
@@ -328,6 +376,17 @@ MODULE MOD_Const_LC
 !16  Barren
 !17  Water Bodies
 
+   character(len=256) :: patchclassname (0:N_land_classification) = &
+      (/'0 Ocean                               ', '1 Evergreen Needleleaf Forests        ', &
+        '2 Evergreen Broadleaf Forests         ', '3 Deciduous Needleleaf Forests        ', &
+        '4 Deciduous Broadleaf Forests         ', '5 Mixed Forests                       ', &
+        '6 Closed Shrublands                   ', '7 Open Shrublands                     ', &
+        '8 Woody Savannas                      ', '9 Savannas                            ', &
+        '10 Grasslands                         ', '11 Permanent Wetlands                 ', &
+        '12 Croplands                          ', '13 Urban and Built-up Lands           ', &
+        '14 Cropland/Natural Vegetation Mosaics', '15 Permanent Snow and Ice             ', &
+        '16 Barren                             ', '17 Water Bodies                       ' /)
+
    ! land patch types
    ! 0: soil, 1: urban, 2: wetland, 3: ice, 4: lake
    integer , parameter, dimension(N_land_classification) :: patchtypes_igbp &
@@ -337,23 +396,24 @@ MODULE MOD_Const_LC
 
    ! Look-up table canopy top height
    !NOTE: now read from input NetCDF file
+   ! shrub land 0.5m? grass like land 1m? all set to 0.5
    real(r8), parameter, dimension(N_land_classification) :: htop0_igbp &
+     !=(/17.0,  35.0,  17.0,  20.0,  20.0,   0.5,   0.5,   1.0,&
+     !    1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,&
+     !    1.0 /)
       =(/17.0,  35.0,  17.0,  20.0,  20.0,   0.5,   0.5,   1.0,&
-          1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,   1.0,&
-          1.0 /)
-      !=(/17.0,  35.0,  17.0,  20.0,  20.0,   0.5,   0.5,   0.5,&
-      !    0.5,   0.5,   0.5,   0.5,   1.0,   0.5,   0.5,   0.5,&
-      !    0.5 /)
+          0.5,   0.5,   0.5,   0.5,   1.0,   0.5,   0.5,   0.5,&
+          0.5 /)
 
    ! Look-up table canopy bottom height
+   ! 01/06/2020, yuan: adjust hbop: grass/shrub -> 0, tree->1
    real(r8), parameter, dimension(N_land_classification) :: hbot0_igbp &
-! 01/06/2020, yuan: adjust hbop: grass/shrub -> 0, tree->1
-      =(/ 8.5,   1.0,   8.5,  11.5,  10.0,   0.1,   0.1,   0.1,&
-          0.1,  0.01,  0.01,  0.01,   0.3,  0.01,  0.01,  0.01,&
-          0.01 /)
-      !=(/ 1.0,   1.0,   1.0,   1.0,   1.0,   0.0,   0.0,   0.0,&
-      !    0.1,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,&
-      !    0.0 /)
+     !=(/ 8.5,   1.0,   8.5,  11.5,  10.0,   0.1,   0.1,   0.1,&
+     !    0.1,  0.01,  0.01,  0.01,   0.3,  0.01,  0.01,  0.01,&
+     !   0.01 /)
+      =(/ 1.0,   1.0,   1.0,   1.0,   1.0,   0.0,   0.0,   0.0,&
+          0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,   0.0,&
+          0.0 /)
 
    ! Look-up table vegetation fractional cover
    real(r8), parameter, dimension(N_land_classification) :: fveg0_igbp &
@@ -381,13 +441,13 @@ MODULE MOD_Const_LC
            0.010, -0.300,  0.100, -0.300,  0.010, -0.300,  0.010,  0.010,&
            0.010 /)
 
-   ! reflectance of green leaf in virsible band
+   ! reflectance of green leaf in visible band
    real(r8), parameter, dimension(N_land_classification) :: rhol_vis_igbp &
       = (/0.070,  0.100,  0.070,  0.100,  0.070,  0.105,  0.105,  0.105,&
           0.105,  0.105,  0.105,  0.105,  0.105,  0.105,  0.105,  0.105,&
           0.105 /)
 
-   ! reflectance of dead leaf in virsible band
+   ! reflectance of dead leaf in visible band
    real(r8), parameter, dimension(N_land_classification) :: rhos_vis_igbp &
       = (/0.160,  0.160,  0.160,  0.160,  0.160,  0.160,  0.160,  0.160,&
           0.160,  0.360,  0.160,  0.360,  0.160,  0.360,  0.160,  0.160,&
@@ -442,6 +502,18 @@ MODULE MOD_Const_LC
       = (/0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08,&
           0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08,&
           0.08 /)
+
+   ! conductance-photosynthesis slope parameter
+   real(r8), parameter, dimension(N_land_classification) :: g1_igbp &
+      = (/9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0,&
+          9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0, 9.0,&
+          9.0 /)
+
+   ! conductance-photosynthesis intercept
+   real(r8), parameter, dimension(N_land_classification) :: g0_igbp &
+      = (/100, 100, 100, 100, 100, 100, 100, 100,&
+          100, 100, 100, 100, 100, 100, 100, 100,&
+          100 /)
 
    ! conductance-photosynthesis slope parameter
    real(r8), parameter, dimension(N_land_classification) :: gradm_igbp &
@@ -515,26 +587,26 @@ MODULE MOD_Const_LC
           1.627,  2.608,  2.608,  2.614,  2.614,  2.614,  2.608,  0.978,&
           2.608 /)
 
-! Plant Hydraulics Paramters
+   ! Plant Hydraulics Parameters
    real(r8), parameter, dimension(N_land_classification) :: kmax_sun0_igbp &
       = (/2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, &
           2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, &
-          0.     , 2.e-008, 0.     , 0.     , 0.     /)
+          2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008     /)
 
    real(r8), parameter, dimension(N_land_classification) :: kmax_sha0_igbp &
       = (/2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, &
           2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, &
-          0.     , 2.e-008, 0.     , 0.     , 0.     /)
+          2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008  /)
 
    real(r8), parameter, dimension(N_land_classification) :: kmax_xyl0_igbp &
       = (/2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, &
           2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, &
-          0.     , 2.e-008, 0.     , 0.     , 0.     /)
+          2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008  /)
 
    real(r8), parameter, dimension(N_land_classification) :: kmax_root0_igbp &
       = (/2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, &
           2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008, &
-          0.     , 2.e-008, 0.     , 0.     , 0.     /)
+          2.e-008, 2.e-008, 2.e-008, 2.e-008, 2.e-008  /)
 
    ! water potential at 50% loss of sunlit leaf tissue conductance (mmH2O)
    real(r8), parameter, dimension(N_land_classification) :: psi50_sun0_igbp &
@@ -564,8 +636,14 @@ MODULE MOD_Const_LC
    real(r8), parameter, dimension(N_land_classification) :: ck0_igbp &
       = (/3.95, 3.95, 3.95, 3.95, 3.95, 3.95, &
           3.95, 3.95, 3.95, 3.95, 3.95, 3.95, &
-          0.  , 3.95, 0.  , 0.  , 0.  /)
-!end plant hydraulic parameters
+          3.95, 3.95, 3.95, 3.95, 3.95  /)
+   !end plant hydraulic parameters
+
+   ! lambda for WUE stomata model
+   real(r8), parameter, dimension(N_land_classification) :: lambda_igbp &
+      = (/1000., 1000., 1000., 1000., 1000., 1000., &
+          1000., 1000., 1000., 1000., 1000., 1000., &
+          1000., 1000., 1000., 1000., 1000./)
 #endif
 
    real(r8), dimension(N_land_classification) :: &
@@ -581,6 +659,8 @@ MODULE MOD_Const_LC
 
       vmax25,     &! maximum carboxylation rate at 25 C at canopy top
       effcon,     &! quantum efficiency
+      g1,         &! conductance-photosynthesis slope parameter
+      g0,         &! conductance-photosynthesis intercept
       gradm,      &! conductance-photosynthesis slope parameter
       binter,     &! conductance-photosynthesis intercept
       respcp,     &! respiration fraction
@@ -593,15 +673,17 @@ MODULE MOD_Const_LC
       hlti,       &! 1/2 point of low temperature inhibition function (s4)
       extkn,      &! coefficient of leaf nitrogen allocation
 
+      lambda,     &! marginal water cost of carbon gain (mol mol-1)
+
       d50,        &! depth at 50% roots
       beta         ! coefficient of root profile
 
 ! Plant Hydraulic Parameters
    real(r8), dimension(N_land_classification) :: &
-      kmax_sun,   &
-      kmax_sha,   &
-      kmax_xyl,   &
-      kmax_root,  &
+      kmax_sun,   &! Plant Hydraulics Parameters (TODO@Xingjie Lu, please give more details)
+      kmax_sha,   &! Plant Hydraulics Parameters
+      kmax_xyl,   &! Plant Hydraulics Parameters
+      kmax_root,  &! Plant Hydraulics Parameters
       psi50_sun,  &! water potential at 50% loss of sunlit leaf tissue conductance (mmH2O)
       psi50_sha,  &! water potential at 50% loss of shaded leaf tissue conductance (mmH2O)
       psi50_xyl,  &! water potential at 50% loss of xylem tissue conductance (mmH2O)
@@ -623,6 +705,9 @@ MODULE MOD_Const_LC
    ! fraction of roots in each soil layer
    real(r8), dimension(nl_soil,N_land_classification) :: rootfr
 
+   ! land cover mapping look-up table
+   integer :: LC_Map(0:255)
+
    ! PUBLIC MEMBER FUNCTIONS:
    PUBLIC :: Init_LC_Const
 
@@ -630,9 +715,10 @@ CONTAINS
 
    SUBROUTINE Init_LC_Const
 
-      IMPLICIT NONE
+   USE MOD_Namelist
+   IMPLICIT NONE
 
-      integer :: i, nsl
+   integer :: i, nsl
 
 #ifdef LULC_USGS
       patchtypes (:) = patchtypes_usgs (:)
@@ -646,6 +732,8 @@ CONTAINS
       chil       (:) = chil_usgs       (:)
       vmax25     (:) = vmax25_usgs     (:) * 1.e-6
       effcon     (:) = effcon_usgs     (:)
+      g1         (:) = g1_usgs         (:)
+      g0         (:) = g0_usgs         (:)
       gradm      (:) = gradm_usgs      (:)
       binter     (:) = binter_usgs     (:)
       respcp     (:) = respcp_usgs     (:)
@@ -670,6 +758,9 @@ IF (DEF_USE_PLANTHYDRAULICS) THEN
       psi50_root (:) = psi50_root0_usgs(:)
       ck         (:) = ck0_usgs        (:)
 ENDIF
+IF (DEF_USE_WUEST)THEN
+      lambda     (:) = lambda_usgs     (:)
+ENDIF
       roota      (:) = roota_usgs      (:)
       rootb      (:) = rootb_usgs      (:)
       rho    (1,1,:) = rhol_vis_usgs   (:)
@@ -692,6 +783,8 @@ ENDIF
       chil       (:) = chil_igbp       (:)
       vmax25     (:) = vmax25_igbp     (:) * 1.e-6
       effcon     (:) = effcon_igbp     (:)
+      g1         (:) = g1_igbp         (:)
+      g0         (:) = g0_igbp         (:)
       gradm      (:) = gradm_igbp      (:)
       binter     (:) = binter_igbp     (:)
       respcp     (:) = respcp_igbp     (:)
@@ -716,6 +809,9 @@ IF(DEF_USE_PLANTHYDRAULICS)THEN
       psi50_root (:) = psi50_root0_igbp(:)
       ck         (:) = ck0_igbp        (:)
 ENDIF
+IF (DEF_USE_WUEST)THEN
+      lambda     (:) = lambda_igbp     (:)
+ENDIF
       roota      (:) = roota_igbp      (:)
       rootb      (:) = rootb_igbp      (:)
       rho    (1,1,:) = rhol_vis_igbp   (:)
@@ -735,32 +831,78 @@ ENDIF
       ! ----------------------------------------------------------
       IF (ROOTFR_SCHEME == 1) THEN
          DO i = 1, N_land_classification
-            rootfr(1,i)=1./(1.+(z_soih(1)*100./d50(i))**beta(i))
-            rootfr(nl_soil,i)=1.-1./(1.+(z_soih(nl_soil-1)*100./d50(i))**beta(i))
+            rootfr(1,i)=1./(1.+(zi_soi(1)*100./d50(i))**beta(i))
+            rootfr(nl_soil,i)=1.-1./(1.+(zi_soi(nl_soil-1)*100./d50(i))**beta(i))
 
             DO nsl=2,nl_soil-1
-               rootfr(nsl,i)=1./(1.+(z_soih(nsl)*100./d50(i))**beta(i)) &
-                  -1./(1.+(z_soih(nsl-1)*100./d50(i))**beta(i))
+               rootfr(nsl,i)=1./(1.+(zi_soi(nsl)*100./d50(i))**beta(i)) &
+                  -1./(1.+(zi_soi(nsl-1)*100./d50(i))**beta(i))
             ENDDO
          ENDDO
       ELSE
          DO i = 1, N_land_classification
             rootfr(1,i) = 1. - 0.5*( &
-                 exp(-roota(i) * z_soih(1)) &
-               + exp(-rootb(i) * z_soih(1)) )
+                 exp(-roota(i) * zi_soi(1)) &
+               + exp(-rootb(i) * zi_soi(1)) )
 
             rootfr(nl_soil,i) = 0.5*( &
-                 exp(-roota(i) * z_soih(nl_soil)) &
-               + exp(-rootb(i) * z_soih(nl_soil)) )
+                 exp(-roota(i) * zi_soi(nl_soil)) &
+               + exp(-rootb(i) * zi_soi(nl_soil)) )
 
             DO nsl = 2, nl_soil-1
                rootfr(nsl,i) = 0.5*( &
-                    exp(-roota(i) * z_soih(nsl-1)) &
-                  + exp(-rootb(i) * z_soih(nsl-1)) &
-                  - exp(-roota(i) * z_soih(nsl)) &
-                  - exp(-rootb(i) * z_soih(nsl)) )
+                    exp(-roota(i) * zi_soi(nsl-1)) &
+                  + exp(-rootb(i) * zi_soi(nsl-1)) &
+                  - exp(-roota(i) * zi_soi(nsl)) &
+                  - exp(-rootb(i) * zi_soi(nsl)) )
             ENDDO
          ENDDO
+      ENDIF
+
+      ! initialization
+      LC_Map(:) = 0
+
+      ! set the land cover look-up table for mapping
+      ! mapping from GLC_FCS30D ==> IGBP 17 classes
+      IF ( DEF_USE_GLC30 ) THEN
+            LC_Map(10)  = 12; LC_Map(20)  = 12;
+            LC_Map(11)  = 14; LC_Map(12)  = 14;
+            LC_Map(51)  =  2; LC_Map(52)  =  2;
+            LC_Map(61)  =  4; LC_Map(62)  =  4;
+            LC_Map(71)  =  1; LC_Map(72)  =  1;
+            LC_Map(81)  =  3; LC_Map(82)  =  3;
+            LC_Map(91)  =  5; LC_Map(92)  =  5;
+            LC_Map(120) =  7; LC_Map(121) =  7; LC_Map(122) =  7;
+            LC_Map(130) = 10; LC_Map(140) = 10;
+            LC_Map(150) = 16; LC_Map(152) = 16; LC_Map(153) = 16;
+            LC_Map(181) = 11; LC_Map(182) = 11; LC_Map(183) = 11;
+            LC_Map(184) = 11; LC_Map(185) = 11; LC_Map(186) = 11;
+            LC_Map(187) = 11;
+            LC_Map(190) = 13;
+            LC_Map(200) = 16; LC_Map(201) = 16; LC_Map(202) = 16;
+            LC_Map(210) = 17;
+            LC_Map(220) = 15;
+      ENDIF
+
+      ! mapping from ESA-CCI ==> IGBP 17 classes
+      IF ( DEF_USE_ESACCI ) THEN
+            LC_Map(10)  = 12; LC_Map(11)  = 12; LC_Map(20)  = 12;
+            LC_Map(12)  = 14; LC_Map(30)  = 14; LC_Map(40)  = 14;
+            LC_Map(50)  =  2;
+            LC_Map(60)  =  4; LC_Map(61)  =  4; LC_Map(62)  =  4;
+            LC_Map(70)  =  1; LC_Map(71)  =  1; LC_Map(72)  =  1;
+            LC_Map(80)  =  3; LC_Map(81)  =  3; LC_Map(82)  =  3;
+            LC_Map(90)  =  5;
+            LC_Map(100) =  8;
+            LC_Map(110) =  9;
+            LC_Map(120) =  7; LC_Map(121) =  7; LC_Map(122) =  7;
+            LC_Map(130) = 10; LC_Map(140) = 10;
+            LC_Map(150) = 16; LC_Map(152) = 16; LC_Map(153) = 16;
+            LC_Map(160) = 11; LC_Map(170) = 11; LC_Map(180) = 11;
+            LC_Map(190) = 13;
+            LC_Map(200) = 16; LC_Map(201) = 16; LC_Map(202) = 16;
+            LC_Map(210) = 17;
+            LC_Map(220) = 15;
       ENDIF
 
    END SUBROUTINE Init_LC_Const

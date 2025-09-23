@@ -1,114 +1,146 @@
 #include <define.h>
 
-module MOD_Vars_1DAccFluxes
+MODULE MOD_Vars_1DAccFluxes
 
-   use MOD_Precision
+   USE MOD_Precision
+#ifdef DataAssimilation
+   USE MOD_DA_Vars_TimeVariables
+   USE MOD_DA_Vars_1DFluxes
+   USE MOD_Namelist
+#endif
+#ifdef EXTERNAL_LAKE
+   USE MOD_Lake_1DAccVars
+#endif
 
-   real(r8) :: nac              ! number of accumulation
-   real(r8), allocatable :: nac_ln   (:)
+   real(r8) :: nac ! number of accumulation
+   real(r8), allocatable :: nac_ln      (:)
+   real(r8), allocatable :: nac_dt      (:)
+   logical,  allocatable :: filter_dt   (:)
 
-   real(r8), allocatable :: a_us     (:)
-   real(r8), allocatable :: a_vs     (:)
-   real(r8), allocatable :: a_t      (:)
-   real(r8), allocatable :: a_q      (:)
-   real(r8), allocatable :: a_prc    (:)
-   real(r8), allocatable :: a_prl    (:)
-   real(r8), allocatable :: a_pbot   (:)
-   real(r8), allocatable :: a_frl    (:)
-   real(r8), allocatable :: a_solarin(:)
-   real(r8), allocatable :: a_hpbl   (:)
+   real(r8), allocatable :: a_us        (:)
+   real(r8), allocatable :: a_vs        (:)
+   real(r8), allocatable :: a_t         (:)
+   real(r8), allocatable :: a_q         (:)
+   real(r8), allocatable :: a_prc       (:)
+   real(r8), allocatable :: a_prl       (:)
+   real(r8), allocatable :: a_pbot      (:)
+   real(r8), allocatable :: a_frl       (:)
+   real(r8), allocatable :: a_solarin   (:)
+   real(r8), allocatable :: a_hpbl      (:)
 
-   real(r8), allocatable :: a_taux   (:)
-   real(r8), allocatable :: a_tauy   (:)
-   real(r8), allocatable :: a_fsena  (:)
-   real(r8), allocatable :: a_lfevpa (:)
-   real(r8), allocatable :: a_fevpa  (:)
-   real(r8), allocatable :: a_fsenl  (:)
-   real(r8), allocatable :: a_fevpl  (:)
-   real(r8), allocatable :: a_etr    (:)
-   real(r8), allocatable :: a_fseng  (:)
-   real(r8), allocatable :: a_fevpg  (:)
-   real(r8), allocatable :: a_fgrnd  (:)
-   real(r8), allocatable :: a_sabvsun(:)
-   real(r8), allocatable :: a_sabvsha(:)
-   real(r8), allocatable :: a_sabg   (:)
-   real(r8), allocatable :: a_olrg   (:)
-   real(r8), allocatable :: a_rnet   (:)
-   real(r8), allocatable :: a_xerr   (:)
-   real(r8), allocatable :: a_zerr   (:)
-   real(r8), allocatable :: a_rsur   (:)
-   real(r8), allocatable :: a_rsub   (:)
-   real(r8), allocatable :: a_rnof   (:)
-   real(r8), allocatable :: a_qintr  (:)
-   real(r8), allocatable :: a_qinfl  (:)
-   real(r8), allocatable :: a_qdrip  (:)
+   real(r8), allocatable :: a_taux      (:)
+   real(r8), allocatable :: a_tauy      (:)
+   real(r8), allocatable :: a_fsena     (:)
+   real(r8), allocatable :: a_lfevpa    (:)
+   real(r8), allocatable :: a_fevpa     (:)
+   real(r8), allocatable :: a_fsenl     (:)
+   real(r8), allocatable :: a_fevpl     (:)
+   real(r8), allocatable :: a_etr       (:)
+   real(r8), allocatable :: a_fseng     (:)
+   real(r8), allocatable :: a_fevpg     (:)
+   real(r8), allocatable :: a_fgrnd     (:)
+   real(r8), allocatable :: a_sabvsun   (:)
+   real(r8), allocatable :: a_sabvsha   (:)
+   real(r8), allocatable :: a_sabg      (:)
+   real(r8), allocatable :: a_olrg      (:)
+   real(r8), allocatable :: a_rnet      (:)
+   real(r8), allocatable :: a_xerr      (:)
+   real(r8), allocatable :: a_zerr      (:)
+   real(r8), allocatable :: a_rsur      (:)
+   real(r8), allocatable :: a_rsur_se   (:)
+   real(r8), allocatable :: a_rsur_ie   (:)
+   real(r8), allocatable :: a_rsub      (:)
+   real(r8), allocatable :: a_rnof      (:)
+#ifdef CatchLateralFlow
+   real(r8), allocatable :: a_xwsur     (:)
+   real(r8), allocatable :: a_xwsub     (:)
+   real(r8), allocatable :: a_fldarea   (:)
+#endif
+   real(r8), allocatable :: a_qintr     (:)
+   real(r8), allocatable :: a_qinfl     (:)
+   real(r8), allocatable :: a_qdrip     (:)
    real(r8), allocatable :: a_rstfacsun (:)
    real(r8), allocatable :: a_rstfacsha (:)
-   real(r8), allocatable :: a_gssun (:)
-   real(r8), allocatable :: a_gssha (:)
-   real(r8), allocatable :: a_wdsrf  (:)
-   real(r8), allocatable :: a_zwt    (:)
-   real(r8), allocatable :: a_wa     (:)
-   real(r8), allocatable :: a_wat    (:)
-   real(r8), allocatable :: a_assim  (:)
-   real(r8), allocatable :: a_respc  (:)
-   real(r8), allocatable :: a_assimsun   (:) !1
-   real(r8), allocatable :: a_assimsha   (:) !1
-   real(r8), allocatable :: a_etrsun     (:) !1
-   real(r8), allocatable :: a_etrsha     (:) !1
+   real(r8), allocatable :: a_gssun     (:)
+   real(r8), allocatable :: a_gssha     (:)
+   real(r8), allocatable :: a_rss       (:)
+   real(r8), allocatable :: a_wdsrf     (:)
+   real(r8), allocatable :: a_zwt       (:)
+   real(r8), allocatable :: a_wa        (:)
+   real(r8), allocatable :: a_wat       (:)
+   real(r8), allocatable :: a_wetwat    (:)
+   real(r8), allocatable :: a_assim     (:)
+   real(r8), allocatable :: a_respc     (:)
+   real(r8), allocatable :: a_assimsun  (:)
+   real(r8), allocatable :: a_assimsha  (:)
+   real(r8), allocatable :: a_etrsun    (:)
+   real(r8), allocatable :: a_etrsha    (:)
 
-   real(r8), allocatable :: a_qcharge(:)
+   real(r8), allocatable :: a_qcharge   (:)
 
-   real(r8), allocatable :: a_t_grnd(:)
-   real(r8), allocatable :: a_tleaf (:)
-   real(r8), allocatable :: a_ldew  (:)
-   real(r8), allocatable :: a_ldew_rain  (:)
-   real(r8), allocatable :: a_ldew_snow  (:)
-   real(r8), allocatable :: a_scv   (:)
-   real(r8), allocatable :: a_snowdp(:)
-   real(r8), allocatable :: a_fsno  (:)
-   real(r8), allocatable :: a_sigf  (:)
-   real(r8), allocatable :: a_green (:)
-   real(r8), allocatable :: a_lai   (:)
-   real(r8), allocatable :: a_laisun(:)
-   real(r8), allocatable :: a_laisha(:)
-   real(r8), allocatable :: a_sai   (:)
+   real(r8), allocatable :: a_t_grnd    (:)
+   real(r8), allocatable :: a_tleaf     (:)
+   real(r8), allocatable :: a_ldew      (:)
+   real(r8), allocatable :: a_ldew_rain (:)
+   real(r8), allocatable :: a_ldew_snow (:)
+   real(r8), allocatable :: a_scv       (:)
+   real(r8), allocatable :: a_snowdp    (:)
+   real(r8), allocatable :: a_fsno      (:)
+   real(r8), allocatable :: a_frcsat    (:)
+   real(r8), allocatable :: a_sigf      (:)
+   real(r8), allocatable :: a_green     (:)
+   real(r8), allocatable :: a_lai       (:)
+   real(r8), allocatable :: a_laisun    (:)
+   real(r8), allocatable :: a_laisha    (:)
+   real(r8), allocatable :: a_sai       (:)
 
-   real(r8), allocatable :: a_alb(:,:,:)
+   real(r8), allocatable :: a_alb   (:,:,:)
 
-   real(r8), allocatable :: a_emis (:)
-   real(r8), allocatable :: a_z0m  (:)
-   real(r8), allocatable :: a_trad (:)
-   real(r8), allocatable :: a_tref (:)
-   real(r8), allocatable :: a_qref (:)
-   real(r8), allocatable :: a_rain (:)
-   real(r8), allocatable :: a_snow (:)
+   real(r8), allocatable :: a_emis      (:)
+   real(r8), allocatable :: a_z0m       (:)
+   real(r8), allocatable :: a_trad      (:)
+   real(r8), allocatable :: a_tref      (:)
+   real(r8), allocatable :: a_t2m_wmo   (:)
+   real(r8), allocatable :: a_qref      (:)
+   real(r8), allocatable :: a_rain      (:)
+   real(r8), allocatable :: a_snow      (:)
+
+   real(r8), allocatable :: a_o3uptakesun(:)
+   real(r8), allocatable :: a_o3uptakesha(:)
+
+#ifdef DataAssimilation
+   real(r8), allocatable :: a_h2osoi_ens     (:,:,:)
+   real(r8), allocatable :: a_t_brt_ens      (:,:,:)
+   real(r8), allocatable :: a_t_brt            (:,:)
+   real(r8), allocatable :: a_wliq_soisno_ens(:,:,:)
+   real(r8), allocatable :: a_wice_soisno_ens(:,:,:)
+#endif
 
 #ifdef URBAN_MODEL
-   REAL(r8), allocatable :: a_t_room (:)    !temperature of inner building [K]
-   REAL(r8), allocatable :: a_tafu   (:)    !temperature of outer building [K]
-   REAL(r8), allocatable :: a_fhac   (:)    !sensible flux from heat or cool AC [W/m2]
-   REAL(r8), allocatable :: a_fwst   (:)    !waste heat flux from heat or cool AC [W/m2]
-   REAL(r8), allocatable :: a_fach   (:)    !flux from inner and outter air exchange [W/m2]
-   REAL(r8), allocatable :: a_fahe   (:)    !flux from metabolic and vehicle [W/m2]
-   REAL(r8), allocatable :: a_fhah   (:)    !sensible flux from heating [W/m2]
-   REAL(r8), allocatable :: a_vehc   (:)    !flux from vehicle [W/m2]
-   REAL(r8), allocatable :: a_meta   (:)    !flux from metabolic [W/m2]
+   real(r8), allocatable :: a_t_room    (:) !temperature of inner building [K]
+   real(r8), allocatable :: a_tafu      (:) !temperature of outer building [K]
+   real(r8), allocatable :: a_fhac      (:) !sensible flux from heat or cool AC [W/m2]
+   real(r8), allocatable :: a_fwst      (:) !waste heat flux from heat or cool AC [W/m2]
+   real(r8), allocatable :: a_fach      (:) !flux from inner and outer air exchange [W/m2]
+   real(r8), allocatable :: a_fahe      (:) !flux from metabolic and vehicle [W/m2]
+   real(r8), allocatable :: a_fhah      (:) !sensible flux from heating [W/m2]
+   real(r8), allocatable :: a_vehc      (:) !flux from vehicle [W/m2]
+   real(r8), allocatable :: a_meta      (:) !flux from metabolic [W/m2]
 
-   REAL(r8), allocatable :: a_senroof(:)    !sensible heat flux from roof [W/m2]
-   REAL(r8), allocatable :: a_senwsun(:)    !sensible heat flux from sunlit wall [W/m2]
-   REAL(r8), allocatable :: a_senwsha(:)    !sensible heat flux from shaded wall [W/m2]
-   REAL(r8), allocatable :: a_sengimp(:)    !sensible heat flux from impervious road [W/m2]
-   REAL(r8), allocatable :: a_sengper(:)    !sensible heat flux from pervious road [W/m2]
-   REAL(r8), allocatable :: a_senurbl(:)    !sensible heat flux from urban vegetation [W/m2]
+   real(r8), allocatable :: a_senroof   (:) !sensible heat flux from roof [W/m2]
+   real(r8), allocatable :: a_senwsun   (:) !sensible heat flux from sunlit wall [W/m2]
+   real(r8), allocatable :: a_senwsha   (:) !sensible heat flux from shaded wall [W/m2]
+   real(r8), allocatable :: a_sengimp   (:) !sensible heat flux from impervious road [W/m2]
+   real(r8), allocatable :: a_sengper   (:) !sensible heat flux from pervious road [W/m2]
+   real(r8), allocatable :: a_senurbl   (:) !sensible heat flux from urban vegetation [W/m2]
 
-   REAL(r8), allocatable :: a_lfevproof(:)  !latent heat flux from roof [W/m2]
-   REAL(r8), allocatable :: a_lfevpgimp(:)  !latent heat flux from impervious road [W/m2]
-   REAL(r8), allocatable :: a_lfevpgper(:)  !latent heat flux from pervious road [W/m2]
-   REAL(r8), allocatable :: a_lfevpurbl(:)  !latent heat flux from urban vegetation [W/m2]
+   real(r8), allocatable :: a_lfevproof (:) !latent heat flux from roof [W/m2]
+   real(r8), allocatable :: a_lfevpgimp (:) !latent heat flux from impervious road [W/m2]
+   real(r8), allocatable :: a_lfevpgper (:) !latent heat flux from pervious road [W/m2]
+   real(r8), allocatable :: a_lfevpurbl (:) !latent heat flux from urban vegetation [W/m2]
 
-   REAL(r8), allocatable :: a_troof    (:)  !temperature of roof [K]
-   REAL(r8), allocatable :: a_twall    (:)  !temperature of wall [K]
+   real(r8), allocatable :: a_troof     (:) !temperature of roof [K]
+   real(r8), allocatable :: a_twall     (:) !temperature of wall [K]
 #endif
 
 
@@ -164,6 +196,16 @@ module MOD_Vars_1DAccFluxes
    real(r8), allocatable :: a_hr                 (:)
    real(r8), allocatable :: a_fpg                (:)
    real(r8), allocatable :: a_fpi                (:)
+   real(r8), allocatable :: a_totvegc            (:)
+   real(r8), allocatable :: a_totlitc            (:)
+   real(r8), allocatable :: a_totcwdc            (:)
+   real(r8), allocatable :: a_totsomc            (:)
+   real(r8), allocatable :: a_totcolc            (:)
+   real(r8), allocatable :: a_totvegn            (:)
+   real(r8), allocatable :: a_totlitn            (:)
+   real(r8), allocatable :: a_totcwdn            (:)
+   real(r8), allocatable :: a_totsomn            (:)
+   real(r8), allocatable :: a_totcoln            (:)
    real(r8), allocatable :: a_gpp_enftemp        (:) !1
    real(r8), allocatable :: a_gpp_enfboreal      (:) !2
    real(r8), allocatable :: a_gpp_dnfboreal      (:) !3
@@ -204,6 +246,7 @@ module MOD_Vars_1DAccFluxes
    real(r8), allocatable :: a_pdrice2               (:)
    real(r8), allocatable :: a_pdsugarcane           (:)
    real(r8), allocatable :: a_plantdate             (:)
+   real(r8), allocatable :: a_manunitro             (:)
    real(r8), allocatable :: a_fertnitro_corn        (:)
    real(r8), allocatable :: a_fertnitro_swheat      (:)
    real(r8), allocatable :: a_fertnitro_wwheat      (:)
@@ -212,27 +255,77 @@ module MOD_Vars_1DAccFluxes
    real(r8), allocatable :: a_fertnitro_rice1       (:)
    real(r8), allocatable :: a_fertnitro_rice2       (:)
    real(r8), allocatable :: a_fertnitro_sugarcane   (:)
-   real(r8), allocatable :: a_cphase             (:)
-   real(r8), allocatable :: a_gddplant           (:)
-   real(r8), allocatable :: a_gddmaturity        (:)
-   real(r8), allocatable :: a_vf                 (:)
-   real(r8), allocatable :: a_hui                (:)
-   real(r8), allocatable :: a_cropprod1c         (:)
-   real(r8), allocatable :: a_cropprod1c_loss    (:)
-   real(r8), allocatable :: a_cropseedc_deficit  (:)
-   real(r8), allocatable :: a_grainc_to_cropprodc(:)
-   real(r8), allocatable :: a_grainc_to_seed     (:)
-   real(r8), allocatable :: a_fert_to_sminn      (:)
+   real(r8), allocatable :: a_irrig_method_corn     (:)
+   real(r8), allocatable :: a_irrig_method_swheat   (:)
+   real(r8), allocatable :: a_irrig_method_wwheat   (:)
+   real(r8), allocatable :: a_irrig_method_soybean  (:)
+   real(r8), allocatable :: a_irrig_method_cotton   (:)
+   real(r8), allocatable :: a_irrig_method_rice1    (:)
+   real(r8), allocatable :: a_irrig_method_rice2    (:)
+   real(r8), allocatable :: a_irrig_method_sugarcane(:)
+
+   real(r8), allocatable :: a_cphase                (:)
+   real(r8), allocatable :: a_gddplant              (:)
+   real(r8), allocatable :: a_gddmaturity           (:)
+   real(r8), allocatable :: a_vf                    (:)
+   real(r8), allocatable :: a_hui                   (:)
+   real(r8), allocatable :: a_cropprod1c            (:)
+   real(r8), allocatable :: a_cropprod1c_loss       (:)
+   real(r8), allocatable :: a_cropseedc_deficit     (:)
+   real(r8), allocatable :: a_grainc_to_cropprodc   (:)
+   real(r8), allocatable :: a_grainc_to_seed        (:)
+   real(r8), allocatable :: a_fert_to_sminn         (:)
+
+   real(r8), allocatable :: a_irrig_rate            (:)
+   real(r8), allocatable :: a_deficit_irrig         (:)
+   real(r8), allocatable :: a_sum_irrig             (:)
+   real(r8), allocatable :: a_sum_irrig_count       (:)
 #endif
-   real(r8), allocatable :: a_ndep_to_sminn      (:)
-   real(r8), allocatable :: a_abm                (:)
-   real(r8), allocatable :: a_gdp                (:)
-   real(r8), allocatable :: a_peatf              (:)
-   real(r8), allocatable :: a_hdm                (:)
-   real(r8), allocatable :: a_lnfm               (:)
+   real(r8), allocatable :: a_ndep_to_sminn         (:)
+   real(r8), allocatable :: a_abm                   (:)
+   real(r8), allocatable :: a_gdp                   (:)
+   real(r8), allocatable :: a_peatf                 (:)
+   real(r8), allocatable :: a_hdm                   (:)
+   real(r8), allocatable :: a_lnfm                  (:)
+   real(r8), allocatable :: a_leafcCap              (:)
+   real(r8), allocatable :: a_leafc_storageCap      (:)
+   real(r8), allocatable :: a_leafc_xferCap         (:)
+   real(r8), allocatable :: a_frootcCap             (:)
+   real(r8), allocatable :: a_frootc_storageCap     (:)
+   real(r8), allocatable :: a_frootc_xferCap        (:)
+   real(r8), allocatable :: a_livestemcCap          (:)
+   real(r8), allocatable :: a_livestemc_storageCap  (:)
+   real(r8), allocatable :: a_livestemc_xferCap     (:)
+   real(r8), allocatable :: a_deadstemcCap          (:)
+   real(r8), allocatable :: a_deadstemc_storageCap  (:)
+   real(r8), allocatable :: a_deadstemc_xferCap     (:)
+   real(r8), allocatable :: a_livecrootcCap         (:)
+   real(r8), allocatable :: a_livecrootc_storageCap (:)
+   real(r8), allocatable :: a_livecrootc_xferCap    (:)
+   real(r8), allocatable :: a_deadcrootcCap         (:)
+   real(r8), allocatable :: a_deadcrootc_storageCap (:)
+   real(r8), allocatable :: a_deadcrootc_xferCap    (:)
+   real(r8), allocatable :: a_leafnCap              (:)
+   real(r8), allocatable :: a_leafn_storageCap      (:)
+   real(r8), allocatable :: a_leafn_xferCap         (:)
+   real(r8), allocatable :: a_frootnCap             (:)
+   real(r8), allocatable :: a_frootn_storageCap     (:)
+   real(r8), allocatable :: a_frootn_xferCap        (:)
+   real(r8), allocatable :: a_livestemnCap          (:)
+   real(r8), allocatable :: a_livestemn_storageCap  (:)
+   real(r8), allocatable :: a_livestemn_xferCap     (:)
+   real(r8), allocatable :: a_deadstemnCap          (:)
+   real(r8), allocatable :: a_deadstemn_storageCap  (:)
+   real(r8), allocatable :: a_deadstemn_xferCap     (:)
+   real(r8), allocatable :: a_livecrootnCap         (:)
+   real(r8), allocatable :: a_livecrootn_storageCap (:)
+   real(r8), allocatable :: a_livecrootn_xferCap    (:)
+   real(r8), allocatable :: a_deadcrootnCap         (:)
+   real(r8), allocatable :: a_deadcrootn_storageCap (:)
+   real(r8), allocatable :: a_deadcrootn_xferCap    (:)
 #endif
 ! Ozone stress variables
-   real(r8), allocatable :: a_ozone              (:)
+   real(r8), allocatable :: a_ozone                 (:)
 ! End ozone stress variables
 
    real(r8), allocatable :: a_t_soisno    (:,:)
@@ -245,7 +338,8 @@ module MOD_Vars_1DAccFluxes
    real(r8), allocatable :: a_OM_density  (:,:)
 !Plant Hydraulic parameters
    real(r8), allocatable :: a_vegwp       (:,:)
-!end plant hydraulic parameters
+!END plant hydraulic parameters
+   real(r8), allocatable :: a_dz_lake     (:,:)
    real(r8), allocatable :: a_t_lake      (:,:)
    real(r8), allocatable :: a_lake_icefrac(:,:)
 
@@ -264,71 +358,94 @@ module MOD_Vars_1DAccFluxes
    real(r8), allocatable :: a_soil2n_vr   (:,:)
    real(r8), allocatable :: a_soil3n_vr   (:,:)
    real(r8), allocatable :: a_cwdn_vr     (:,:)
+   real(r8), allocatable :: a_totsoiln_vr (:,:)
+   real(r8), allocatable :: a_litr1cCap_vr(:,:)
+   real(r8), allocatable :: a_litr2cCap_vr(:,:)
+   real(r8), allocatable :: a_litr3cCap_vr(:,:)
+   real(r8), allocatable :: a_soil1cCap_vr(:,:)
+   real(r8), allocatable :: a_soil2cCap_vr(:,:)
+   real(r8), allocatable :: a_soil3cCap_vr(:,:)
+   real(r8), allocatable :: a_cwdcCap_vr  (:,:)
+   real(r8), allocatable :: a_litr1nCap_vr(:,:)
+   real(r8), allocatable :: a_litr2nCap_vr(:,:)
+   real(r8), allocatable :: a_litr3nCap_vr(:,:)
+   real(r8), allocatable :: a_soil1nCap_vr(:,:)
+   real(r8), allocatable :: a_soil2nCap_vr(:,:)
+   real(r8), allocatable :: a_soil3nCap_vr(:,:)
+   real(r8), allocatable :: a_cwdnCap_vr  (:,:)
+   real(r8), allocatable :: a_t_scalar    (:,:)
+   real(r8), allocatable :: a_w_scalar    (:,:)
    real(r8), allocatable :: a_sminn_vr    (:,:)
    real(r8), allocatable :: decomp_vr_tmp (:,:)
 #endif
 
-   real(r8), allocatable :: a_ustar (:)
-   real(r8), allocatable :: a_ustar2(:)
-   real(r8), allocatable :: a_tstar (:)
-   real(r8), allocatable :: a_qstar (:)
-   real(r8), allocatable :: a_zol   (:)
-   real(r8), allocatable :: a_rib   (:)
-   real(r8), allocatable :: a_fm    (:)
-   real(r8), allocatable :: a_fh    (:)
-   real(r8), allocatable :: a_fq    (:)
+   real(r8), allocatable :: a_ustar   (:)
+   real(r8), allocatable :: a_ustar2  (:)
+   real(r8), allocatable :: a_tstar   (:)
+   real(r8), allocatable :: a_qstar   (:)
+   real(r8), allocatable :: a_zol     (:)
+   real(r8), allocatable :: a_rib     (:)
+   real(r8), allocatable :: a_fm      (:)
+   real(r8), allocatable :: a_fh      (:)
+   real(r8), allocatable :: a_fq      (:)
 
-   real(r8), allocatable :: a_us10m(:)
-   real(r8), allocatable :: a_vs10m(:)
-   real(r8), allocatable :: a_fm10m(:)
+   real(r8), allocatable :: a_us10m   (:)
+   real(r8), allocatable :: a_vs10m   (:)
+   real(r8), allocatable :: a_fm10m   (:)
 
-   real(r8), allocatable :: a_sr     (:)
-   real(r8), allocatable :: a_solvd  (:)
-   real(r8), allocatable :: a_solvi  (:)
-   real(r8), allocatable :: a_solnd  (:)
-   real(r8), allocatable :: a_solni  (:)
-   real(r8), allocatable :: a_srvd   (:)
-   real(r8), allocatable :: a_srvi   (:)
-   real(r8), allocatable :: a_srnd   (:)
-   real(r8), allocatable :: a_srni   (:)
-   real(r8), allocatable :: a_solvdln(:)
-   real(r8), allocatable :: a_solviln(:)
-   real(r8), allocatable :: a_solndln(:)
-   real(r8), allocatable :: a_solniln(:)
-   real(r8), allocatable :: a_srvdln (:)
-   real(r8), allocatable :: a_srviln (:)
-   real(r8), allocatable :: a_srndln (:)
-   real(r8), allocatable :: a_srniln (:)
+   real(r8), allocatable :: a_sr      (:)
+   real(r8), allocatable :: a_solvd   (:)
+   real(r8), allocatable :: a_solvi   (:)
+   real(r8), allocatable :: a_solnd   (:)
+   real(r8), allocatable :: a_solni   (:)
+   real(r8), allocatable :: a_srvd    (:)
+   real(r8), allocatable :: a_srvi    (:)
+   real(r8), allocatable :: a_srnd    (:)
+   real(r8), allocatable :: a_srni    (:)
+   real(r8), allocatable :: a_solvdln (:)
+   real(r8), allocatable :: a_solviln (:)
+   real(r8), allocatable :: a_solndln (:)
+   real(r8), allocatable :: a_solniln (:)
+   real(r8), allocatable :: a_srvdln  (:)
+   real(r8), allocatable :: a_srviln  (:)
+   real(r8), allocatable :: a_srndln  (:)
+   real(r8), allocatable :: a_srniln  (:)
 
-   public :: allocate_acc_fluxes
-   public :: deallocate_acc_fluxes
-   public :: flush_acc_fluxes
-   public :: accumulate_fluxes
+   real(r8), allocatable :: a_sensors (:,:)
 
-contains
+   PUBLIC :: allocate_acc_fluxes
+   PUBLIC :: deallocate_acc_fluxes
+   PUBLIC :: flush_acc_fluxes
+   PUBLIC :: accumulate_fluxes
 
-   subroutine allocate_acc_fluxes
+CONTAINS
 
-      use MOD_SPMD_Task
-      USE MOD_LandElm
-      use MOD_LandPatch
-      USE MOD_LandUrban, only: numurban
-      USE MOD_Vars_Global
-      implicit none
+   SUBROUTINE allocate_acc_fluxes
 
-      if (p_is_worker) then
-         if (numpatch > 0) then
+   USE MOD_SPMD_Task
+   USE MOD_LandElm
+   USE MOD_LandPatch
+   USE MOD_LandUrban, only: numurban
+   USE MOD_Vars_1DFluxes, only: nsensor
+#ifdef CROP
+   USE MOD_LandCrop
+#endif
+   USE MOD_Vars_Global
+   IMPLICIT NONE
 
-            allocate (a_us     (numpatch))
-            allocate (a_vs     (numpatch))
-            allocate (a_t      (numpatch))
-            allocate (a_q      (numpatch))
-            allocate (a_prc    (numpatch))
-            allocate (a_prl    (numpatch))
-            allocate (a_pbot   (numpatch))
-            allocate (a_frl    (numpatch))
-            allocate (a_solarin(numpatch))
-            allocate (a_hpbl   (numpatch))
+      IF (p_is_worker) THEN
+         IF (numpatch > 0) THEN
+
+            allocate (a_us        (numpatch))
+            allocate (a_vs        (numpatch))
+            allocate (a_t         (numpatch))
+            allocate (a_q         (numpatch))
+            allocate (a_prc       (numpatch))
+            allocate (a_prl       (numpatch))
+            allocate (a_pbot      (numpatch))
+            allocate (a_frl       (numpatch))
+            allocate (a_solarin   (numpatch))
+            allocate (a_hpbl      (numpatch))
 
             allocate (a_taux      (numpatch))
             allocate (a_tauy      (numpatch))
@@ -349,8 +466,15 @@ contains
             allocate (a_xerr      (numpatch))
             allocate (a_zerr      (numpatch))
             allocate (a_rsur      (numpatch))
+            allocate (a_rsur_se   (numpatch))
+            allocate (a_rsur_ie   (numpatch))
             allocate (a_rsub      (numpatch))
             allocate (a_rnof      (numpatch))
+#ifdef CatchLateralFlow
+            allocate (a_xwsur     (numpatch))
+            allocate (a_xwsub     (numpatch))
+            allocate (a_fldarea   (numpatch))
+#endif
             allocate (a_qintr     (numpatch))
             allocate (a_qinfl     (numpatch))
             allocate (a_qdrip     (numpatch))
@@ -358,18 +482,20 @@ contains
             allocate (a_rstfacsha (numpatch))
             allocate (a_gssun     (numpatch))
             allocate (a_gssha     (numpatch))
+            allocate (a_rss       (numpatch))
             allocate (a_wdsrf     (numpatch))
 
             allocate (a_zwt       (numpatch))
             allocate (a_wa        (numpatch))
             allocate (a_wat       (numpatch))
+            allocate (a_wetwat    (numpatch))
             allocate (a_assim     (numpatch))
             allocate (a_respc     (numpatch))
 
-            allocate (a_assimsun  (numpatch)) !1
-            allocate (a_assimsha  (numpatch)) !1
-            allocate (a_etrsun    (numpatch)) !1
-            allocate (a_etrsha    (numpatch)) !1
+            allocate (a_assimsun  (numpatch))
+            allocate (a_assimsha  (numpatch))
+            allocate (a_etrsun    (numpatch))
+            allocate (a_etrsha    (numpatch))
 
             allocate (a_qcharge   (numpatch))
 
@@ -381,6 +507,7 @@ contains
             allocate (a_scv       (numpatch))
             allocate (a_snowdp    (numpatch))
             allocate (a_fsno      (numpatch))
+            allocate (a_frcsat    (numpatch))
             allocate (a_sigf      (numpatch))
             allocate (a_green     (numpatch))
             allocate (a_lai       (numpatch))
@@ -394,9 +521,22 @@ contains
             allocate (a_z0m       (numpatch))
             allocate (a_trad      (numpatch))
             allocate (a_tref      (numpatch))
+            allocate (a_t2m_wmo   (numpatch))
             allocate (a_qref      (numpatch))
             allocate (a_rain      (numpatch))
             allocate (a_snow      (numpatch))
+
+            allocate (a_o3uptakesun(numpatch))
+            allocate (a_o3uptakesha(numpatch))
+
+#ifdef DataAssimilation
+            allocate (a_h2osoi_ens            (1:nl_soil,DEF_DA_ENS,numpatch))
+            allocate (a_t_brt_ens                     (2,DEF_DA_ENS,numpatch))
+            allocate (a_t_brt                                    (2,numpatch))
+            allocate (a_wliq_soisno_ens(maxsnl+1:nl_soil,DEF_DA_ENS,numpatch))
+            allocate (a_wice_soisno_ens(maxsnl+1:nl_soil,DEF_DA_ENS,numpatch))
+#endif
+
 #ifdef URBAN_MODEL
             IF (numurban > 0) THEN
                allocate (a_t_room    (numurban))
@@ -477,6 +617,16 @@ contains
             allocate (a_hr                 (numpatch))
             allocate (a_fpg                (numpatch))
             allocate (a_fpi                (numpatch))
+            allocate (a_totvegc            (numpatch))
+            allocate (a_totlitc            (numpatch))
+            allocate (a_totcwdc            (numpatch))
+            allocate (a_totsomc            (numpatch))
+            allocate (a_totcolc            (numpatch))
+            allocate (a_totvegn            (numpatch))
+            allocate (a_totlitn            (numpatch))
+            allocate (a_totcwdn            (numpatch))
+            allocate (a_totsomn            (numpatch))
+            allocate (a_totcoln            (numpatch))
             allocate (a_gpp_enftemp        (numpatch)) !1
             allocate (a_gpp_enfboreal      (numpatch)) !2
             allocate (a_gpp_dnfboreal      (numpatch)) !3
@@ -519,6 +669,7 @@ contains
             allocate (a_pdrice2            (numpatch))
             allocate (a_pdsugarcane        (numpatch))
             allocate (a_plantdate          (numpatch))
+            allocate (a_manunitro          (numpatch))
             allocate (a_fertnitro_corn     (numpatch))
             allocate (a_fertnitro_swheat   (numpatch))
             allocate (a_fertnitro_wwheat   (numpatch))
@@ -527,6 +678,14 @@ contains
             allocate (a_fertnitro_rice1    (numpatch))
             allocate (a_fertnitro_rice2    (numpatch))
             allocate (a_fertnitro_sugarcane(numpatch))
+            allocate (a_irrig_method_corn     (numpatch))
+            allocate (a_irrig_method_swheat   (numpatch))
+            allocate (a_irrig_method_wwheat   (numpatch))
+            allocate (a_irrig_method_soybean  (numpatch))
+            allocate (a_irrig_method_cotton   (numpatch))
+            allocate (a_irrig_method_rice1    (numpatch))
+            allocate (a_irrig_method_rice2    (numpatch))
+            allocate (a_irrig_method_sugarcane(numpatch))
             allocate (a_cphase             (numpatch))
             allocate (a_hui                (numpatch))
             allocate (a_gddmaturity        (numpatch))
@@ -538,6 +697,11 @@ contains
             allocate (a_grainc_to_cropprodc(numpatch))
             allocate (a_grainc_to_seed     (numpatch))
             allocate (a_fert_to_sminn      (numpatch))
+
+            allocate (a_irrig_rate         (numpatch))
+            allocate (a_deficit_irrig      (numpatch))
+            allocate (a_sum_irrig          (numpatch))
+            allocate (a_sum_irrig_count    (numpatch))
 #endif
             allocate (a_ndep_to_sminn      (numpatch))
 
@@ -547,6 +711,42 @@ contains
             allocate (a_hdm                (numpatch))
             allocate (a_lnfm               (numpatch))
 
+            allocate (a_leafcCap              (numpatch))
+            allocate (a_leafc_storageCap      (numpatch))
+            allocate (a_leafc_xferCap         (numpatch))
+            allocate (a_frootcCap             (numpatch))
+            allocate (a_frootc_storageCap     (numpatch))
+            allocate (a_frootc_xferCap        (numpatch))
+            allocate (a_livestemcCap          (numpatch))
+            allocate (a_livestemc_storageCap  (numpatch))
+            allocate (a_livestemc_xferCap     (numpatch))
+            allocate (a_deadstemcCap          (numpatch))
+            allocate (a_deadstemc_storageCap  (numpatch))
+            allocate (a_deadstemc_xferCap     (numpatch))
+            allocate (a_livecrootcCap         (numpatch))
+            allocate (a_livecrootc_storageCap (numpatch))
+            allocate (a_livecrootc_xferCap    (numpatch))
+            allocate (a_deadcrootcCap         (numpatch))
+            allocate (a_deadcrootc_storageCap (numpatch))
+            allocate (a_deadcrootc_xferCap    (numpatch))
+            allocate (a_leafnCap              (numpatch))
+            allocate (a_leafn_storageCap      (numpatch))
+            allocate (a_leafn_xferCap         (numpatch))
+            allocate (a_frootnCap             (numpatch))
+            allocate (a_frootn_storageCap     (numpatch))
+            allocate (a_frootn_xferCap        (numpatch))
+            allocate (a_livestemnCap          (numpatch))
+            allocate (a_livestemn_storageCap  (numpatch))
+            allocate (a_livestemn_xferCap     (numpatch))
+            allocate (a_deadstemnCap          (numpatch))
+            allocate (a_deadstemn_storageCap  (numpatch))
+            allocate (a_deadstemn_xferCap     (numpatch))
+            allocate (a_livecrootnCap         (numpatch))
+            allocate (a_livecrootn_storageCap (numpatch))
+            allocate (a_livecrootn_xferCap    (numpatch))
+            allocate (a_deadcrootnCap         (numpatch))
+            allocate (a_deadcrootn_storageCap (numpatch))
+            allocate (a_deadcrootn_xferCap    (numpatch))
 #endif
 ! Ozone stress variables
             allocate (a_ozone              (numpatch))
@@ -562,8 +762,9 @@ contains
 !Plant Hydraulic parameters
             allocate (a_vegwp       (1:nvegwcs,       numpatch))
 !End Plant Hydraulic parameters
-            allocate (a_t_lake      (nl_lake,numpatch))
-            allocate (a_lake_icefrac(nl_lake,numpatch))
+            allocate (a_dz_lake     (nl_lake,         numpatch))
+            allocate (a_t_lake      (nl_lake,         numpatch))
+            allocate (a_lake_icefrac(nl_lake,         numpatch))
 
 #ifdef BGC
             allocate (a_litr1c_vr   (1:nl_soil,       numpatch))
@@ -580,8 +781,26 @@ contains
             allocate (a_soil2n_vr   (1:nl_soil,       numpatch))
             allocate (a_soil3n_vr   (1:nl_soil,       numpatch))
             allocate (a_cwdn_vr     (1:nl_soil,       numpatch))
+            allocate (a_totsoiln_vr (1:nl_soil,       numpatch))
             allocate (a_sminn_vr    (1:nl_soil,       numpatch))
             allocate (decomp_vr_tmp (1:nl_soil,       numpatch))
+
+            allocate (a_litr1cCap_vr(1:nl_soil,       numpatch))
+            allocate (a_litr2cCap_vr(1:nl_soil,       numpatch))
+            allocate (a_litr3cCap_vr(1:nl_soil,       numpatch))
+            allocate (a_soil1cCap_vr(1:nl_soil,       numpatch))
+            allocate (a_soil2cCap_vr(1:nl_soil,       numpatch))
+            allocate (a_soil3cCap_vr(1:nl_soil,       numpatch))
+            allocate (a_cwdcCap_vr  (1:nl_soil,       numpatch))
+            allocate (a_litr1nCap_vr(1:nl_soil,       numpatch))
+            allocate (a_litr2nCap_vr(1:nl_soil,       numpatch))
+            allocate (a_litr3nCap_vr(1:nl_soil,       numpatch))
+            allocate (a_soil1nCap_vr(1:nl_soil,       numpatch))
+            allocate (a_soil2nCap_vr(1:nl_soil,       numpatch))
+            allocate (a_soil3nCap_vr(1:nl_soil,       numpatch))
+            allocate (a_cwdnCap_vr  (1:nl_soil,       numpatch))
+            allocate (a_t_scalar    (1:nl_soil,       numpatch))
+            allocate (a_w_scalar    (1:nl_soil,       numpatch))
 #endif
 
             allocate (a_ustar     (numpatch))
@@ -616,30 +835,34 @@ contains
             allocate (a_srndln    (numpatch))
             allocate (a_srniln    (numpatch))
 
+            allocate (a_sensors (nsensor,numpatch))
+
             allocate (nac_ln      (numpatch))
+            allocate (nac_dt      (numpatch))
+            allocate (filter_dt   (numpatch))
 
-         end if
-      end if
-
-      IF (p_is_worker) THEN
-#if (defined CROP)
-         CALL elm_patch%build (landelm, landpatch, use_frac = .true., shadowfrac = pctcrop)
-#else
-         CALL elm_patch%build (landelm, landpatch, use_frac = .true.)
-#endif
+         ENDIF
       ENDIF
 
-   end subroutine allocate_acc_fluxes
+#ifdef EXTERNAL_LAKE
+      CALL allocate_LakeAccVars
+#endif
 
-   subroutine deallocate_acc_fluxes ()
+      IF (p_is_worker) THEN
+         CALL elm_patch%build (landelm, landpatch, use_frac = .true.)
+      ENDIF
 
-      use MOD_SPMD_Task
-      use MOD_LandPatch, only : numpatch
-      USE MOD_LandUrban, only : numurban
-      implicit none
+   END SUBROUTINE allocate_acc_fluxes
 
-      if (p_is_worker) then
-         if (numpatch > 0) then
+   SUBROUTINE deallocate_acc_fluxes ()
+
+   USE MOD_SPMD_Task
+   USE MOD_LandPatch, only: numpatch
+   USE MOD_LandUrban, only: numurban
+   IMPLICIT NONE
+
+      IF (p_is_worker) THEN
+         IF (numpatch > 0) THEN
 
             deallocate (a_us     )
             deallocate (a_vs     )
@@ -671,20 +894,29 @@ contains
             deallocate (a_xerr      )
             deallocate (a_zerr      )
             deallocate (a_rsur      )
+            deallocate (a_rsur_se   )
+            deallocate (a_rsur_ie   )
             deallocate (a_rsub      )
             deallocate (a_rnof      )
+#ifdef CatchLateralFlow
+            deallocate (a_xwsur     )
+            deallocate (a_xwsub     )
+            deallocate (a_fldarea   )
+#endif
             deallocate (a_qintr     )
             deallocate (a_qinfl     )
             deallocate (a_qdrip     )
             deallocate (a_rstfacsun )
             deallocate (a_rstfacsha )
-            deallocate (a_gssun )
-            deallocate (a_gssha )
+            deallocate (a_gssun     )
+            deallocate (a_gssha     )
+            deallocate (a_rss       )
             deallocate (a_wdsrf     )
 
             deallocate (a_zwt       )
             deallocate (a_wa        )
             deallocate (a_wat       )
+            deallocate (a_wetwat    )
             deallocate (a_assim     )
             deallocate (a_respc     )
 
@@ -703,6 +935,7 @@ contains
             deallocate (a_scv       )
             deallocate (a_snowdp    )
             deallocate (a_fsno      )
+            deallocate (a_frcsat    )
             deallocate (a_sigf      )
             deallocate (a_green     )
             deallocate (a_lai       )
@@ -710,15 +943,28 @@ contains
             deallocate (a_laisha    )
             deallocate (a_sai       )
 
-            deallocate (a_alb  )
+            deallocate (a_alb       )
 
             deallocate (a_emis      )
             deallocate (a_z0m       )
             deallocate (a_trad      )
             deallocate (a_tref      )
+            deallocate (a_t2m_wmo   )
             deallocate (a_qref      )
             deallocate (a_rain      )
             deallocate (a_snow      )
+
+            deallocate (a_o3uptakesun)
+            deallocate (a_o3uptakesha)
+
+#ifdef DataAssimilation
+            deallocate (a_h2osoi_ens     )
+            deallocate (a_t_brt_ens      )
+            deallocate (a_t_brt          )
+            deallocate (a_wliq_soisno_ens)
+            deallocate (a_wice_soisno_ens)
+#endif
+
 #ifdef URBAN_MODEL
             IF (numurban > 0) THEN
                deallocate (a_t_room    )
@@ -800,6 +1046,16 @@ contains
             deallocate (a_hr                 )
             deallocate (a_fpg                )
             deallocate (a_fpi                )
+            deallocate (a_totvegc            )
+            deallocate (a_totlitc            )
+            deallocate (a_totcwdc            )
+            deallocate (a_totsomc            )
+            deallocate (a_totcolc            )
+            deallocate (a_totvegn            )
+            deallocate (a_totlitn            )
+            deallocate (a_totcwdn            )
+            deallocate (a_totsomn            )
+            deallocate (a_totcoln            )
             deallocate (a_gpp_enftemp        ) !1
             deallocate (a_gpp_enfboreal      ) !2
             deallocate (a_gpp_dnfboreal      ) !3
@@ -842,6 +1098,7 @@ contains
             deallocate (a_pdrice2            )
             deallocate (a_pdsugarcane        )
             deallocate (a_plantdate          )
+            deallocate (a_manunitro          )
             deallocate (a_fertnitro_corn     )
             deallocate (a_fertnitro_swheat   )
             deallocate (a_fertnitro_wwheat   )
@@ -850,6 +1107,14 @@ contains
             deallocate (a_fertnitro_rice1    )
             deallocate (a_fertnitro_rice2    )
             deallocate (a_fertnitro_sugarcane)
+            deallocate (a_irrig_method_corn     )
+            deallocate (a_irrig_method_swheat   )
+            deallocate (a_irrig_method_wwheat   )
+            deallocate (a_irrig_method_soybean  )
+            deallocate (a_irrig_method_cotton   )
+            deallocate (a_irrig_method_rice1    )
+            deallocate (a_irrig_method_rice2    )
+            deallocate (a_irrig_method_sugarcane)
             deallocate (a_cphase             )
             deallocate (a_hui                )
             deallocate (a_vf                 )
@@ -861,6 +1126,11 @@ contains
             deallocate (a_grainc_to_cropprodc)
             deallocate (a_grainc_to_seed     )
             deallocate (a_fert_to_sminn      )
+
+            deallocate (a_irrig_rate         )
+            deallocate (a_deficit_irrig      )
+            deallocate (a_sum_irrig          )
+            deallocate (a_sum_irrig_count    )
 #endif
             deallocate (a_ndep_to_sminn      )
 
@@ -870,10 +1140,46 @@ contains
             deallocate (a_hdm                )
             deallocate (a_lnfm               )
 
+            deallocate (a_leafcCap             )
+            deallocate (a_leafc_storageCap     )
+            deallocate (a_leafc_xferCap        )
+            deallocate (a_frootcCap            )
+            deallocate (a_frootc_storageCap    )
+            deallocate (a_frootc_xferCap       )
+            deallocate (a_livestemcCap         )
+            deallocate (a_livestemc_storageCap )
+            deallocate (a_livestemc_xferCap    )
+            deallocate (a_deadstemcCap         )
+            deallocate (a_deadstemc_storageCap )
+            deallocate (a_deadstemc_xferCap    )
+            deallocate (a_livecrootcCap        )
+            deallocate (a_livecrootc_storageCap)
+            deallocate (a_livecrootc_xferCap   )
+            deallocate (a_deadcrootcCap        )
+            deallocate (a_deadcrootc_storageCap)
+            deallocate (a_deadcrootc_xferCap   )
+            deallocate (a_leafnCap             )
+            deallocate (a_leafn_storageCap     )
+            deallocate (a_leafn_xferCap        )
+            deallocate (a_frootnCap            )
+            deallocate (a_frootn_storageCap    )
+            deallocate (a_frootn_xferCap       )
+            deallocate (a_livestemnCap         )
+            deallocate (a_livestemn_storageCap )
+            deallocate (a_livestemn_xferCap    )
+            deallocate (a_deadstemnCap         )
+            deallocate (a_deadstemn_storageCap )
+            deallocate (a_deadstemn_xferCap    )
+            deallocate (a_livecrootnCap        )
+            deallocate (a_livecrootn_storageCap)
+            deallocate (a_livecrootn_xferCap   )
+            deallocate (a_deadcrootnCap        )
+            deallocate (a_deadcrootn_storageCap)
+            deallocate (a_deadcrootn_xferCap   )
 #endif
 ! Ozone stress variables
             deallocate (a_ozone              )
-! end ozone stress variables
+! END ozone stress variables
 
             deallocate (a_t_soisno    )
             deallocate (a_wliq_soisno )
@@ -885,7 +1191,8 @@ contains
             deallocate (a_OM_density  )
 !Plant Hydraulic parameters
             deallocate (a_vegwp       )
-!end plant hydraulic parameters
+!END plant hydraulic parameters
+            deallocate (a_dz_lake     )
             deallocate (a_t_lake      )
             deallocate (a_lake_icefrac)
 #ifdef BGC
@@ -903,8 +1210,25 @@ contains
             deallocate (a_soil2n_vr   )
             deallocate (a_soil3n_vr   )
             deallocate (a_cwdn_vr     )
+            deallocate (a_totsoiln_vr )
             deallocate (a_sminn_vr    )
             deallocate (decomp_vr_tmp )
+            deallocate (a_litr1cCap_vr)
+            deallocate (a_litr2cCap_vr)
+            deallocate (a_litr3cCap_vr)
+            deallocate (a_soil1cCap_vr)
+            deallocate (a_soil2cCap_vr)
+            deallocate (a_soil3cCap_vr)
+            deallocate (a_cwdcCap_vr  )
+            deallocate (a_litr1nCap_vr)
+            deallocate (a_litr2nCap_vr)
+            deallocate (a_litr3nCap_vr)
+            deallocate (a_soil1nCap_vr)
+            deallocate (a_soil2nCap_vr)
+            deallocate (a_soil3nCap_vr)
+            deallocate (a_cwdnCap_vr  )
+            deallocate (a_t_scalar    )
+            deallocate (a_w_scalar    )
 #endif
 
             deallocate (a_ustar     )
@@ -939,96 +1263,114 @@ contains
             deallocate (a_srndln    )
             deallocate (a_srniln    )
 
+            deallocate (a_sensors   )
+
             deallocate (nac_ln      )
+            deallocate (nac_dt      )
+            deallocate (filter_dt   )
 
-         end if
-      end if
+         ENDIF
+      ENDIF
 
-   end subroutine deallocate_acc_fluxes
+#ifdef EXTERNAL_LAKE
+      CALL deallocate_LakeAccVars
+#endif
+
+   END SUBROUTINE deallocate_acc_fluxes
 
    !-----------------------
    SUBROUTINE FLUSH_acc_fluxes ()
 
-      use MOD_SPMD_Task
-      use MOD_LandPatch, only : numpatch
-      USE MOD_LandUrban, only : numurban
-      use MOD_Vars_Global, only : spval
-      implicit none
+      USE MOD_SPMD_Task
+      USE MOD_LandPatch, only: numpatch
+      USE MOD_LandUrban, only: numurban
+      USE MOD_Vars_Global, only: spval
+      IMPLICIT NONE
 
-      if (p_is_worker) then
+      IF (p_is_worker) THEN
 
          nac = 0
 
-         if (numpatch > 0) then
+         IF (numpatch > 0) THEN
 
             ! flush the Fluxes for accumulation
-            a_us     (:) = spval
-            a_vs     (:) = spval
-            a_t      (:) = spval
-            a_q      (:) = spval
-            a_prc    (:) = spval
-            a_prl    (:) = spval
-            a_pbot   (:) = spval
-            a_frl    (:) = spval
-            a_solarin(:) = spval
-            a_hpbl   (:) = spval
+            a_us        (:) = spval
+            a_vs        (:) = spval
+            a_t         (:) = spval
+            a_q         (:) = spval
+            a_prc       (:) = spval
+            a_prl       (:) = spval
+            a_pbot      (:) = spval
+            a_frl       (:) = spval
+            a_solarin   (:) = spval
+            a_hpbl      (:) = spval
 
-            a_taux    (:) = spval
-            a_tauy    (:) = spval
-            a_fsena   (:) = spval
-            a_lfevpa  (:) = spval
-            a_fevpa   (:) = spval
-            a_fsenl   (:) = spval
-            a_fevpl   (:) = spval
-            a_etr     (:) = spval
-            a_fseng   (:) = spval
-            a_fevpg   (:) = spval
-            a_fgrnd   (:) = spval
-            a_sabvsun (:) = spval
-            a_sabvsha (:) = spval
-            a_sabg    (:) = spval
-            a_olrg    (:) = spval
-            a_rnet    (:) = spval
-            a_xerr    (:) = spval
-            a_zerr    (:) = spval
-            a_rsur    (:) = spval
-            a_rsub    (:) = spval
-            a_rnof    (:) = spval
-            a_qintr   (:) = spval
-            a_qinfl   (:) = spval
-            a_qdrip   (:) = spval
-            a_rstfacsun(:) = spval
-            a_rstfacsha(:) = spval
-            a_gssun   (:) = spval
-            a_gssha   (:) = spval
+            a_taux      (:) = spval
+            a_tauy      (:) = spval
+            a_fsena     (:) = spval
+            a_lfevpa    (:) = spval
+            a_fevpa     (:) = spval
+            a_fsenl     (:) = spval
+            a_fevpl     (:) = spval
+            a_etr       (:) = spval
+            a_fseng     (:) = spval
+            a_fevpg     (:) = spval
+            a_fgrnd     (:) = spval
+            a_sabvsun   (:) = spval
+            a_sabvsha   (:) = spval
+            a_sabg      (:) = spval
+            a_olrg      (:) = spval
+            a_rnet      (:) = spval
+            a_xerr      (:) = spval
+            a_zerr      (:) = spval
+            a_rsur      (:) = spval
+            a_rsur_se   (:) = spval
+            a_rsur_ie   (:) = spval
+            a_rsub      (:) = spval
+            a_rnof      (:) = spval
+#ifdef CatchLateralFlow
+            a_xwsur     (:) = spval
+            a_xwsub     (:) = spval
+            a_fldarea   (:) = spval
+#endif
+            a_qintr     (:) = spval
+            a_qinfl     (:) = spval
+            a_qdrip     (:) = spval
+            a_rstfacsun (:) = spval
+            a_rstfacsha (:) = spval
+            a_gssun     (:) = spval
+            a_gssha     (:) = spval
+            a_rss       (:) = spval
 
-            a_wdsrf   (:) = spval
-            a_zwt     (:) = spval
-            a_wa      (:) = spval
-            a_wat     (:) = spval
-            a_assim   (:) = spval
-            a_respc   (:) = spval
-            a_assimsun(:) = spval !1
-            a_assimsha(:) = spval !1
-            a_etrsun  (:) = spval !1
-            a_etrsha  (:) = spval !1
+            a_wdsrf     (:) = spval
+            a_zwt       (:) = spval
+            a_wa        (:) = spval
+            a_wat       (:) = spval
+            a_wetwat    (:) = spval
+            a_assim     (:) = spval
+            a_respc     (:) = spval
+            a_assimsun  (:) = spval
+            a_assimsha  (:) = spval
+            a_etrsun    (:) = spval
+            a_etrsha    (:) = spval
 
-            a_qcharge (:) = spval
+            a_qcharge   (:) = spval
 
-            a_t_grnd  (:) = spval
-            a_tleaf   (:) = spval
-            a_ldew_rain(:) = spval
-            a_ldew_snow(:) = spval
-            a_ldew    (:) = spval
-            a_scv     (:) = spval
-            a_snowdp  (:) = spval
-            a_fsno    (:) = spval
-            a_sigf    (:) = spval
-            a_green   (:) = spval
-            a_lai     (:) = spval
-            a_laisun  (:) = spval
-            a_laisha  (:) = spval
-            a_sai     (:) = spval
+            a_t_grnd    (:) = spval
+            a_tleaf     (:) = spval
+            a_ldew_rain (:) = spval
+            a_ldew_snow (:) = spval
+            a_ldew      (:) = spval
+            a_scv       (:) = spval
+            a_snowdp    (:) = spval
+            a_fsno      (:) = spval
+            a_frcsat    (:) = spval
+            a_sigf      (:) = spval
+            a_green     (:) = spval
+            a_lai       (:) = spval
+            a_laisun    (:) = spval
+            a_laisha    (:) = spval
+            a_sai       (:) = spval
 
             a_alb   (:,:,:) = spval
 
@@ -1036,9 +1378,21 @@ contains
             a_z0m       (:) = spval
             a_trad      (:) = spval
             a_tref      (:) = spval
+            a_t2m_wmo   (:) = spval
             a_qref      (:) = spval
             a_rain      (:) = spval
             a_snow      (:) = spval
+
+            a_o3uptakesun(:) = spval
+            a_o3uptakesha(:) = spval
+
+#ifdef DataAssimilation
+            a_h2osoi_ens     (:,:,:) = spval
+            a_t_brt_ens      (:,:,:) = spval
+            a_t_brt            (:,:) = spval
+            a_wliq_soisno_ens(:,:,:) = spval
+            a_wice_soisno_ens(:,:,:) = spval
+#endif
 
 #ifdef URBAN_MODEL
             IF (numurban > 0) THEN
@@ -1121,6 +1475,16 @@ contains
             a_hr                 (:) = spval
             a_fpg                (:) = spval
             a_fpi                (:) = spval
+            a_totvegc            (:) = spval
+            a_totlitc            (:) = spval
+            a_totcwdc            (:) = spval
+            a_totsomc            (:) = spval
+            a_totcolc            (:) = spval
+            a_totvegn            (:) = spval
+            a_totlitn            (:) = spval
+            a_totcwdn            (:) = spval
+            a_totsomn            (:) = spval
+            a_totcoln            (:) = spval
             a_gpp_enftemp        (:) = spval
             a_gpp_enfboreal      (:) = spval
             a_gpp_dnfboreal      (:) = spval
@@ -1162,6 +1526,7 @@ contains
             a_pdrice2            (:) = spval
             a_pdsugarcane        (:) = spval
             a_plantdate          (:) = spval
+            a_manunitro          (:) = spval
             a_fertnitro_corn     (:) = spval
             a_fertnitro_swheat   (:) = spval
             a_fertnitro_wwheat   (:) = spval
@@ -1170,6 +1535,14 @@ contains
             a_fertnitro_rice1    (:) = spval
             a_fertnitro_rice2    (:) = spval
             a_fertnitro_sugarcane(:) = spval
+            a_irrig_method_corn     (:) = spval
+            a_irrig_method_swheat   (:) = spval
+            a_irrig_method_wwheat   (:) = spval
+            a_irrig_method_soybean  (:) = spval
+            a_irrig_method_cotton   (:) = spval
+            a_irrig_method_rice1    (:) = spval
+            a_irrig_method_rice2    (:) = spval
+            a_irrig_method_sugarcane(:) = spval
             a_cphase             (:) = spval
             a_vf                 (:) = spval
             a_gddmaturity        (:) = spval
@@ -1181,6 +1554,10 @@ contains
             a_grainc_to_cropprodc(:) = spval
             a_grainc_to_seed     (:) = spval
             a_fert_to_sminn      (:) = spval
+            a_irrig_rate         (:) = spval
+            a_deficit_irrig      (:) = spval
+            a_sum_irrig          (:) = spval
+            a_sum_irrig_count    (:) = spval
 #endif
             a_ndep_to_sminn      (:) = spval
 
@@ -1190,8 +1567,44 @@ contains
             a_hdm                (:) = spval
             a_lnfm               (:) = spval
 
+            a_leafcCap             (:) = spval
+            a_leafc_storageCap     (:) = spval
+            a_leafc_xferCap        (:) = spval
+            a_frootcCap            (:) = spval
+            a_frootc_storageCap    (:) = spval
+            a_frootc_xferCap       (:) = spval
+            a_livestemcCap         (:) = spval
+            a_livestemc_storageCap (:) = spval
+            a_livestemc_xferCap    (:) = spval
+            a_deadstemcCap         (:) = spval
+            a_deadstemc_storageCap (:) = spval
+            a_deadstemc_xferCap    (:) = spval
+            a_livecrootcCap        (:) = spval
+            a_livecrootc_storageCap(:) = spval
+            a_livecrootc_xferCap   (:) = spval
+            a_deadcrootcCap        (:) = spval
+            a_deadcrootc_storageCap(:) = spval
+            a_deadcrootc_xferCap   (:) = spval
+            a_leafnCap             (:) = spval
+            a_leafn_storageCap     (:) = spval
+            a_leafn_xferCap        (:) = spval
+            a_frootnCap            (:) = spval
+            a_frootn_storageCap    (:) = spval
+            a_frootn_xferCap       (:) = spval
+            a_livestemnCap         (:) = spval
+            a_livestemn_storageCap (:) = spval
+            a_livestemn_xferCap    (:) = spval
+            a_deadstemnCap         (:) = spval
+            a_deadstemn_storageCap (:) = spval
+            a_deadstemn_xferCap    (:) = spval
+            a_livecrootnCap        (:) = spval
+            a_livecrootn_storageCap(:) = spval
+            a_livecrootn_xferCap   (:) = spval
+            a_deadcrootnCap        (:) = spval
+            a_deadcrootn_storageCap(:) = spval
+            a_deadcrootn_xferCap   (:) = spval
 #endif
-            a_ozone              (:) = spval
+            a_ozone                (:) = spval
 
             a_t_soisno     (:,:) = spval
             a_wliq_soisno  (:,:) = spval
@@ -1203,7 +1616,8 @@ contains
             a_OM_density   (:,:) = spval
 !Plant Hydraulic parameters
             a_vegwp        (:,:) = spval
-!end plant hydraulic parameters
+!END plant hydraulic parameters
+            a_dz_lake      (:,:) = spval
             a_t_lake       (:,:) = spval
             a_lake_icefrac (:,:) = spval
 #ifdef BGC
@@ -1221,6 +1635,26 @@ contains
             a_soil2n_vr    (:,:) = spval
             a_soil3n_vr    (:,:) = spval
             a_cwdn_vr      (:,:) = spval
+            a_totsoiln_vr  (:,:) = spval
+
+            a_litr1cCap_vr (:,:) = spval
+            a_litr2cCap_vr (:,:) = spval
+            a_litr3cCap_vr (:,:) = spval
+            a_soil1cCap_vr (:,:) = spval
+            a_soil2cCap_vr (:,:) = spval
+            a_soil3cCap_vr (:,:) = spval
+            a_cwdcCap_vr   (:,:) = spval
+            a_litr1nCap_vr (:,:) = spval
+            a_litr2nCap_vr (:,:) = spval
+            a_litr3nCap_vr (:,:) = spval
+            a_soil1nCap_vr (:,:) = spval
+            a_soil2nCap_vr (:,:) = spval
+            a_soil3nCap_vr (:,:) = spval
+            a_cwdnCap_vr   (:,:) = spval
+
+            a_t_scalar     (:,:) = spval
+            a_w_scalar     (:,:) = spval
+
             a_sminn_vr     (:,:) = spval
 #endif
 
@@ -1256,114 +1690,137 @@ contains
             a_srndln   (:) = spval
             a_srniln   (:) = spval
 
-            nac_ln  (:) = 0
+            a_sensors(:,:) = spval
 
-         end if
-      end if
+            nac_ln     (:) = 0
+            nac_dt     (:) = 0
+            filter_dt  (:) = .true.
+
+         ENDIF
+      ENDIF
+
+#ifdef EXTERNAL_LAKE
+      CALL Flush_LakeAccVars
+#endif
 
    END SUBROUTINE FLUSH_acc_fluxes
 
    SUBROUTINE accumulate_fluxes
-      ! ----------------------------------------------------------------------
-      ! perfrom the grid average mapping: average a subgrid input 1d vector
-      ! of length numpatch to a output 2d array of length [ghist%xcnt,ghist%ycnt]
-      !
-      ! Created by Yongjiu Dai, 03/2014
-      !---------------------------------------------------------------------
+! ----------------------------------------------------------------------
+!  perform the grid average mapping: average a subgrid input 1d vector
+!  of length numpatch to a output 2d array of length [ghist%xcnt,ghist%ycnt]
+!
+!  Created by Yongjiu Dai, 03/2014
+!---------------------------------------------------------------------
 
-      use MOD_Precision
-      use MOD_SPMD_Task
-      USE mod_forcing, only: forcmask
-      USE MOD_Mesh,    only: numelm
-      USE MOD_LandElm
-      use MOD_LandPatch,      only: numpatch, elm_patch
-      USE MOD_LandUrban,      only: numurban
-      use MOD_Const_Physical, only: vonkar, stefnc, cpair, rgas, grav
-      use MOD_Vars_TimeInvariants
-      use MOD_Vars_TimeVariables
-      use MOD_Vars_1DForcing
-      use MOD_Vars_1DFluxes
-      use MOD_FrictionVelocity
-      USE MOD_Namelist, only: DEF_USE_CBL_HEIGHT, DEF_USE_OZONESTRESS, DEF_USE_PLANTHYDRAULICS, DEF_USE_NITRIF
-      USE MOD_TurbulenceLEddy
-      use MOD_Vars_Global
-#ifdef LATERAL_FLOW
-      USE MOD_Hydro_Hist, only: accumulate_fluxes_basin
+   USE MOD_Precision
+   USE MOD_SPMD_Task
+   USE mod_forcing, only: forcmask_pch
+   USE MOD_Mesh,    only: numelm
+   USE MOD_LandElm
+   USE MOD_LandPatch,      only: numpatch, elm_patch
+   USE MOD_LandUrban,      only: numurban
+   USE MOD_Const_Physical, only: vonkar, stefnc, cpair, rgas, grav
+   USE MOD_Vars_TimeInvariants
+   USE MOD_Vars_TimeVariables
+   USE MOD_Vars_1DForcing
+   USE MOD_Vars_1DFluxes
+   USE MOD_FrictionVelocity
+   USE MOD_Namelist, only: DEF_USE_CBL_HEIGHT, DEF_USE_OZONESTRESS, DEF_USE_PLANTHYDRAULICS, DEF_USE_NITRIF
+   USE MOD_TurbulenceLEddy
+   USE MOD_Vars_Global
+#ifdef CatchLateralFlow
+   USE MOD_Catch_Vars_1DFluxes
+   USE MOD_Catch_Hist, only: accumulate_fluxes_basin
 #endif
 
-      IMPLICIT NONE
+   IMPLICIT NONE
 
-      ! Local Variables
+   ! Local Variables
 
-      real(r8), allocatable :: r_trad  (:)
+   real(r8), allocatable :: r_trad   (:)
+   real(r8), allocatable :: r_ustar  (:)
+   real(r8), allocatable :: r_ustar2 (:) !define a temporary for estimating us10m only, output should be r_ustar. Shaofeng, 2023.05.20
+   real(r8), allocatable :: r_tstar  (:)
+   real(r8), allocatable :: r_qstar  (:)
+   real(r8), allocatable :: r_zol    (:)
+   real(r8), allocatable :: r_rib    (:)
+   real(r8), allocatable :: r_fm     (:)
+   real(r8), allocatable :: r_fh     (:)
+   real(r8), allocatable :: r_fq     (:)
 
-      real(r8), allocatable :: r_ustar (:)
-      real(r8), allocatable :: r_ustar2(:) !define a temporary for estimating us10m only, output should be r_ustar. Shaofeng, 2023.05.20
-      real(r8), allocatable :: r_tstar (:)
-      real(r8), allocatable :: r_qstar (:)
-      real(r8), allocatable :: r_zol   (:)
-      real(r8), allocatable :: r_rib   (:)
-      real(r8), allocatable :: r_fm    (:)
-      real(r8), allocatable :: r_fh    (:)
-      real(r8), allocatable :: r_fq    (:)
+   real(r8), allocatable :: r_us10m  (:)
+   real(r8), allocatable :: r_vs10m  (:)
+   real(r8), allocatable :: r_fm10m  (:)
 
-      real(r8), allocatable :: r_us10m (:)
-      real(r8), allocatable :: r_vs10m (:)
-      real(r8), allocatable :: r_fm10m (:)
+   logical,  allocatable :: filter   (:)
 
-      logical,  allocatable :: filter  (:)
+   !---------------------------------------------------------------------
+   integer  ib, jb, i, j, ielm, istt, iend
+   real(r8) sumwt
+   real(r8) rhoair,thm,th,thv,ur,displa_av,zldis,hgt_u,hgt_t,hgt_q
+   real(r8) hpbl ! atmospheric boundary layer height [m]
+   real(r8) z0m_av,z0h_av,z0q_av,us,vs,tm,qm,psrf,taux_e,tauy_e,fsena_e,fevpa_e
+   real(r8) r_ustar_e, r_tstar_e, r_qstar_e, r_zol_e, r_ustar2_e, r_fm10m_e
+   real(r8) r_fm_e, r_fh_e, r_fq_e, r_rib_e, r_us10m_e, r_vs10m_e
+   real(r8) obu,fh2m,fq2m
+   real(r8) um,thvstar,beta,zii,wc,wc2
 
-      !---------------------------------------------------------------------
-      integer  ib, jb, i, j, ielm, istt, iend
-      real(r8) sumwt
-      real(r8) rhoair,thm,th,thv,ur,displa_av,zldis,hgt_u,hgt_t,hgt_q
-      real(r8) hpbl ! atmospheric boundary layer height [m]
-      real(r8) z0m_av,z0h_av,z0q_av,us,vs,tm,qm,psrf,taux_e,tauy_e,fsena_e,fevpa_e
-      real(r8) r_ustar_e, r_tstar_e, r_qstar_e, r_zol_e, r_ustar2_e, r_fm10m_e
-      real(r8) r_fm_e, r_fh_e, r_fq_e, r_rib_e, r_us10m_e, r_vs10m_e
-      real(r8) obu,fh2m,fq2m
-      real(r8) um,thvstar,beta,zii,wc,wc2
+      IF (p_is_worker) THEN
+         IF (numpatch > 0) THEN
 
-      if (p_is_worker) then
-         if (numpatch > 0) then
-
+            ! count for time steps
             nac = nac + 1
 
-            call acc1d (forc_us  , a_us  )
-            call acc1d (forc_vs  , a_vs  )
-            call acc1d (forc_t   , a_t   )
-            call acc1d (forc_q   , a_q   )
-            call acc1d (forc_prc , a_prc )
-            call acc1d (forc_prl , a_prl )
-            call acc1d (forc_pbot, a_pbot)
-            call acc1d (forc_frl , a_frl )
+            ! count for local noon time steps
+            DO i = 1, numpatch
+               IF (solvdln(i) /= spval) THEN
+                  nac_ln(i) = nac_ln(i) + 1
+               ENDIF
+            ENDDO
 
-            call acc1d (forc_sols,  a_solarin)
-            call acc1d (forc_soll,  a_solarin)
-            call acc1d (forc_solsd, a_solarin)
-            call acc1d (forc_solld, a_solarin)
-            if (DEF_USE_CBL_HEIGHT) then
-               call acc1d (forc_hpbl , a_hpbl)
-            endif
+            ! set daytime filter
+            filter_dt(:) = coszen(:) > 0
 
-            call acc1d (taux    , a_taux   )
-            call acc1d (tauy    , a_tauy   )
-            call acc1d (fsena   , a_fsena  )
-            call acc1d (lfevpa  , a_lfevpa )
-            call acc1d (fevpa   , a_fevpa  )
-            call acc1d (fsenl   , a_fsenl  )
-            call acc1d (fevpl   , a_fevpl  )
-            call acc1d (etr     , a_etr    )
-            call acc1d (fseng   , a_fseng  )
-            call acc1d (fevpg   , a_fevpg  )
-            call acc1d (fgrnd   , a_fgrnd  )
-            call acc1d (sabvsun , a_sabvsun)
-            call acc1d (sabvsha , a_sabvsha)
-            call acc1d (sabg    , a_sabg   )
-            call acc1d (olrg    , a_olrg   )
+            ! count for daytime time steps
+            WHERE ( filter_dt(:) ) nac_dt(:) = nac_dt(:) + 1
+
+            CALL acc1d (forc_us    , a_us      )
+            CALL acc1d (forc_vs    , a_vs      )
+            CALL acc1d (forc_t     , a_t       )
+            CALL acc1d (forc_q     , a_q       )
+            CALL acc1d (forc_prc   , a_prc     )
+            CALL acc1d (forc_prl   , a_prl     )
+            CALL acc1d (forc_pbot  , a_pbot    )
+            CALL acc1d (forc_frl   , a_frl     )
+
+            CALL acc1d (forc_sols  , a_solarin )
+            CALL acc1d (forc_soll  , a_solarin )
+            CALL acc1d (forc_solsd , a_solarin )
+            CALL acc1d (forc_solld , a_solarin )
+
+            IF (DEF_USE_CBL_HEIGHT) THEN
+               CALL acc1d (forc_hpbl , a_hpbl)
+            ENDIF
+
+            CALL acc1d (taux    , a_taux    )
+            CALL acc1d (tauy    , a_tauy    )
+            CALL acc1d (fsena   , a_fsena   )
+            CALL acc1d (lfevpa  , a_lfevpa  )
+            CALL acc1d (fevpa   , a_fevpa   )
+            CALL acc1d (fsenl   , a_fsenl   )
+            CALL acc1d (fevpl   , a_fevpl   )
+            CALL acc1d (etr     , a_etr     )
+            CALL acc1d (fseng   , a_fseng   )
+            CALL acc1d (fevpg   , a_fevpg   )
+            CALL acc1d (fgrnd   , a_fgrnd   )
+            CALL acc1d (sabvsun , a_sabvsun )
+            CALL acc1d (sabvsha , a_sabvsha )
+            CALL acc1d (sabg    , a_sabg    )
+            CALL acc1d (olrg    , a_olrg    )
 
             IF (DEF_forcing%has_missing_value) THEN
-               WHERE (forcmask)
+               WHERE (forcmask_pch)
                   rnet = sabg + sabvsun + sabvsha - olrg + forc_frl
                END WHERE
             ELSE
@@ -1371,330 +1828,540 @@ contains
                  rnet = sabg + sabvsun + sabvsha - olrg + forc_frl
                END WHERE
             ENDIF
-            call acc1d (rnet    , a_rnet   )
+            CALL acc1d (rnet    , a_rnet    )
 
-            call acc1d (xerr    , a_xerr   )
-            call acc1d (zerr    , a_zerr   )
-            call acc1d (rsur    , a_rsur   )
-            call acc1d (rsub    , a_rsub   )
-            call acc1d (rnof    , a_rnof   )
-            call acc1d (qintr   , a_qintr  )
-            call acc1d (qinfl   , a_qinfl  )
-            call acc1d (qdrip   , a_qdrip  )
+            CALL acc1d (xerr    , a_xerr    )
+            CALL acc1d (zerr    , a_zerr    )
+            CALL acc1d (rsur    , a_rsur    )
+#ifndef CatchLateralFlow
+            CALL acc1d (rsur_se , a_rsur_se )
+            CALL acc1d (rsur_ie , a_rsur_ie )
 
-            call acc1d (rstfacsun_out , a_rstfacsun )
-            call acc1d (rstfacsha_out , a_rstfacsha )
-            call acc1d (gssun_out     , a_gssun     )
-            call acc1d (gssha_out     , a_gssha     )
+            WHERE ((rsur /= spval) .and. (rnof /= spval))
+               rsub = rnof - rsur
+            ELSEWHERE
+               rsub = spval
+            END WHERE
+#endif
+            CALL acc1d (rsub          , a_rsub           )
+            CALL acc1d (rnof          , a_rnof           )
+#ifdef CatchLateralFlow
+            CALL acc1d (xwsur         , a_xwsur          )
+            CALL acc1d (xwsub         , a_xwsub          )
+            CALL acc1d (fldarea       , a_fldarea        )
+#endif
+            CALL acc1d (qintr         , a_qintr          )
+            CALL acc1d (qinfl         , a_qinfl          )
+            CALL acc1d (qdrip         , a_qdrip          )
 
-            call acc1d (wdsrf   , a_wdsrf  )
-            call acc1d (zwt     , a_zwt    )
-            call acc1d (wa      , a_wa     )
-            call acc1d (wat     , a_wat    )
-            call acc1d (assim   , a_assim  )
-            call acc1d (respc   , a_respc  )
+            CALL acc1d (rstfacsun_out , a_rstfacsun      )
+            CALL acc1d (rstfacsha_out , a_rstfacsha      )
 
-            call acc1d (assimsun_out  , a_assimsun  )
-            call acc1d (assimsha_out  , a_assimsha  )
-            call acc1d (etrsun_out    , a_etrsun    )
-            call acc1d (etrsha_out    , a_etrsha    )
+            CALL acc1d (gssun_out     , a_gssun          )
+            CALL acc1d (gssha_out     , a_gssha          )
 
-            call acc1d (qcharge   , a_qcharge   )
+            CALL acc1d (rss           , a_rss            )
+            CALL acc1d (wdsrf         , a_wdsrf          )
+            CALL acc1d (zwt           , a_zwt            )
+            CALL acc1d (wa            , a_wa             )
+            CALL acc1d (wat           , a_wat            )
+            CALL acc1d (wetwat        , a_wetwat         )
+            CALL acc1d (assim         , a_assim          )
+            CALL acc1d (respc         , a_respc          )
+            CALL acc1d (assimsun_out  , a_assimsun       )
+            CALL acc1d (assimsha_out  , a_assimsha       )
+            CALL acc1d (etrsun_out    , a_etrsun         )
+            CALL acc1d (etrsha_out    , a_etrsha         )
 
-            call acc1d (t_grnd    , a_t_grnd    )
-            call acc1d (tleaf     , a_tleaf     )
-            call acc1d (ldew_rain , a_ldew_rain )
-            call acc1d (ldew_snow , a_ldew_snow )
-            call acc1d (ldew      , a_ldew      )
-            call acc1d (scv       , a_scv       )
-            call acc1d (snowdp    , a_snowdp    )
-            call acc1d (fsno      , a_fsno      )
-            call acc1d (sigf      , a_sigf      )
-            call acc1d (green     , a_green     )
-            call acc1d (lai       , a_lai       )
-            call acc1d (laisun    , a_laisun    )
-            call acc1d (laisha    , a_laisha    )
-            call acc1d (sai       , a_sai       )
+            CALL acc1d (qcharge       , a_qcharge        )
 
-            call acc3d (alb       , a_alb       )
+            CALL acc1d (t_grnd        , a_t_grnd         )
+            CALL acc1d (tleaf         , a_tleaf          )
+            CALL acc1d (ldew_rain     , a_ldew_rain      )
+            CALL acc1d (ldew_snow     , a_ldew_snow      )
+            CALL acc1d (ldew          , a_ldew           )
+            CALL acc1d (scv           , a_scv            )
+            CALL acc1d (snowdp        , a_snowdp         )
+            CALL acc1d (fsno          , a_fsno           )
+            CALL acc1d (frcsat        , a_frcsat         )
+            CALL acc1d (sigf          , a_sigf           )
+            CALL acc1d (green         , a_green          )
+            CALL acc1d (lai           , a_lai            )
+            CALL acc1d (laisun        , a_laisun         )
+            CALL acc1d (laisha        , a_laisha         )
+            CALL acc1d (sai           , a_sai            )
 
-            call acc1d (emis      , a_emis      )
-            call acc1d (z0m       , a_z0m       )
+            ! only acc for daytime for albedo
+            CALL acc3d (alb           , a_alb, filter_dt )
 
-            allocate (r_trad (numpatch))
-            do i = 1, numpatch
+            CALL acc1d (emis          , a_emis           )
+            CALL acc1d (z0m           , a_z0m            )
+
+            allocate (r_trad (numpatch)) ; r_trad(:) = spval
+            DO i = 1, numpatch
                IF (DEF_forcing%has_missing_value) THEN
-                  IF (.not. forcmask(i)) cycle
+                  IF (.not. forcmask_pch(i)) CYCLE
                ENDIF
 
                IF (.not. patchmask(i)) CYCLE
                r_trad(i) = (olrg(i)/stefnc)**0.25
-            end do
-            call acc1d (r_trad , a_trad   )
-            deallocate (r_trad            )
+            ENDDO
+            CALL acc1d (r_trad , a_trad )
+            deallocate (r_trad          )
 
-            call acc1d (tref   , a_tref   )
-            call acc1d (qref   , a_qref   )
+            CALL acc1d (tref   , a_tref )
+            CALL acc1d (qref   , a_qref )
 
-            call acc1d (forc_rain, a_rain )
-            call acc1d (forc_snow, a_snow )
+            ! set 2m WMO temperature
+            DO ielm = 1, numelm
+
+               istt = elm_patch%substt(ielm)
+               iend = elm_patch%subend(ielm)
+
+               ! landelm%settyp=1 means 2m WMO patch exist,
+               ! which is the last end patch in a element.
+               IF (landelm%settyp(ielm)==1 .and. forcmask_pch(iend)) THEN
+                  ! all set to the 2m WMO patch tref
+                  t2m_wmo(istt:iend) = tref(iend)
+               ELSE
+                  ! if no 2m WMO patch, keep t2m_wmo to tref
+                  t2m_wmo(istt:iend) = tref(istt:iend)
+               ENDIF
+            ENDDO
+
+            CALL acc1d (t2m_wmo, a_t2m_wmo)
+
+            CALL acc1d (forc_rain, a_rain )
+            CALL acc1d (forc_snow, a_snow )
+
+            IF (DEF_USE_OZONESTRESS)THEN
+               CALL acc1d(o3uptakesun,a_o3uptakesun)
+               CALL acc1d(o3uptakesha,a_o3uptakesha)
+            ENDIF
+
+#ifdef DataAssimilation
+            CALL acc3d (h2osoi_ens     , a_h2osoi_ens     )
+            CALL acc3d (t_brt_ens      , a_t_brt_ens      )
+            CALL acc2d (t_brt          , a_t_brt          )
+            CALL acc3d (wliq_soisno_ens, a_wliq_soisno_ens)
+            CALL acc3d (wice_soisno_ens, a_wice_soisno_ens)
+#endif
 
 #ifdef URBAN_MODEL
             IF (numurban > 0) THEN
-               CALL acc1d(t_room    , a_t_room    )
-               CALL acc1d(tafu      , a_tafu      )
-               CALL acc1d(fhac      , a_fhac      )
-               CALL acc1d(fwst      , a_fwst      )
-               CALL acc1d(fach      , a_fach      )
-               CALL acc1d(fahe      , a_fahe      )
-               CALL acc1d(fhah      , a_fhah      )
-               CALL acc1d(vehc      , a_vehc      )
-               CALL acc1d(meta      , a_meta      )
+               CALL acc1d(t_room     , a_t_room    )
+               CALL acc1d(tafu       , a_tafu      )
+               CALL acc1d(fhac       , a_fhac      )
+               CALL acc1d(fwst       , a_fwst      )
+               CALL acc1d(fach       , a_fach      )
+               CALL acc1d(fahe       , a_fahe      )
+               CALL acc1d(fhah       , a_fhah      )
+               CALL acc1d(vehc       , a_vehc      )
+               CALL acc1d(meta       , a_meta      )
 
-               CALL acc1d(fsen_roof , a_senroof   )
-               CALL acc1d(fsen_wsun , a_senwsun   )
-               CALL acc1d(fsen_wsha , a_senwsha   )
-               CALL acc1d(fsen_gimp , a_sengimp   )
-               CALL acc1d(fsen_gper , a_sengper   )
-               CALL acc1d(fsen_urbl , a_senurbl   )
+               CALL acc1d(fsen_roof  , a_senroof   )
+               CALL acc1d(fsen_wsun  , a_senwsun   )
+               CALL acc1d(fsen_wsha  , a_senwsha   )
+               CALL acc1d(fsen_gimp  , a_sengimp   )
+               CALL acc1d(fsen_gper  , a_sengper   )
+               CALL acc1d(fsen_urbl  , a_senurbl   )
 
-               CALL acc1d(lfevp_roof, a_lfevproof )
-               CALL acc1d(lfevp_gimp, a_lfevpgimp )
-               CALL acc1d(lfevp_gper, a_lfevpgper )
-               CALL acc1d(lfevp_urbl, a_lfevpurbl )
+               CALL acc1d(lfevp_roof , a_lfevproof )
+               CALL acc1d(lfevp_gimp , a_lfevpgimp )
+               CALL acc1d(lfevp_gper , a_lfevpgper )
+               CALL acc1d(lfevp_urbl , a_lfevpurbl )
 
-               CALL acc1d(t_roof    , a_troof     )
-               CALL acc1d(t_wall    , a_twall     )
+               CALL acc1d(t_roof     , a_troof     )
+               CALL acc1d(t_wall     , a_twall     )
             ENDIF
 #endif
 
 #ifdef BGC
-            call acc1d (leafc              , a_leafc               )
-            call acc1d (leafc_storage      , a_leafc_storage       )
-            call acc1d (leafc_xfer         , a_leafc_xfer          )
-            call acc1d (frootc             , a_frootc              )
-            call acc1d (frootc_storage     , a_frootc_storage      )
-            call acc1d (frootc_xfer        , a_frootc_xfer         )
-            call acc1d (livestemc          , a_livestemc           )
-            call acc1d (livestemc_storage  , a_livestemc_storage   )
-            call acc1d (livestemc_xfer     , a_livestemc_xfer      )
-            call acc1d (deadstemc          , a_deadstemc           )
-            call acc1d (deadstemc_storage  , a_deadstemc_storage   )
-            call acc1d (deadstemc_xfer     , a_deadstemc_xfer      )
-            call acc1d (livecrootc         , a_livecrootc          )
-            call acc1d (livecrootc_storage , a_livecrootc_storage  )
-            call acc1d (livecrootc_xfer    , a_livecrootc_xfer     )
-            call acc1d (deadcrootc         , a_deadcrootc          )
-            call acc1d (deadcrootc_storage , a_deadcrootc_storage  )
-            call acc1d (deadcrootc_xfer    , a_deadcrootc_xfer     )
-            call acc1d (grainc             , a_grainc              )
-            call acc1d (grainc_storage     , a_grainc_storage      )
-            call acc1d (grainc_xfer        , a_grainc_xfer         )
-            call acc1d (leafn              , a_leafn               )
-            call acc1d (leafn_storage      , a_leafn_storage       )
-            call acc1d (leafn_xfer         , a_leafn_xfer          )
-            call acc1d (frootn             , a_frootn              )
-            call acc1d (frootn_storage     , a_frootn_storage      )
-            call acc1d (frootn_xfer        , a_frootn_xfer         )
-            call acc1d (livestemn          , a_livestemn           )
-            call acc1d (livestemn_storage  , a_livestemn_storage   )
-            call acc1d (livestemn_xfer     , a_livestemn_xfer      )
-            call acc1d (deadstemn          , a_deadstemn           )
-            call acc1d (deadstemn_storage  , a_deadstemn_storage   )
-            call acc1d (deadstemn_xfer     , a_deadstemn_xfer      )
-            call acc1d (livecrootn         , a_livecrootn          )
-            call acc1d (livecrootn_storage , a_livecrootn_storage  )
-            call acc1d (livecrootn_xfer    , a_livecrootn_xfer     )
-            call acc1d (deadcrootn         , a_deadcrootn          )
-            call acc1d (deadcrootn_storage , a_deadcrootn_storage  )
-            call acc1d (deadcrootn_xfer    , a_deadcrootn_xfer     )
-            call acc1d (grainn             , a_grainn              )
-            call acc1d (grainn_storage     , a_grainn_storage      )
-            call acc1d (grainn_xfer        , a_grainn_xfer         )
-            call acc1d (retransn           , a_retransn            )
-            call acc1d (gpp                , a_gpp                 )
-            call acc1d (downreg            , a_downreg             )
-            call acc1d (ar                 , a_ar                  )
-            call acc1d (cwdprod            , a_cwdprod             )
-            call acc1d (cwddecomp          , a_cwddecomp           )
-            call acc1d (decomp_hr          , a_hr                  )
-            call acc1d (fpg                , a_fpg                 )
-            call acc1d (fpi                , a_fpi                 )
-            call acc1d (gpp_enftemp        , a_gpp_enftemp         )
-            call acc1d (gpp_enfboreal      , a_gpp_enfboreal       )
-            call acc1d (gpp_dnfboreal      , a_gpp_dnfboreal       )
-            call acc1d (gpp_ebftrop        , a_gpp_ebftrop         )
-            call acc1d (gpp_ebftemp        , a_gpp_ebftemp         )
-            call acc1d (gpp_dbftrop        , a_gpp_dbftrop         )
-            call acc1d (gpp_dbftemp        , a_gpp_dbftemp         )
-            call acc1d (gpp_dbfboreal      , a_gpp_dbfboreal       )
-            call acc1d (gpp_ebstemp        , a_gpp_ebstemp         )
-            call acc1d (gpp_dbstemp        , a_gpp_dbstemp         )
-            call acc1d (gpp_dbsboreal      , a_gpp_dbsboreal       )
-            call acc1d (gpp_c3arcgrass     , a_gpp_c3arcgrass      )
-            call acc1d (gpp_c3grass        , a_gpp_c3grass         )
-            call acc1d (gpp_c4grass        , a_gpp_c4grass         )
-            call acc1d (leafc_enftemp      , a_leafc_enftemp       )
-            call acc1d (leafc_enfboreal    , a_leafc_enfboreal     )
-            call acc1d (leafc_dnfboreal    , a_leafc_dnfboreal     )
-            call acc1d (leafc_ebftrop      , a_leafc_ebftrop       )
-            call acc1d (leafc_ebftemp      , a_leafc_ebftemp       )
-            call acc1d (leafc_dbftrop      , a_leafc_dbftrop       )
-            call acc1d (leafc_dbftemp      , a_leafc_dbftemp       )
-            call acc1d (leafc_dbfboreal    , a_leafc_dbfboreal     )
-            call acc1d (leafc_ebstemp      , a_leafc_ebstemp       )
-            call acc1d (leafc_dbstemp      , a_leafc_dbstemp       )
-            call acc1d (leafc_dbsboreal    , a_leafc_dbsboreal     )
-            call acc1d (leafc_c3arcgrass   , a_leafc_c3arcgrass    )
-            call acc1d (leafc_c3grass      , a_leafc_c3grass       )
-            call acc1d (leafc_c4grass      , a_leafc_c4grass       )
-            if(DEF_USE_NITRIF)then
-               call acc2d (to2_decomp_depth_unsat, a_O2_DECOMP_DEPTH_UNSAT)
-               call acc2d (tconc_o2_unsat        , a_CONC_O2_UNSAT        )
-            end if
+            CALL acc1d (leafc              , a_leafc               )
+            CALL acc1d (leafc_storage      , a_leafc_storage       )
+            CALL acc1d (leafc_xfer         , a_leafc_xfer          )
+            CALL acc1d (frootc             , a_frootc              )
+            CALL acc1d (frootc_storage     , a_frootc_storage      )
+            CALL acc1d (frootc_xfer        , a_frootc_xfer         )
+            CALL acc1d (livestemc          , a_livestemc           )
+            CALL acc1d (livestemc_storage  , a_livestemc_storage   )
+            CALL acc1d (livestemc_xfer     , a_livestemc_xfer      )
+            CALL acc1d (deadstemc          , a_deadstemc           )
+            CALL acc1d (deadstemc_storage  , a_deadstemc_storage   )
+            CALL acc1d (deadstemc_xfer     , a_deadstemc_xfer      )
+            CALL acc1d (livecrootc         , a_livecrootc          )
+            CALL acc1d (livecrootc_storage , a_livecrootc_storage  )
+            CALL acc1d (livecrootc_xfer    , a_livecrootc_xfer     )
+            CALL acc1d (deadcrootc         , a_deadcrootc          )
+            CALL acc1d (deadcrootc_storage , a_deadcrootc_storage  )
+            CALL acc1d (deadcrootc_xfer    , a_deadcrootc_xfer     )
+            CALL acc1d (grainc             , a_grainc              )
+            CALL acc1d (grainc_storage     , a_grainc_storage      )
+            CALL acc1d (grainc_xfer        , a_grainc_xfer         )
+            CALL acc1d (leafn              , a_leafn               )
+            CALL acc1d (leafn_storage      , a_leafn_storage       )
+            CALL acc1d (leafn_xfer         , a_leafn_xfer          )
+            CALL acc1d (frootn             , a_frootn              )
+            CALL acc1d (frootn_storage     , a_frootn_storage      )
+            CALL acc1d (frootn_xfer        , a_frootn_xfer         )
+            CALL acc1d (livestemn          , a_livestemn           )
+            CALL acc1d (livestemn_storage  , a_livestemn_storage   )
+            CALL acc1d (livestemn_xfer     , a_livestemn_xfer      )
+            CALL acc1d (deadstemn          , a_deadstemn           )
+            CALL acc1d (deadstemn_storage  , a_deadstemn_storage   )
+            CALL acc1d (deadstemn_xfer     , a_deadstemn_xfer      )
+            CALL acc1d (livecrootn         , a_livecrootn          )
+            CALL acc1d (livecrootn_storage , a_livecrootn_storage  )
+            CALL acc1d (livecrootn_xfer    , a_livecrootn_xfer     )
+            CALL acc1d (deadcrootn         , a_deadcrootn          )
+            CALL acc1d (deadcrootn_storage , a_deadcrootn_storage  )
+            CALL acc1d (deadcrootn_xfer    , a_deadcrootn_xfer     )
+            CALL acc1d (grainn             , a_grainn              )
+            CALL acc1d (grainn_storage     , a_grainn_storage      )
+            CALL acc1d (grainn_xfer        , a_grainn_xfer         )
+            CALL acc1d (retransn           , a_retransn            )
+            CALL acc1d (gpp                , a_gpp                 )
+            CALL acc1d (downreg            , a_downreg             )
+            CALL acc1d (ar                 , a_ar                  )
+            CALL acc1d (cwdprod            , a_cwdprod             )
+            CALL acc1d (cwddecomp          , a_cwddecomp           )
+            CALL acc1d (decomp_hr          , a_hr                  )
+            CALL acc1d (fpg                , a_fpg                 )
+            CALL acc1d (fpi                , a_fpi                 )
+            CALL acc1d (totvegc            , a_totvegc             )
+            CALL acc1d (totlitc            , a_totlitc             )
+            CALL acc1d (totcwdc            , a_totcwdc             )
+            CALL acc1d (totsomc            , a_totsomc             )
+            CALL acc1d (totcolc            , a_totcolc             )
+            CALL acc1d (totvegn            , a_totvegn             )
+            CALL acc1d (totlitn            , a_totlitn             )
+            CALL acc1d (totcwdn            , a_totcwdn             )
+            CALL acc1d (totsomn            , a_totsomn             )
+            CALL acc1d (totcoln            , a_totcoln             )
+            CALL acc1d (gpp_enftemp        , a_gpp_enftemp         )
+            CALL acc1d (gpp_enfboreal      , a_gpp_enfboreal       )
+            CALL acc1d (gpp_dnfboreal      , a_gpp_dnfboreal       )
+            CALL acc1d (gpp_ebftrop        , a_gpp_ebftrop         )
+            CALL acc1d (gpp_ebftemp        , a_gpp_ebftemp         )
+            CALL acc1d (gpp_dbftrop        , a_gpp_dbftrop         )
+            CALL acc1d (gpp_dbftemp        , a_gpp_dbftemp         )
+            CALL acc1d (gpp_dbfboreal      , a_gpp_dbfboreal       )
+            CALL acc1d (gpp_ebstemp        , a_gpp_ebstemp         )
+            CALL acc1d (gpp_dbstemp        , a_gpp_dbstemp         )
+            CALL acc1d (gpp_dbsboreal      , a_gpp_dbsboreal       )
+            CALL acc1d (gpp_c3arcgrass     , a_gpp_c3arcgrass      )
+            CALL acc1d (gpp_c3grass        , a_gpp_c3grass         )
+            CALL acc1d (gpp_c4grass        , a_gpp_c4grass         )
+            CALL acc1d (leafc_enftemp      , a_leafc_enftemp       )
+            CALL acc1d (leafc_enfboreal    , a_leafc_enfboreal     )
+            CALL acc1d (leafc_dnfboreal    , a_leafc_dnfboreal     )
+            CALL acc1d (leafc_ebftrop      , a_leafc_ebftrop       )
+            CALL acc1d (leafc_ebftemp      , a_leafc_ebftemp       )
+            CALL acc1d (leafc_dbftrop      , a_leafc_dbftrop       )
+            CALL acc1d (leafc_dbftemp      , a_leafc_dbftemp       )
+            CALL acc1d (leafc_dbfboreal    , a_leafc_dbfboreal     )
+            CALL acc1d (leafc_ebstemp      , a_leafc_ebstemp       )
+            CALL acc1d (leafc_dbstemp      , a_leafc_dbstemp       )
+            CALL acc1d (leafc_dbsboreal    , a_leafc_dbsboreal     )
+            CALL acc1d (leafc_c3arcgrass   , a_leafc_c3arcgrass    )
+            CALL acc1d (leafc_c3grass      , a_leafc_c3grass       )
+            CALL acc1d (leafc_c4grass      , a_leafc_c4grass       )
+            IF(DEF_USE_NITRIF)THEN
+               CALL acc2d (to2_decomp_depth_unsat, a_O2_DECOMP_DEPTH_UNSAT)
+               CALL acc2d (tconc_o2_unsat        , a_CONC_O2_UNSAT        )
+            ENDIF
 #ifdef CROP
-            call acc1d (pdcorn             ,   a_pdcorn             )
-            call acc1d (pdswheat           ,   a_pdswheat           )
-            call acc1d (pdwwheat           ,   a_pdwwheat           )
-            call acc1d (pdsoybean          ,   a_pdsoybean          )
-            call acc1d (pdcotton           ,   a_pdcotton           )
-            call acc1d (pdrice1            ,   a_pdrice1            )
-            call acc1d (pdrice2            ,   a_pdrice2            )
-            call acc1d (pdsugarcane        ,   a_pdsugarcane        )
-            call acc1d (plantdate          ,   a_plantdate          )
-            call acc1d (fertnitro_corn     ,   a_fertnitro_corn     )
-            call acc1d (fertnitro_swheat   ,   a_fertnitro_swheat   )
-            call acc1d (fertnitro_wwheat   ,   a_fertnitro_wwheat   )
-            call acc1d (fertnitro_soybean  ,   a_fertnitro_soybean  )
-            call acc1d (fertnitro_cotton   ,   a_fertnitro_cotton   )
-            call acc1d (fertnitro_rice1    ,   a_fertnitro_rice1    )
-            call acc1d (fertnitro_rice2    ,   a_fertnitro_rice2    )
-            call acc1d (fertnitro_sugarcane,   a_fertnitro_sugarcane)
-            call acc1d (cphase             ,   a_cphase             )
-            call acc1d (hui                ,   a_hui                )
-            call acc1d (vf                 ,   a_vf                 )
-            call acc1d (gddmaturity        ,   a_gddmaturity        )
-            call acc1d (gddplant           ,   a_gddplant           )
-            call acc1d (cropprod1c         ,   a_cropprod1c         )
-            call acc1d (cropprod1c_loss    ,   a_cropprod1c_loss    )
-            call acc1d (cropseedc_deficit  ,   a_cropseedc_deficit  )
-            call acc1d (grainc_to_cropprodc,   a_grainc_to_cropprodc)
-            call acc1d (grainc_to_seed     ,   a_grainc_to_seed     )
-            call acc1d (fert_to_sminn      ,   a_fert_to_sminn      )
+            CALL acc1d (pdcorn             ,   a_pdcorn             )
+            CALL acc1d (pdswheat           ,   a_pdswheat           )
+            CALL acc1d (pdwwheat           ,   a_pdwwheat           )
+            CALL acc1d (pdsoybean          ,   a_pdsoybean          )
+            CALL acc1d (pdcotton           ,   a_pdcotton           )
+            CALL acc1d (pdrice1            ,   a_pdrice1            )
+            CALL acc1d (pdrice2            ,   a_pdrice2            )
+            CALL acc1d (pdsugarcane        ,   a_pdsugarcane        )
+            CALL acc1d (plantdate          ,   a_plantdate          )
+            CALL acc1d (manunitro          ,   a_manunitro          )
+            CALL acc1d (fertnitro_corn     ,   a_fertnitro_corn     )
+            CALL acc1d (fertnitro_swheat   ,   a_fertnitro_swheat   )
+            CALL acc1d (fertnitro_wwheat   ,   a_fertnitro_wwheat   )
+            CALL acc1d (fertnitro_soybean  ,   a_fertnitro_soybean  )
+            CALL acc1d (fertnitro_cotton   ,   a_fertnitro_cotton   )
+            CALL acc1d (fertnitro_rice1    ,   a_fertnitro_rice1    )
+            CALL acc1d (fertnitro_rice2    ,   a_fertnitro_rice2    )
+            CALL acc1d (fertnitro_sugarcane,   a_fertnitro_sugarcane)
+            CALL acc1d (real(irrig_method_corn     ,r8),   a_irrig_method_corn     )
+            CALL acc1d (real(irrig_method_swheat   ,r8),   a_irrig_method_swheat   )
+            CALL acc1d (real(irrig_method_wwheat   ,r8),   a_irrig_method_wwheat   )
+            CALL acc1d (real(irrig_method_soybean  ,r8),   a_irrig_method_soybean  )
+            CALL acc1d (real(irrig_method_cotton   ,r8),   a_irrig_method_cotton   )
+            CALL acc1d (real(irrig_method_rice1    ,r8),   a_irrig_method_rice1    )
+            CALL acc1d (real(irrig_method_rice2    ,r8),   a_irrig_method_rice2    )
+            CALL acc1d (real(irrig_method_sugarcane,r8),   a_irrig_method_sugarcane)
+            CALL acc1d (cphase             ,   a_cphase             )
+            CALL acc1d (hui                ,   a_hui                )
+            CALL acc1d (vf                 ,   a_vf                 )
+            CALL acc1d (gddmaturity        ,   a_gddmaturity        )
+            CALL acc1d (gddplant           ,   a_gddplant           )
+            CALL acc1d (cropprod1c         ,   a_cropprod1c         )
+            CALL acc1d (cropprod1c_loss    ,   a_cropprod1c_loss    )
+            CALL acc1d (cropseedc_deficit  ,   a_cropseedc_deficit  )
+            CALL acc1d (grainc_to_cropprodc,   a_grainc_to_cropprodc)
+            CALL acc1d (grainc_to_seed     ,   a_grainc_to_seed     )
+            CALL acc1d (fert_to_sminn      ,   a_fert_to_sminn      )
+
+           !CALL acc1d (irrig_rate         ,   a_irrig_rate         )
+           !CALL acc1d (deficit_irrig      ,   a_deficit_irrig      )
+           !CALL acc1d (sum_irrig          ,   a_sum_irrig          )
+           !CALL acc1d (sum_irrig_count    ,   a_sum_irrig_count    )
+            CALL acc1d (irrig_rate         ,   a_irrig_rate         )
+            CALL acc1d (deficit_irrig      ,   a_deficit_irrig      )
+            a_sum_irrig = sum_irrig
+            a_sum_irrig_count = sum_irrig_count
+
 #endif
-            call acc1d (ndep_to_sminn      ,   a_ndep_to_sminn      )
-            if(DEF_USE_FIRE)then
-               call acc1d (abm_lf          ,   a_abm                )
-               call acc1d (gdp_lf          ,   a_gdp                )
-               call acc1d (peatf_lf        ,   a_peatf              )
-               call acc1d (hdm_lf          ,   a_hdm                )
-               call acc1d (lnfm            ,   a_lnfm               )
-            end if
+            CALL acc1d (ndep_to_sminn      ,   a_ndep_to_sminn      )
+            IF(DEF_USE_FIRE)THEN
+               CALL acc1d (abm_lf          ,   a_abm                )
+               CALL acc1d (gdp_lf          ,   a_gdp                )
+               CALL acc1d (peatf_lf        ,   a_peatf              )
+               CALL acc1d (hdm_lf          ,   a_hdm                )
+               CALL acc1d (lnfm            ,   a_lnfm               )
+            ENDIF
+            IF(DEF_USE_DiagMatrix)THEN
+               CALL acc1d (leafcCap             ,a_leafcCap             )
+               CALL acc1d (leafc_storageCap     ,a_leafc_storageCap     )
+               CALL acc1d (leafc_xferCap        ,a_leafc_xferCap        )
+               CALL acc1d (frootcCap            ,a_frootcCap            )
+               CALL acc1d (frootc_storageCap    ,a_frootc_storageCap    )
+               CALL acc1d (frootc_xferCap       ,a_frootc_xferCap       )
+               CALL acc1d (livestemcCap         ,a_livestemcCap         )
+               CALL acc1d (livestemc_storageCap ,a_livestemc_storageCap )
+               CALL acc1d (livestemc_xferCap    ,a_livestemc_xferCap    )
+               CALL acc1d (deadstemcCap         ,a_deadstemcCap         )
+               CALL acc1d (deadstemc_storageCap ,a_deadstemc_storageCap )
+               CALL acc1d (deadstemc_xferCap    ,a_deadstemc_xferCap    )
+               CALL acc1d (livecrootcCap        ,a_livecrootcCap        )
+               CALL acc1d (livecrootc_storageCap,a_livecrootc_storageCap)
+               CALL acc1d (livecrootc_xferCap   ,a_livecrootc_xferCap   )
+               CALL acc1d (deadcrootcCap        ,a_deadcrootcCap        )
+               CALL acc1d (deadcrootc_storageCap,a_deadcrootc_storageCap)
+               CALL acc1d (deadcrootc_xferCap   ,a_deadcrootc_xferCap   )
+               CALL acc1d (leafnCap             ,a_leafnCap             )
+               CALL acc1d (leafn_storageCap     ,a_leafn_storageCap     )
+               CALL acc1d (leafn_xferCap        ,a_leafn_xferCap        )
+               CALL acc1d (frootnCap            ,a_frootnCap            )
+               CALL acc1d (frootn_storageCap    ,a_frootn_storageCap    )
+               CALL acc1d (frootn_xferCap       ,a_frootn_xferCap       )
+               CALL acc1d (livestemnCap         ,a_livestemnCap         )
+               CALL acc1d (livestemn_storageCap ,a_livestemn_storageCap )
+               CALL acc1d (livestemn_xferCap    ,a_livestemn_xferCap    )
+               CALL acc1d (deadstemnCap         ,a_deadstemnCap         )
+               CALL acc1d (deadstemn_storageCap ,a_deadstemn_storageCap )
+               CALL acc1d (deadstemn_xferCap    ,a_deadstemn_xferCap    )
+               CALL acc1d (livecrootnCap        ,a_livecrootnCap        )
+               CALL acc1d (livecrootn_storageCap,a_livecrootn_storageCap)
+               CALL acc1d (livecrootn_xferCap   ,a_livecrootn_xferCap   )
+               CALL acc1d (deadcrootnCap        ,a_deadcrootnCap        )
+               CALL acc1d (deadcrootn_storageCap,a_deadcrootn_storageCap)
+               CALL acc1d (deadcrootn_xferCap   ,a_deadcrootn_xferCap   )
+            ENDIF
 #endif
             IF(DEF_USE_OZONESTRESS)THEN
-               call acc1d (forc_ozone      ,   a_ozone              )
+               CALL acc1d (forc_ozone      ,   a_ozone              )
             ENDIF
 
-            call acc2d (t_soisno   , a_t_soisno      )
-            call acc2d (wliq_soisno, a_wliq_soisno   )
-            call acc2d (wice_soisno, a_wice_soisno   )
+            CALL acc2d (t_soisno   , a_t_soisno      )
+            CALL acc2d (wliq_soisno, a_wliq_soisno   )
+            CALL acc2d (wice_soisno, a_wice_soisno   )
 
-            call acc2d (h2osoi     , a_h2osoi        )
-            call acc2d (rootr      , a_rootr         )
-            call acc2d (BD_all     , a_BD_all        )
-            call acc2d (wfc        , a_wfc           )
-            call acc2d (OM_density , a_OM_density    )
-            if(DEF_USE_PLANTHYDRAULICS)then
-               call acc2d (vegwp    , a_vegwp        )
-            end if
-            call acc2d (t_lake      , a_t_lake       )
-            call acc2d (lake_icefrac, a_lake_icefrac )
+            CALL acc2d (h2osoi     , a_h2osoi        )
+            CALL acc2d (rootr      , a_rootr         )
+            CALL acc2d (BD_all     , a_BD_all        )
+            CALL acc2d (wfc        , a_wfc           )
+            CALL acc2d (OM_density , a_OM_density    )
+            IF(DEF_USE_PLANTHYDRAULICS)THEN
+               CALL acc2d (vegwp    , a_vegwp        )
+            ENDIF
+            IF (DEF_USE_Dynamic_Lake) THEN
+               CALL acc2d (dz_lake  , a_dz_lake      )
+            ENDIF
+            CALL acc2d (t_lake      , a_t_lake       )
+            CALL acc2d (lake_icefrac, a_lake_icefrac )
 #ifdef BGC
-            do i = 1, numpatch
-               do j = 1, nl_soil
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
                   decomp_vr_tmp(j,i)  = decomp_cpools_vr(j,i_met_lit,i)
-               end do
-            end do
-            call acc2d (decomp_vr_tmp, a_litr1c_vr   )
-            do i = 1, numpatch
-               do j = 1, nl_soil
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_litr1c_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
                   decomp_vr_tmp(j,i)  = decomp_cpools_vr(j,i_cel_lit,i)
-               end do
-            end do
-            call acc2d (decomp_vr_tmp, a_litr2c_vr   )
-            do i = 1, numpatch
-               do j = 1, nl_soil
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_litr2c_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
                   decomp_vr_tmp(j,i)  = decomp_cpools_vr(j,i_lig_lit,i)
-               end do
-            end do
-            call acc2d (decomp_vr_tmp, a_litr3c_vr   )
-            do i = 1, numpatch
-               do j = 1, nl_soil
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_litr3c_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
                   decomp_vr_tmp(j,i)  = decomp_cpools_vr(j,i_soil1,i)
-               end do
-            end do
-            call acc2d (decomp_vr_tmp, a_soil1c_vr   )
-            do i = 1, numpatch
-               do j = 1, nl_soil
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_soil1c_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
                   decomp_vr_tmp(j,i)  = decomp_cpools_vr(j,i_soil2,i)
-               end do
-            end do
-            call acc2d (decomp_vr_tmp, a_soil2c_vr   )
-            do i = 1, numpatch
-               do j = 1, nl_soil
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_soil2c_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
                   decomp_vr_tmp(j,i)  = decomp_cpools_vr(j,i_soil3,i)
-               end do
-            end do
-            call acc2d (decomp_vr_tmp, a_soil3c_vr   )
-            do i = 1, numpatch
-               do j = 1, nl_soil
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_soil3c_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
                   decomp_vr_tmp(j,i)  = decomp_cpools_vr(j,i_cwd,i)
-               end do
-            end do
-            call acc2d (decomp_vr_tmp, a_cwdc_vr     )
-            do i = 1, numpatch
-               do j = 1, nl_soil
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_cwdc_vr     )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
                   decomp_vr_tmp(j,i)  = decomp_npools_vr(j,i_met_lit,i)
-               end do
-            end do
-            call acc2d (decomp_vr_tmp, a_litr1n_vr   )
-            do i = 1, numpatch
-               do j = 1, nl_soil
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_litr1n_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
                   decomp_vr_tmp(j,i)  = decomp_npools_vr(j,i_cel_lit,i)
-               end do
-            end do
-            call acc2d (decomp_vr_tmp, a_litr2n_vr   )
-            do i = 1, numpatch
-               do j = 1, nl_soil
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_litr2n_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
                   decomp_vr_tmp(j,i)  = decomp_npools_vr(j,i_lig_lit,i)
-               end do
-            end do
-            call acc2d (decomp_vr_tmp, a_litr3n_vr   )
-            do i = 1, numpatch
-               do j = 1, nl_soil
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_litr3n_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
                   decomp_vr_tmp(j,i)  = decomp_npools_vr(j,i_soil1,i)
-               end do
-            end do
-            call acc2d (decomp_vr_tmp, a_soil1n_vr   )
-            do i = 1, numpatch
-               do j = 1, nl_soil
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_soil1n_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
                   decomp_vr_tmp(j,i)  = decomp_npools_vr(j,i_soil2,i)
-               end do
-            end do
-            call acc2d (decomp_vr_tmp, a_soil2n_vr   )
-            do i = 1, numpatch
-               do j = 1, nl_soil
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_soil2n_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
                   decomp_vr_tmp(j,i)  = decomp_npools_vr(j,i_soil3,i)
-               end do
-            end do
-            call acc2d (decomp_vr_tmp, a_soil3n_vr   )
-            do i = 1, numpatch
-               do j = 1, nl_soil
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_soil3n_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
                   decomp_vr_tmp(j,i)  = decomp_npools_vr(j,i_cwd,i)
-               end do
-            end do
-            call acc2d (decomp_vr_tmp, a_cwdn_vr     )
-            call acc2d (sminn_vr     , a_sminn_vr    )
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_cwdn_vr     )
+            CALL acc2d (totsoiln_vr  , a_totsoiln_vr )
+
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
+                  decomp_vr_tmp(j,i)  = decomp_cpools_vr_Cap(j,i_met_lit,i)
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_litr1cCap_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
+                  decomp_vr_tmp(j,i)  = decomp_cpools_vr_Cap(j,i_cel_lit,i)
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_litr2cCap_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
+                  decomp_vr_tmp(j,i)  = decomp_cpools_vr_Cap(j,i_lig_lit,i)
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_litr3cCap_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
+                  decomp_vr_tmp(j,i)  = decomp_cpools_vr_Cap(j,i_soil1,i)
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_soil1cCap_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
+                  decomp_vr_tmp(j,i)  = decomp_cpools_vr_Cap(j,i_soil2,i)
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_soil2cCap_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
+                  decomp_vr_tmp(j,i)  = decomp_cpools_vr_Cap(j,i_soil3,i)
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_soil3cCap_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
+                  decomp_vr_tmp(j,i)  = decomp_cpools_vr_Cap(j,i_cwd,i)
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_cwdcCap_vr     )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
+                  decomp_vr_tmp(j,i)  = decomp_npools_vr_Cap(j,i_met_lit,i)
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_litr1nCap_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
+                  decomp_vr_tmp(j,i)  = decomp_npools_vr_Cap(j,i_cel_lit,i)
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_litr2nCap_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
+                  decomp_vr_tmp(j,i)  = decomp_npools_vr_Cap(j,i_lig_lit,i)
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_litr3nCap_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
+                  decomp_vr_tmp(j,i)  = decomp_npools_vr_Cap(j,i_soil1,i)
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_soil1nCap_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
+                  decomp_vr_tmp(j,i)  = decomp_npools_vr_Cap(j,i_soil2,i)
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_soil2nCap_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
+                  decomp_vr_tmp(j,i)  = decomp_npools_vr_Cap(j,i_soil3,i)
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_soil3nCap_vr   )
+            DO i = 1, numpatch
+               DO j = 1, nl_soil
+                  decomp_vr_tmp(j,i)  = decomp_npools_vr_Cap(j,i_cwd,i)
+               ENDDO
+            ENDDO
+            CALL acc2d (decomp_vr_tmp, a_cwdnCap_vr     )
+            CALL acc2d (sminn_vr     , a_sminn_vr       )
+
+            CALL acc2d (t_scalar     , a_t_scalar       )
+            CALL acc2d (w_scalar     , a_w_scalar       )
 #endif
             allocate (r_ustar  (numpatch));  r_ustar (:) = spval
             allocate (r_ustar2 (numpatch));  r_ustar2(:) = spval !Shaofeng, 2023.05.20
@@ -1720,8 +2387,8 @@ contains
                filter(:) = patchmask(istt:iend)
 
                IF (DEF_forcing%has_missing_value) THEN
-                  WHERE (.not. forcmask(istt:iend)) filter = .false.
-                  filter = filter .and. forcmask(istt:iend)
+                  WHERE (.not. forcmask_pch(istt:iend)) filter = .false.
+                  filter = filter .and. forcmask_pch(istt:iend)
                ENDIF
 
                IF (.not. any(filter)) THEN
@@ -1745,7 +2412,7 @@ contains
                tauy_e  = sum(tauy       (istt:iend) * elm_patch%subfrc(istt:iend), mask = filter) / sumwt
                fsena_e = sum(fsena      (istt:iend) * elm_patch%subfrc(istt:iend), mask = filter) / sumwt
                fevpa_e = sum(fevpa      (istt:iend) * elm_patch%subfrc(istt:iend), mask = filter) / sumwt
-               if (DEF_USE_CBL_HEIGHT) then !//TODO: Shaofeng, 2023.05.18
+               IF (DEF_USE_CBL_HEIGHT) THEN !//TODO: Shaofeng, 2023.05.18
                   hpbl = sum(forc_hpbl(istt:iend) * elm_patch%subfrc(istt:iend), mask = filter) / sumwt
                ENDIF
 
@@ -1773,36 +2440,36 @@ contains
                r_zol_e = zldis*vonkar*grav * (r_tstar_e*(1.+0.61*qm)+0.61*th*r_qstar_e) &
                   / (r_ustar_e**2*thv)
 
-               if(r_zol_e >= 0.)then   !stable
+               IF(r_zol_e >= 0.)THEN   !stable
                   r_zol_e = min(2.,max(r_zol_e,1.e-6))
-               else                       !unstable
+               ELSE                       !unstable
                   r_zol_e = max(-100.,min(r_zol_e,-1.e-6))
-               endif
+               ENDIF
 
                beta = 1.
                zii = 1000.
 
                thvstar=r_tstar_e*(1.+0.61*qm)+0.61*th*r_qstar_e
                ur = sqrt(us*us+vs*vs)
-               if(r_zol_e >= 0.)then
+               IF(r_zol_e >= 0.)THEN
                   um = max(ur,0.1)
-               else
-                  if (DEF_USE_CBL_HEIGHT) then !//TODO: Shaofeng, 2023.05.18
+               ELSE
+                  IF (DEF_USE_CBL_HEIGHT) THEN !//TODO: Shaofeng, 2023.05.18
                      zii = max(5.*hgt_u,hpbl)
-                  endif !//TODO: Shaofeng, 2023.05.18
+                  ENDIF !//TODO: Shaofeng, 2023.05.18
                   wc = (-grav*r_ustar_e*thvstar*zii/thv)**(1./3.)
                   wc2 = beta*beta*(wc*wc)
                   um = max(0.1,sqrt(ur*ur+wc2))
-               endif
+               ENDIF
 
                obu = zldis/r_zol_e
-               if (DEF_USE_CBL_HEIGHT) then
-                  call moninobuk_leddy(hgt_u,hgt_t,hgt_q,displa_av,z0m_av,z0h_av,z0q_av,&
+               IF (DEF_USE_CBL_HEIGHT) THEN
+                  CALL moninobuk_leddy(hgt_u,hgt_t,hgt_q,displa_av,z0m_av,z0h_av,z0q_av,&
                      obu,um, hpbl, r_ustar2_e,fh2m,fq2m,r_fm10m_e,r_fm_e,r_fh_e,r_fq_e) !Shaofeng, 2023.05.20
-               else
-                  call moninobuk(hgt_u,hgt_t,hgt_q,displa_av,z0m_av,z0h_av,z0q_av,&
+               ELSE
+                  CALL moninobuk(hgt_u,hgt_t,hgt_q,displa_av,z0m_av,z0h_av,z0q_av,&
                     obu,um,r_ustar2_e,fh2m,fq2m,r_fm10m_e,r_fm_e,r_fh_e,r_fq_e) !Shaofeng, 2023.05.20
-               endif
+               ENDIF
 
                ! bug found by chen qiying 2013/07/01
                r_rib_e = r_zol_e /vonkar * r_ustar2_e**2 / (vonkar/r_fh_e*um**2)
@@ -1828,21 +2495,21 @@ contains
 
                deallocate(filter)
 
-            end do
+            ENDDO
 
-            call acc1d (r_ustar , a_ustar )
-            call acc1d (r_ustar2, a_ustar2)
-            call acc1d (r_tstar , a_tstar )
-            call acc1d (r_qstar , a_qstar )
-            call acc1d (r_zol   , a_zol   )
-            call acc1d (r_rib   , a_rib   )
-            call acc1d (r_fm    , a_fm    )
-            call acc1d (r_fh    , a_fh    )
-            call acc1d (r_fq    , a_fq    )
+            CALL acc1d (r_ustar  , a_ustar  )
+            CALL acc1d (r_ustar2 , a_ustar2 )
+            CALL acc1d (r_tstar  , a_tstar  )
+            CALL acc1d (r_qstar  , a_qstar  )
+            CALL acc1d (r_zol    , a_zol    )
+            CALL acc1d (r_rib    , a_rib    )
+            CALL acc1d (r_fm     , a_fm     )
+            CALL acc1d (r_fh     , a_fh     )
+            CALL acc1d (r_fq     , a_fq     )
 
-            call acc1d (r_us10m, a_us10m)
-            call acc1d (r_vs10m, a_vs10m)
-            call acc1d (r_fm10m, a_fm10m)
+            CALL acc1d (r_us10m  , a_us10m  )
+            CALL acc1d (r_vs10m  , a_vs10m  )
+            CALL acc1d (r_fm10m  , a_fm10m  )
 
             deallocate (r_ustar )
             deallocate (r_ustar2) !Shaofeng, 2023.05.20
@@ -1858,35 +2525,35 @@ contains
             deallocate (r_vs10m )
             deallocate (r_fm10m )
 
-            call acc1d (sr     , a_sr     )
-            call acc1d (solvd  , a_solvd  )
-            call acc1d (solvi  , a_solvi  )
-            call acc1d (solnd  , a_solnd  )
-            call acc1d (solni  , a_solni  )
-            call acc1d (srvd   , a_srvd   )
-            call acc1d (srvi   , a_srvi   )
-            call acc1d (srnd   , a_srnd   )
-            call acc1d (srni   , a_srni   )
-            call acc1d (solvdln, a_solvdln)
-            call acc1d (solviln, a_solviln)
-            call acc1d (solndln, a_solndln)
-            call acc1d (solniln, a_solniln)
-            call acc1d (srvdln , a_srvdln )
-            call acc1d (srviln , a_srviln )
-            call acc1d (srndln , a_srndln )
-            call acc1d (srniln , a_srniln )
+            CALL acc1d (sr      , a_sr      )
+            CALL acc1d (solvd   , a_solvd   )
+            CALL acc1d (solvi   , a_solvi   )
+            CALL acc1d (solnd   , a_solnd   )
+            CALL acc1d (solni   , a_solni   )
+            CALL acc1d (srvd    , a_srvd    )
+            CALL acc1d (srvi    , a_srvi    )
+            CALL acc1d (srnd    , a_srnd    )
+            CALL acc1d (srni    , a_srni    )
+            CALL acc1d (solvdln , a_solvdln )
+            CALL acc1d (solviln , a_solviln )
+            CALL acc1d (solndln , a_solndln )
+            CALL acc1d (solniln , a_solniln )
+            CALL acc1d (srvdln  , a_srvdln  )
+            CALL acc1d (srviln  , a_srviln  )
+            CALL acc1d (srndln  , a_srndln  )
+            CALL acc1d (srniln  , a_srniln  )
 
-            do i = 1, numpatch
-               if (solvdln(i) /= spval) then
-                  nac_ln(i) = nac_ln(i) + 1
-               end if
-            end do
+            CALL acc2d (sensors , a_sensors )
 
-         end if
-      end if
+         ENDIF
+      ENDIF
 
-#ifdef LATERAL_FLOW
+#ifdef CatchLateralFlow
       CALL accumulate_fluxes_basin ()
+#endif
+
+#ifdef EXTERNAL_LAKE
+      CALL accumulate_LakeTimeVars
 #endif
 
    END SUBROUTINE accumulate_fluxes
@@ -1895,83 +2562,90 @@ contains
    !------
    SUBROUTINE acc1d (var, s)
 
-      use MOD_Precision
-      use MOD_Vars_Global, only: spval
+   USE MOD_Precision
+   USE MOD_Vars_Global, only: spval
 
-      IMPLICIT NONE
+   IMPLICIT NONE
 
-      real(r8), intent(in)    :: var(:)
-      real(r8), intent(inout) :: s  (:)
-      ! Local variables
-      integer :: i
+   real(r8), intent(in)    :: var(:)
+   real(r8), intent(inout) :: s  (:)
+   ! Local variables
+   integer :: i
 
-      do i = lbound(var,1), ubound(var,1)
-         if (var(i) /= spval) then
-            if (s(i) /= spval) then
+      DO i = lbound(var,1), ubound(var,1)
+         IF (var(i) /= spval) THEN
+            IF (s(i) /= spval) THEN
                s(i) = s(i) + var(i)
-            else
+            ELSE
                s(i) = var(i)
-            end if
-         end if
-      end do
+            ENDIF
+         ENDIF
+      ENDDO
 
    END SUBROUTINE acc1d
 
    !------
    SUBROUTINE acc2d (var, s)
 
-      use MOD_Precision
-      use MOD_Vars_Global, only: spval
+   USE MOD_Precision
+   USE MOD_Vars_Global, only: spval
 
-      IMPLICIT NONE
+   IMPLICIT NONE
 
-      real(r8), intent(in)    :: var(:,:)
-      real(r8), intent(inout) :: s  (:,:)
-      ! Local variables
-      integer :: i1, i2
+   real(r8), intent(in)    :: var(:,:)
+   real(r8), intent(inout) :: s  (:,:)
+   ! Local variables
+   integer :: i1, i2
 
-      do i2 = lbound(var,2), ubound(var,2)
-         do i1 = lbound(var,1), ubound(var,1)
-            if (var(i1,i2) /= spval) then
-               if (s(i1,i2) /= spval) then
+      DO i2 = lbound(var,2), ubound(var,2)
+         DO i1 = lbound(var,1), ubound(var,1)
+            IF (var(i1,i2) /= spval) THEN
+               IF (s(i1,i2) /= spval) THEN
                   s(i1,i2) = s(i1,i2) + var(i1,i2)
-               else
+               ELSE
                   s(i1,i2) = var(i1,i2)
-               end if
-            end if
-         end do
-      end do
+               ENDIF
+            ENDIF
+         ENDDO
+      ENDDO
 
    END SUBROUTINE acc2d
 
    !------
-   SUBROUTINE acc3d (var, s)
+   SUBROUTINE acc3d (var, s, filter)
 
-      use MOD_Precision
-      use MOD_Vars_Global, only: spval
+   USE MOD_Precision
+   USE MOD_Vars_Global, only: spval
 
-      IMPLICIT NONE
+   IMPLICIT NONE
 
-      real(r8), intent(in)    :: var(:,:,:)
-      real(r8), intent(inout) :: s  (:,:,:)
-      ! Local variables
-      integer :: i1, i2, i3
+   real(r8), intent(in)    :: var(:,:,:)
+   real(r8), intent(inout) :: s  (:,:,:)
+   logical,  intent(in), optional :: filter(:)
 
-      do i3 = lbound(var,3), ubound(var,3)
-         do i2 = lbound(var,2), ubound(var,2)
-            do i1 = lbound(var,1), ubound(var,1)
-               if (var(i1,i2,i3) /= spval) then
-                  if (s(i1,i2,i3) /= spval) then
+   ! Local variables
+   integer :: i1, i2, i3
+
+      DO i3 = lbound(var,3), ubound(var,3)
+
+         IF ( present(filter) ) THEN
+            IF ( .not. filter(i3) ) CYCLE
+         ENDIF
+
+         DO i2 = lbound(var,2), ubound(var,2)
+            DO i1 = lbound(var,1), ubound(var,1)
+               IF (var(i1,i2,i3) /= spval) THEN
+                  IF (s(i1,i2,i3) /= spval) THEN
                      s(i1,i2,i3) = s(i1,i2,i3) + var(i1,i2,i3)
-                  else
+                  ELSE
                      s(i1,i2,i3) = var(i1,i2,i3)
-                  end if
-               end if
-            end do
-         end do
-      end do
+                  ENDIF
+               ENDIF
+            ENDDO
+         ENDDO
+      ENDDO
 
    END SUBROUTINE acc3d
 
-end module MOD_Vars_1DAccFluxes
-! ----- EOP ---------
+END MODULE MOD_Vars_1DAccFluxes
+! ---------- EOP ------------
