@@ -168,13 +168,33 @@ MODULE MOD_Namelist
    !         only available for USGS/IGBP/PFT CLASSIFICATION
    logical :: USE_srfdata_from_3D_gridded_data = .false.
 
+   ! ----- rawdata definition -----
+
+   character(len=256) :: DEF_rawdata_namelist  = 'path/to/rawdata/namelist'
+
+   type :: datainfo
+      character(len=256) :: dir
+      character(len=256) :: gname
+      character(len=256) :: fname
+   end type
+
+   type :: rawdata
+      type(datainfo) :: landcover
+      type(datainfo) :: pft
+      type(datainfo) :: lai_sai
+      type(datainfo) :: htop
+   end type
+
+   type (rawdata) :: DEF_rawdata
+
    ! ----- land cover data year (for static land cover, i.e. non-LULCC) -----
    ! NOTE: Please check the LC data year range available
    integer :: DEF_LC_YEAR  = 2005
 
    ! ----- land cover data -----
-   ! NOTE: default using MODIS MCD12Q1 IGBP land cover data, or choose one below
-   logical :: DEF_USE_GLC30  = .true.
+   ! NOTE: default using MODIS MCD12Q1 IGBP land cover system, or choose one below
+   !       it will be automatically set according to rawdata namelist
+   logical :: DEF_USE_GLC30  = .false.
    logical :: DEF_USE_ESACCI = .false.
 
    ! ----- Subgrid scheme -----
@@ -994,9 +1014,9 @@ CONTAINS
       DEF_file_mesh_filter,                   &
 
       DEF_rawdata_namelist,                   &
-
       DEF_USE_GLC30,                          &
       DEF_USE_ESACCI,                         &
+
       DEF_USE_LCT,                            &
       DEF_USE_PFT,                            &
       DEF_USE_PC,                             &
@@ -1127,6 +1147,7 @@ CONTAINS
       DEF_HIST_vars_namelist,                 &
       DEF_HIST_vars_out_default
 
+   namelist /nl_colm_rawdata/ DEF_rawdata
    namelist /nl_colm_forcing/ DEF_dir_forcing, DEF_forcing
    namelist /nl_colm_history/ DEF_hist_vars
 
@@ -1141,8 +1162,19 @@ CONTAINS
             CALL CoLM_Stop (' ***** ERROR: Problem reading namelist: '// trim(nlfile))
          ENDIF
          close(10)
+    
+         CALL set_rawdata_default()
+         open(10, status='OLD', file=trim(DEF_rawdata_namelist), form="FORMATTED")
+         read(10, nml=nl_colm_rawdata, iostat=ierr)
+         IF (ierr /= 0) THEN
+            CALL CoLM_Stop (' ***** ERROR: Problem reading namelist: '// trim(DEF_rawdata_namelist))
+         ENDIF
+         close(10)
 
-         print*, DEF_forcing_namelist
+         IF ( trim(DEF_rawdata%landcover%fname) == "LC30m.GLC." ) THEN
+            DEF_USE_GLC30 = .true.
+         ENDIF
+
          open(10, status='OLD', file=trim(DEF_forcing_namelist), form="FORMATTED")
          read(10, nml=nl_colm_forcing, iostat=ierr)
          IF (ierr /= 0) THEN
@@ -1563,9 +1595,28 @@ CONTAINS
       CALL mpi_bcast (USE_zip_for_aggregation                ,1   ,mpi_logical   ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_Srfdata_CompressLevel              ,1   ,mpi_integer   ,p_address_master ,p_comm_glb ,p_err)
 
-      ! 07/2023, added by yuan: subgrid setting related
+      CALL mpi_bcast (DEF_rawdata_namelist                   ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      ! 09/2025, added by yuan: rawdata info
+      CALL mpi_bcast (DEF_rawdata%landcover%dir              ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%landcover%gname            ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%landcover%fname            ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%pft%dir                    ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%pft%gname                  ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%pft%fname                  ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%lai_sai%dir                ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%lai_sai%gname              ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%lai_sai%fname              ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%htop%dir                   ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%htop%gname                 ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%htop%fname                 ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
       CALL mpi_bcast (DEF_USE_GLC30                          ,1   ,mpi_logical   ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_USE_ESACCI                         ,1   ,mpi_logical   ,p_address_master ,p_comm_glb ,p_err)
+      ! 07/2023, added by yuan: subgrid setting related
       CALL mpi_bcast (DEF_USE_LCT                            ,1   ,mpi_logical   ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_USE_PFT                            ,1   ,mpi_logical   ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_USE_PC                             ,1   ,mpi_logical   ,p_address_master ,p_comm_glb ,p_err)
@@ -1815,6 +1866,29 @@ CONTAINS
       CALL sync_hist_vars (set_defaults = .false.)
 
    END SUBROUTINE read_namelist
+
+
+   SUBROUTINE set_rawdata_default
+
+   IMPLICIT NONE
+
+      DEF_rawdata%landcover%dir   = 'dir'
+      DEF_rawdata%landcover%gname = 'gname'
+      DEF_rawdata%landcover%fname = 'fname'
+
+      DEF_rawdata%pft%dir         = 'dir'
+      DEF_rawdata%pft%gname       = 'gname'
+      DEF_rawdata%pft%fname       = 'fname'
+
+      DEF_rawdata%lai_sai%dir     = 'dir'
+      DEF_rawdata%lai_sai%gname   = 'gname'
+      DEF_rawdata%lai_sai%fname   = 'fname'
+
+      DEF_rawdata%htop%dir        = 'dir'
+      DEF_rawdata%htop%gname      = 'gname'
+      DEF_rawdata%htop%fname      = 'fname'
+
+   END SUBROUTINE set_rawdata_default
 
    ! ---------------
    SUBROUTINE sync_hist_vars (set_defaults)
