@@ -10,45 +10,43 @@ MODULE MOD_PercentagesPFTReadin
 ! PUBLIC MEMBER FUNCTIONS:
    PUBLIC :: pct_readin
 
-
-!-----------------------------------------------------------------------
-
-   CONTAINS
-
-!-----------------------------------------------------------------------
-
+CONTAINS
 
    SUBROUTINE pct_readin (dir_landdata, lc_year)
 
-      use MOD_Precision
-      USE MOD_Vars_Global
-      use MOD_SPMD_Task
-      USE MOD_NetCDFVector
-      USE MOD_LandPatch
+   USE MOD_Precision
+   USE MOD_Vars_Global
+   USE MOD_SPMD_Task
+   USE MOD_NetCDFVector
+   USE MOD_LandPatch
 #ifdef RangeCheck
-      USE MOD_RangeCheck
+   USE MOD_RangeCheck
 #endif
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
-      use MOD_LandPFT
-      use MOD_Vars_PFTimeInvariants, only : pftfrac
+   USE MOD_LandPFT
+   USE MOD_Vars_PFTimeInvariants
 #endif
 #ifdef SinglePoint
-      USE MOD_SingleSrfdata
+   USE MOD_SingleSrfdata
 #endif
-      IMPLICIT NONE
+   IMPLICIT NONE
 
-      INTEGER, intent(in) :: lc_year
-      character(LEN=256), INTENT(in) :: dir_landdata
-      ! Local Variables
-      character(len=256) :: lndname, cyear
-      REAL(r8), allocatable :: sumpct (:)
-      INTEGER :: npatch, ipatch
+   integer, intent(in) :: lc_year
+   character(len=256), intent(in) :: dir_landdata
+   ! Local Variables
+   character(len=256) :: lndname, cyear
+   real(r8), allocatable :: sumpct (:)
+   integer :: npatch, ipatch
 
       write(cyear,'(i4.4)') lc_year
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
+#ifdef SinglePoint
+      IF (patchtypes(SITE_landtype) /= 0) RETURN
+#endif
+
 #ifndef SinglePoint
       lndname = trim(dir_landdata)//'/pctpft/'//trim(cyear)//'/pct_pfts.nc'
-      call ncio_read_vector (lndname, 'pct_pfts', landpft, pftfrac)
+      CALL ncio_read_vector (lndname, 'pct_pfts', landpft, pftfrac)
 #else
       pftfrac = pack(SITE_pctpfts, SITE_pctpfts > 0.)
 #endif
@@ -56,13 +54,12 @@ MODULE MOD_PercentagesPFTReadin
 #if (defined CROP)
 #ifndef SinglePoint
       lndname = trim(dir_landdata)//'/pctpft/'//trim(cyear)//'/pct_crops.nc'
-      call ncio_read_vector (lndname, 'pct_crops', landpatch, pctcrop)
+      CALL ncio_read_vector (lndname, 'pct_crops', landpatch, cropfrac)
 #else
-      allocate (pctcrop (numpatch))
       IF (SITE_landtype == CROPLAND) THEN
-         pctcrop = pack(SITE_pctcrop, SITE_pctcrop > 0.)
+         cropfrac = pack(SITE_pctcrop, SITE_pctcrop > 0.)
       ELSE
-         pctcrop = 0.
+         cropfrac = 0.
       ENDIF
 #endif
 #endif
@@ -84,10 +81,10 @@ MODULE MOD_PercentagesPFTReadin
 
       CALL check_vector_data ('Sum PFT pct', sumpct)
 #if (defined CROP)
-      CALL check_vector_data ('CROP pct', pctcrop)
+      CALL check_vector_data ('CROP pct', cropfrac)
+#endif
 #endif
 
-#endif
 #endif
 
       IF (allocated(sumpct)) deallocate(sumpct)

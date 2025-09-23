@@ -2,37 +2,39 @@
 
 MODULE MOD_Urban_RoofFlux
 
-  USE MOD_Precision
-  IMPLICIT NONE
-  SAVE
+   USE MOD_Precision
+   IMPLICIT NONE
+   SAVE
 
-  PUBLIC :: UrbanRoofFlux
+   PUBLIC :: UrbanRoofFlux
 
 CONTAINS
 
 
- SUBROUTINE UrbanRoofFlux (hu, ht, hq, us, vs, tm, qm, rhoair, psrf, &
-                           ur, thm, th, thv, zsno, fsno_roof, hroof, htvp_roof, &
-                           lbr, wliq_roofsno, wice_roofsno, troof, qroof, dqroofdT, &
-                           croofs, croofl, croof, fsenroof, fevproof, &
-                           z0m, z0hg, zol, ustar, qstar, tstar, fm, fh, fq)
+   SUBROUTINE UrbanRoofFlux (hu, ht, hq, us, vs, tm, qm, rhoair, psrf, &
+                             ur, thm, th, thv, zsno, fsno_roof, hroof, htvp_roof, &
+                             lbr, wliq_roofsno, wice_roofsno, troof, qroof, dqroofdT, &
+                             croofs, croofl, croof, fsenroof, fevproof, &
+                             z0m, z0hg, zol, ustar, qstar, tstar, fm, fh, fq)
 
-!=======================================================================
-! this is the main subroutine to execute the calculation
-! of bare ground fluxes
+!-----------------------------------------------------------------------
+! !DESCRIPTION:
+!  This is the main subroutine to execute the calculation
+!  of roof fluxes - not used now.
 !
-!=======================================================================
+!  Created by Hua Yuan, 11/2022
+!-----------------------------------------------------------------------
 
-  USE MOD_Precision
-  USE MOD_Const_Physical, only: cpair,vonkar,grav
-  USE MOD_FrictionVelocity
-  IMPLICIT NONE
+   USE MOD_Precision
+   USE MOD_Const_Physical, only: cpair,vonkar,grav
+   USE MOD_FrictionVelocity
+   IMPLICIT NONE
 
 !----------------------- Dummy argument --------------------------------
-  INTEGER, intent(in) :: &
+   integer, intent(in) :: &
         lbr        ! lower bound of array
 
-  REAL(r8), intent(in) :: &
+   real(r8), intent(in) :: &
         ! atmospherical variables and observational height
         hu,       &! observational height of wind [m]
         ht,       &! observational height of temperature [m]
@@ -53,7 +55,7 @@ CONTAINS
         fsno_roof,&! fraction of impervious ground covered by snow
         hroof,    &! average building height [m]
 
-        wliq_roofsno,&! liqui water [kg/m2]
+        wliq_roofsno,&! liquid water [kg/m2]
         wice_roofsno,&! ice lens [kg/m2]
 
         troof,    &! ground impervious temperature [K]
@@ -61,16 +63,16 @@ CONTAINS
         dqroofdT, &! d(qroof)/dT
         htvp_roof  ! latent heat of vapor of water (or sublimation) [j/kg]
 
-  REAL(r8), intent(out) :: &
+   real(r8), intent(out) :: &
         croofs,   &! deriv of roof sensible heat flux wrt soil temp [w/m**2/k]
         croofl,   &! deriv of roof latent heat flux wrt soil temp [w/m**2/k]
         croof      ! deriv of roof total heat flux wrt soil temp [w/m**2/k]
 
-  REAL(r8), intent(out) :: &
+   real(r8), intent(out) :: &
         fsenroof, &! sensible heat flux from roof [W/m2]
-        fevproof   ! evaperation heat flux from roof [W/m2]
+        fevproof   ! evaporation heat flux from roof [W/m2]
 
-  REAL(r8), intent(out) :: &
+   real(r8), intent(out) :: &
         z0m,      &! effective roughness [m]
         z0hg,     &! roughness length over ground, sensible heat [m]
         zol,      &! dimensionless height (z/L) used in Monin-Obukhov theory
@@ -81,13 +83,13 @@ CONTAINS
         fh,       &! integral of profile function for heat
         fq         ! integral of profile function for moisture
 
-!------------------------ LOCAL VARIABLES ------------------------------
-  INTEGER niters, &! maximum number of iterations for surface temperature
+!-------------------------- Local Variables ----------------------------
+   integer niters,&! maximum number of iterations for surface temperature
         iter,     &! iteration index
         nmozsgn    ! number of times moz changes sign
 
-  REAL(r8) ::     &
-        beta,     &! coefficient of conective velocity [-]
+   real(r8) :: &
+        beta,     &! coefficient of convective velocity [-]
         displax,  &! zero-displacement height [m]
         tg,       &! ground surface temperature [K]
         qg,       &! ground specific humidity [kg/kg]
@@ -107,18 +109,18 @@ CONTAINS
         fq2m,     &! relation for specific humidity at 2m
         fm10m,    &! integral of profile function for momentum at 10m
         thvstar,  &! virtual potential temperature scaling parameter
-        um,       &! wind speed including the stablity effect [m/s]
+        um,       &! wind speed including the stability effect [m/s]
         wc,       &! convective velocity [m/s]
         wc2,      &! wc**2
         zeta,     &! dimensionless height used in Monin-Obukhov theory
         zii,      &! convective boundary height [m]
-        zldis,    &! reference height "minus" zero displacement heght [m]
+        zldis,    &! reference height "minus" zero displacement height [m]
         z0mg,     &! roughness length over ground, momentum [m]
         z0qg       ! roughness length over ground, latent heat [m]
 
-  REAL(r8) fwet_roof
+   real(r8) fwet_roof
 
-!----------------------- Dummy argument --------------------------------
+!-----------------------------------------------------------------------
 ! initial roughness length
       !TODO: change to original
       !z0mg = (1.-fsno)*zlnd + fsno*zsno
@@ -130,7 +132,7 @@ CONTAINS
       z0hg = z0mg
       z0qg = z0mg
 
-! potential temperatur at the reference height
+! potential temperature at the reference height
       beta = 1.       !-  (in computing W_*)
       zii  = 1000.    !m  (pbl height)
       z0m  = z0mg
@@ -200,7 +202,7 @@ CONTAINS
          ENDIF
 
          IF (obuold*obu < 0.) nmozsgn = nmozsgn+1
-         IF (nmozsgn >= 4) exit
+         IF (nmozsgn >= 4) EXIT
 
          obuold = obu
 
@@ -208,7 +210,7 @@ CONTAINS
       ENDDO ITERATION                         !end stability iteration
       !----------------------------------------------------------------
 
-! Get derivative of fluxes with repect to ground temperature
+! Get derivative of fluxes with respect to ground temperature
       ram    = 1./(ustar*ustar/um)
       rah    = 1./(vonkar/fh*ustar)
       raw    = 1./(vonkar/fq*ustar)
@@ -223,11 +225,12 @@ CONTAINS
 
 ! surface fluxes of momentum, sensible and latent
 ! using ground temperatures from previous time step
-      !taux   = -rhoair*us/ram
-      !tauy   = -rhoair*vs/ram
-      fsenroof  = -raih*dth
-      fevproof  = -raiw*dqh*fwet_roof
+      !taux    = -rhoair*us/ram
+      !tauy    = -rhoair*vs/ram
+      fsenroof = -raih*dth
+      fevproof = -raiw*dqh*fwet_roof
 
- END SUBROUTINE UrbanRoofFlux
+   END SUBROUTINE UrbanRoofFlux
 
 END MODULE MOD_Urban_RoofFlux
+! ---------- EOP ------------

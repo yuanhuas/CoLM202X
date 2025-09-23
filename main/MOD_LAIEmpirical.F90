@@ -13,46 +13,47 @@ MODULE MOD_LAIEmpirical
 
 !-----------------------------------------------------------------------
 
-   CONTAINS
+CONTAINS
 
 !-----------------------------------------------------------------------
 
 
-   subroutine LAI_empirical(ivt,nl_soil,rootfr,t,lai,sai,fveg,green)
+   SUBROUTINE LAI_empirical(ivt,nl_soil,rootfr,t,lai,sai,fveg,green)
 
 !-----------------------------------------------------------------------
-! provides leaf and stem area parameters
-! Original author : Yongjiu Dai, 08/31/2002
+!  provides leaf and stem area parameters
+!  Original author: Yongjiu Dai, 08/31/2002
 !-----------------------------------------------------------------------
 
-   use MOD_Precision
-   implicit none
+   USE MOD_Precision
+   IMPLICIT NONE
 
-   integer, intent(in)  :: ivt      !land cover type
-   integer, intent(in)  :: nl_soil  !number of soil layers
+!-------------------------- Dummy Arguments ----------------------------
+   integer,  intent(in)  :: ivt               !land cover type
+   integer,  intent(in)  :: nl_soil           !number of soil layers
 
-   real(r8), intent(in)  :: rootfr(1:nl_soil)  !root fraction
-   real(r8), intent(in)  :: t(1:nl_soil)  !soil temperature
-   real(r8), intent(out) :: lai     !leaf area index
-   real(r8), intent(out) :: sai     !Stem area index
-   real(r8), intent(out) :: fveg    !fractional cover of vegetation
-   real(r8), intent(out) :: green   !greenness
+   real(r8), intent(in)  :: rootfr(1:nl_soil) !root fraction
+   real(r8), intent(in)  :: t(1:nl_soil)      !soil temperature
+   real(r8), intent(out) :: lai               !leaf area index
+   real(r8), intent(out) :: sai               !Stem area index
+   real(r8), intent(out) :: fveg              !fractional cover of vegetation
+   real(r8), intent(out) :: green             !greenness
 
-!local variable
+!-------------------------- Local Variables ----------------------------
    real(r8) f      !
    real(r8) roota  !accumulates root fraction
    integer jrt     !number of soil layers with 90% root fraction
    integer j       !number of soil layers
 
 !-----------------------------------------------------------------------
-#if(defined LULC_USGS)
+#if (defined LULC_USGS)
 ! Maximum fractional cover of vegetation [-]
    real(r8), dimension(24), parameter :: &
    vegc=(/1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, &
           1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, &
           1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0 /)
 ! Maximum leaf area index, the numbers are based on the data of
-! "worldwide histrorical estimates of leaf area index, 1932-2000" :
+! "worldwide historical estimates of leaf area index, 1932-2000" :
 ! http://www.daac.ornl.gov/global_vegetation/HistoricalLai/data"
    real(r8), dimension(24), parameter :: &
    xla=(/1.50, 3.29, 4.18, 3.50, 2.50, 3.60, 2.02, 1.53, &
@@ -72,7 +73,7 @@ MODULE MOD_LAIEmpirical
    real(r8), dimension(11), parameter :: &
    vegc=(/1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0/)
    real(r8), dimension(11), parameter :: &
-   xla=(/4.8, 3.9, 5.6, 5.5, 4.6, 1.7, 1.3, 2.1, 3.6, 0.0, 0.0/)
+   xla =(/4.8, 3.9, 5.6, 5.5, 4.6, 1.7, 1.3, 2.1, 3.6, 0.0, 0.0/)
    real(r8), dimension(11), parameter :: &
    xla0=(/4.0, 0.6, 0.5, 5.0, 0.5, 0.3, 0.6, 0.4, 0.2, 0.0, 0.0/)
    real(r8), dimension(11), parameter :: &
@@ -82,8 +83,8 @@ MODULE MOD_LAIEmpirical
    vegc=(/1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 1.0,&
           1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0/)
    real(r8), dimension(19), parameter :: &
-   xla=(/5.1, 1.6, 4.8, 4.8, 4.8, 5.4, 4.8, 0.0, 3.6, 4.8,&
-         0.6, 0.0, 4.8, 0.0, 0.0, 4.8, 4.8, 4.8, 4.8/)
+   xla =(/5.1, 1.6, 4.8, 4.8, 4.8, 5.4, 4.8, 0.0, 3.6, 4.8,&
+          0.6, 0.0, 4.8, 0.0, 0.0, 4.8, 4.8, 4.8, 4.8/)
    real(r8), dimension(19), parameter :: &
    xla0=(/0.425, 0.4, 4.0, 0.8, 0.8, 4.5, 0.4, 0.0, 0.3, 0.4,&
           0.05, 0.0, 0.4, 0.0, 0.0, 4.0, 0.8, 2.4, 2.4/)
@@ -98,8 +99,8 @@ MODULE MOD_LAIEmpirical
    vegc=(/1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0,&
           1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0/)
    real(r8), dimension(17), parameter :: &
-   xla=(/4.8, 5.4, 4.8, 4.8, 4.7, 4.7, 1.6, 4.7, 4.8, 1.7,&
-         4.6, 4.9, 3.8, 4.8, 0.0, 0.06, 0.0/)
+   xla =(/4.8, 5.4, 4.8, 4.8, 4.7, 4.7, 1.6, 4.7, 4.8, 1.7,&
+          4.6, 4.9, 3.8, 4.8, 0.0, 0.06, 0.0/)
    real(r8), dimension(17), parameter :: &
    xla0=(/4.0, 4.5, 0.8, 0.8, 2.2, 1.6, 0.15, 1.8, 0.9, 0.4,&
           0.4, 0.4, 0.9, 2.0, 0.0, 0.006, 0.0/)
@@ -109,30 +110,30 @@ MODULE MOD_LAIEmpirical
 #endif
 
 !-----------------------------------------------------------------------
-   roota = 0.
-   jrt = 1
-   do j = 1, nl_soil
-      roota = roota + rootfr(j)
-      if(roota>0.9)then
-         jrt = j
-         exit
-      endif
-   enddo
+      roota = 0.
+      jrt = 1
+      DO j = 1, nl_soil
+         roota = roota + rootfr(j)
+         IF(roota>0.9)THEN
+            jrt = j
+            EXIT
+         ENDIF
+      ENDDO
 
 ! Adjust leaf area index for seasonal variation
 
-   f = max(0.0,1.-0.0016*max(298.-t(jrt),0.0)**2)
-   lai = xla(ivt) + (xla0(ivt)-xla(ivt))*(1.-f)
+      f = max(0.0,1.-0.0016*max(298.-t(jrt),0.0)**2)
+      lai = xla(ivt) + (xla0(ivt)-xla(ivt))*(1.-f)
 
 ! Sum leaf area index and stem area index
-   sai = sai0(ivt)
+      sai = sai0(ivt)
 
 ! Fractional vegetation cover
-   fveg = vegc(ivt)
+      fveg = vegc(ivt)
 
-   green = 0.0
-   if(fveg > 0.) green = 1.0
+      green = 0.0
+      IF(fveg > 0.) green = 1.0
 
-   end subroutine LAI_empirical
+   END SUBROUTINE LAI_empirical
 
 END MODULE MOD_LAIEmpirical

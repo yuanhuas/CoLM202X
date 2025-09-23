@@ -2,7 +2,6 @@
 #ifdef LULCC
 MODULE MOD_Lulcc_Initialize
 
-!-----------------------------------------------------------------------
    USE MOD_Precision
    IMPLICIT NONE
    SAVE
@@ -10,18 +9,23 @@ MODULE MOD_Lulcc_Initialize
 ! PUBLIC MEMBER FUNCTIONS:
    PUBLIC :: LulccInitialize
 
-!-----------------------------------------------------------------------
-   CONTAINS
-!-----------------------------------------------------------------------
+CONTAINS
 
- SUBROUTINE LulccInitialize (casename,dir_landdata,dir_restart,&
-                             idate,greenwich)
+   SUBROUTINE LulccInitialize (casename, dir_landdata, dir_restart, &
+                               jdate, greenwich)
 
-! ======================================================================
+!-----------------------------------------------------------------------
 !
-! Initialization routine for Land-use-Land-cover-change (Lulcc) case
+! !DESCRIPTION:
+!  Initialization routine for Land-use-Land-cover-change (Lulcc) case
 !
-! ======================================================================
+!  Created by Hua Yuan, 04/08/2022
+!
+! !REVISIONS:
+!  08/2023, Wenzong Dong: Porting to MPI version and share the same code
+!           with MOD_Initialize:initialize()
+!
+!-----------------------------------------------------------------------
 
    USE MOD_Precision
    USE MOD_SPMD_Task
@@ -29,9 +33,13 @@ MODULE MOD_Lulcc_Initialize
    USE MOD_Mesh
    USE MOD_LandElm
    USE MOD_LandPatch
+#if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
+   USE MOD_LandPFT
+#endif
+   USE MOD_LandUrban
    USE MOD_Const_LC
    USE MOD_Const_PFT
-   use MOD_TimeManager
+   USE MOD_TimeManager
    USE MOD_Lulcc_Vars_TimeInvariants
    USE MOD_Lulcc_Vars_TimeVariables
    USE MOD_SrfdataRestart
@@ -41,79 +49,90 @@ MODULE MOD_Lulcc_Initialize
 
    IMPLICIT NONE
 
-   ! ----------------------------------------------------------------------
+!-------------------------- Dummy Arguments ----------------------------
    character(len=*), intent(in) :: casename      ! case name
    character(len=*), intent(in) :: dir_landdata
    character(len=*), intent(in) :: dir_restart
 
-   integer, intent(inout) :: idate(3)   ! year, julian day, seconds of the starting time
+   integer, intent(inout) :: jdate(3)   ! year, julian day, seconds of the starting time
    logical, intent(in)    :: greenwich  ! true: greenwich time, false: local time
 
-   ! local vars
-   INTEGER :: year, jday
-   ! ----------------------------------------------------------------------
+!-------------------------- Local Variables ----------------------------
+   integer :: year, jday
 
-   ! initial time of model run
-   ! ............................
-   CALL adj2begin(idate)
+!-----------------------------------------------------------------------
 
-   year = idate(1)
-   jday = idate(2)
+      ! initial time of model run and consts
+      year = jdate(1)
+      jday = jdate(2)
 
-   CALL Init_GlobalVars
-   CAll Init_LC_Const
-   CAll Init_PFT_Const
+      CALL Init_GlobalVars
+      CALL Init_LC_Const
+      CALL Init_PFT_Const
 
-   ! deallocate pixelset and mesh data of previous
-   CALL mesh_free_mem
-   CALL landelm%forc_free_mem
-   CALL landpatch%forc_free_mem
+      ! deallocate pixelset and mesh data of previous year
+      CALL mesh_free_mem
+      CALL landelm%forc_free_mem
+      CALL landpatch%forc_free_mem
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
-   CALL landpft%forc_free_mem
+      CALL landpft%forc_free_mem
 #endif
 #ifdef URBAN_MODEL
-   CALL landurban%forc_free_mem
+      CALL landurban%forc_free_mem
 #endif
 
-   ! load pixelset and mesh data of next year
-   ! call pixel%load_from_file  (dir_landdata)
-   ! call gblock%load_from_file (dir_landdata)
-   call mesh_load_from_file     (dir_landdata, year)
-   CALL pixelset_load_from_file (dir_landdata, 'landelm'  , landelm  , numelm  , year)
+      ! load pixelset and mesh data of next year
+      ! CALL pixel%load_from_file  (dir_landdata)
+      ! CALL gblock%load_from_file (dir_landdata)
+      CALL mesh_load_from_file     (dir_landdata, year)
+      CALL pixelset_load_from_file (dir_landdata, 'landelm'  , landelm  , numelm  , year)
 
+      ! load CATCHMENT of next year
 #ifdef CATCHMENT
-   CALL pixelset_load_from_file (dir_landdata, 'landhru'  , landhru  , numhru  , year)
+      CALL pixelset_load_from_file (dir_landdata, 'landhru'  , landhru  , numhru  , year)
 #endif
 
-   call pixelset_load_from_file (dir_landdata, 'landpatch', landpatch, numpatch, year)
+      ! load landpatch data of next year
+      CALL pixelset_load_from_file (dir_landdata, 'landpatch', landpatch, numpatch, year)
 
+      ! load pft data of PFT/PC of next year
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
-   call pixelset_load_from_file (dir_landdata, 'landpft'  , landpft  , numpft  , year)
-   CALL map_patch_to_pft
+      CALL pixelset_load_from_file (dir_landdata, 'landpft'  , landpft  , numpft  , year)
+      CALL map_patch_to_pft
 #endif
 
+      ! load urban data of next year
 #ifdef URBAN_MODEL
-   CALL pixelset_load_from_file (dir_landdata, 'landurban', landurban, numurban, year)
-   CALL map_patch_to_urban
+      CALL pixelset_load_from_file (dir_landdata, 'landurban', landurban, numurban, year)
+      CALL map_patch_to_urban
 #endif
 
+      ! initialize for data associated with land element
 #if (defined UNSTRUCTURED || defined CATCHMENT)
-   CALL elm_vector_init ()
+      CALL elm_vector_init ()
 #ifdef CATCHMENT
-   CALL hru_vector_init ()
+      CALL hru_vector_init ()
 #endif
 #endif
 
-   ! --------------------------------------------------------------------
-   ! Deallocates memory for CoLM 1d [numpatch] variables
-   ! --------------------------------------------------------------------
-   CALL deallocate_TimeInvariants
-   CALL deallocate_TimeVariables
+      ! build element subfraction of next year which it's needed in the MOD_Lulcc_TransferTrace
+      IF (p_is_worker) THEN
+         CALL elm_patch%build (landelm, landpatch, use_frac = .true.)
+      ENDIF
 
-   CALL initialize (casename,dir_landdata,dir_restart,&
-                    idate,year,greenwich,lulcc_call=.true.)
 
- END SUBROUTINE LulccInitialize
+      ! --------------------------------------------------------------------
+      ! Deallocates memory for CoLM 1d [numpatch] variables
+      ! --------------------------------------------------------------------
+      CALL deallocate_TimeInvariants
+      CALL deallocate_TimeVariables
+
+      ! initialize all state variables of next year
+      CALL initialize (casename, dir_landdata, dir_restart,&
+                       jdate, year, greenwich, lulcc_call=.true.)
+
+   END SUBROUTINE LulccInitialize
 
 END MODULE MOD_Lulcc_Initialize
 #endif
+! ---------- EOP ------------

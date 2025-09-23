@@ -20,25 +20,27 @@ CONTAINS
 
    SUBROUTINE netsolar (ipatch,idate,deltim,dlon,patchtype,&
                         forc_sols,forc_soll,forc_solsd,forc_solld,&
-                        alb,ssun,ssha,lai,sai,rho,tau,ssno,&
-                        parsun,parsha,sabvsun,sabvsha,sabg,sabg_lyr,sr,&
-                        solvd,solvi,solnd,solni,srvd,srvi,srnd,srni,&
+                        alb,ssun,ssha,lai,sai,rho,tau,ssoi,ssno,ssno_lyr,fsno,&
+                        parsun,parsha,sabvsun,sabvsha,sabg,sabg_soil,sabg_snow,sabg_snow_lyr,&
+                        sr,solvd,solvi,solnd,solni,srvd,srvi,srnd,srni,&
                         solvdln,solviln,solndln,solniln,srvdln,srviln,srndln,srniln)
-!
+
+!-----------------------------------------------------------------------
 ! !DESCRIPTION:
-! Net solar absorbed by surface
+!  Net solar absorbed by surface
 !
-! Original author : Yongjiu Dai, 09/15/1999; 09/11/2001
+!  Original author: Yongjiu Dai, 09/15/1999; 09/11/2001
 !
-! REVISIONS:
-! Hua Yuan, 05/2014: added for solar radiation output [vars: so*, sr*]
+! !REVISIONS:
+!  05/2014, Hua Yuan: added for solar radiation output [vars: so*, sr*]
 !
-! Hua Yuan, 08/2014: added for local noon calculation
+!  08/2014, Hua Yuan: added for local noon calculation
 !
-! Hua Yuan, 08/2020: added for PFT and PC calculation
+!  08/2020, Hua Yuan: added for PFT and PC calculation
 !
-! Hua Yuan, 12/2022: calculated snow layer absorption by SNICAR model
+!  12/2022, Hua Yuan: calculated snow layer absorption by SNICAR model
 !
+!-----------------------------------------------------------------------
 ! !USES:
    USE MOD_Precision
    USE MOD_Vars_Global
@@ -53,12 +55,12 @@ CONTAINS
 
    IMPLICIT NONE
 
-! Dummy argument
+!-------------------------- Dummy Arguments ----------------------------
    integer,  intent(in) :: ipatch     !patch index
    integer,  intent(in) :: idate(3)   !model time
    integer,  intent(in) :: patchtype  !land patch type (99-sea)
 
-   real(r8), intent(in) :: dlon       !logitude in radians
+   real(r8), intent(in) :: dlon       !longitude in radians
    real(r8), intent(in) :: deltim     !seconds in a time step [second]
 
    real(r8), intent(in) :: &
@@ -68,12 +70,16 @@ CONTAINS
          forc_solld   ! atm nir diffuse solar rad onto srf [W/m2]
 
    real(r8), dimension(1:2,1:2), intent(in) :: &
-         alb,        &! averaged albedo [-]
+         alb          ! averaged albedo [-]
+
+   real(r8), dimension(1:2,1:2), intent(inout) :: &
          ssun,       &! sunlit canopy absorption for solar radiation
-         ssha         ! shaded canopy absorption for solar radiation
+         ssha,       &! shaded canopy absorption for solar radiation
+         ssoi,       &! ground soil absorption [-]
+         ssno         ! ground snow absorption [-]
 
    real(r8), dimension(1:2,1:2,maxsnl+1:1), intent(inout) :: &
-         ssno         ! snow layer absorption
+         ssno_lyr     ! snow layer absorption
 
    real(r8), intent(in) :: &
          lai,        &! leaf area index
@@ -81,12 +87,18 @@ CONTAINS
          rho(2,2),   &! leaf reflectance (iw=iband, il=life and dead)
          tau(2,2)     ! leaf transmittance (iw=iband, il=life and dead)
 
+   real(r8), intent(in) :: &
+         fsno         ! snow fractional cover
+
    real(r8), intent(out) :: &
          parsun,     &! PAR absorbed by sunlit vegetation [W/m2]
          parsha,     &! PAR absorbed by shaded vegetation [W/m2]
          sabvsun,    &! solar absorbed by sunlit vegetation [W/m2]
          sabvsha,    &! solar absorbed by shaded vegetation [W/m2]
          sabg,       &! solar absorbed by ground  [W/m2]
+! 03/06/2020, yuan:
+         sabg_soil,  &! solar absorbed by ground soil [W/m2]
+         sabg_snow,  &! solar absorbed by ground snow [W/m2]
          sr,         &! total reflected solar radiation (W/m2)
          solvd,      &! incident direct beam vis solar radiation (W/m2)
          solvi,      &! incident diffuse beam vis solar radiation (W/m2)
@@ -106,34 +118,59 @@ CONTAINS
          srniln       ! reflected diffuse beam nir solar radiation at local noon(W/m2)
 
    real(r8), intent(out) :: &
-         sabg_lyr(maxsnl+1:1)   ! solar absorbed by snow layers [W/m2]
+         sabg_snow_lyr(maxsnl+1:1)   ! solar absorbed by snow layers [W/m2]
 
-! ----------------local variables ---------------------------------
+!-------------------------- Local Variables ----------------------------
    integer  :: local_secs
-   real(r8) :: radpsec, sabvg
+   real(r8) :: radpsec, sabvg, sabg_noadj
 
-   integer ps, pe, pc
-!=======================================================================
+   integer ps, pe, p
+
+!-----------------------------------------------------------------------
 
       sabvsun = 0.
       sabvsha = 0.
       parsun  = 0.
       parsha  = 0.
 
-      sabg  = 0.
-      sabg_lyr(:) = 0.
+      IF (lai+sai <= 1.e-6) THEN
+         ssun(:,:) = 0.
+         ssha(:,:) = 0.
+      ENDIF
+
+      sabg = 0.
+      sabg_soil = 0.
+      sabg_snow = 0.
+      sabg_snow_lyr(:) = 0.
 
       IF (patchtype == 0) THEN
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
          ps = patch_pft_s(ipatch)
          pe = patch_pft_e(ipatch)
+
          sabvsun_p(ps:pe) = 0.
          sabvsha_p(ps:pe) = 0.
-         parsun_p(ps:pe)  = 0.
-         parsha_p(ps:pe)  = 0.
+         parsun_p (ps:pe) = 0.
+         parsha_p (ps:pe) = 0.
+
+         DO p = ps, pe
+            IF (lai_p(p)+sai_p(p) <= 1.e-6) THEN
+               ssun_p(:,:,p) = 0.
+               ssha_p(:,:,p) = 0.
+            ENDIF
+         ENDDO
+
+         ssun(1,1) = sum( ssun_p(1,1,ps:pe)*pftfrac(ps:pe) )
+         ssun(1,2) = sum( ssun_p(1,2,ps:pe)*pftfrac(ps:pe) )
+         ssun(2,1) = sum( ssun_p(2,1,ps:pe)*pftfrac(ps:pe) )
+         ssun(2,2) = sum( ssun_p(2,2,ps:pe)*pftfrac(ps:pe) )
+
+         ssha(1,1) = sum( ssha_p(1,1,ps:pe)*pftfrac(ps:pe) )
+         ssha(1,2) = sum( ssha_p(1,2,ps:pe)*pftfrac(ps:pe) )
+         ssha(2,1) = sum( ssha_p(2,1,ps:pe)*pftfrac(ps:pe) )
+         ssha(2,2) = sum( ssha_p(2,2,ps:pe)*pftfrac(ps:pe) )
 #endif
       ENDIF
-
 
       IF (forc_sols+forc_soll+forc_solsd+forc_solld > 0.) THEN
          IF (patchtype < 4) THEN    !non lake and ocean
@@ -149,9 +186,11 @@ CONTAINS
             sabg    = sabvg - sabvsun - sabvsha
 
             IF (patchtype == 0) THEN
+
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
-               parsun_p(ps:pe)  = forc_sols*ssun_p(1,1,ps:pe) + forc_solsd*ssun_p(1,2,ps:pe)
-               parsha_p(ps:pe)  = forc_sols*ssha_p(1,1,ps:pe) + forc_solsd*ssha_p(1,2,ps:pe)
+
+               parsun_p (ps:pe) = forc_sols*ssun_p(1,1,ps:pe) + forc_solsd*ssun_p(1,2,ps:pe)
+               parsha_p (ps:pe) = forc_sols*ssha_p(1,1,ps:pe) + forc_solsd*ssha_p(1,2,ps:pe)
                sabvsun_p(ps:pe) = forc_sols*ssun_p(1,1,ps:pe) + forc_solsd*ssun_p(1,2,ps:pe) &
                                 + forc_soll*ssun_p(2,1,ps:pe) + forc_solld*ssun_p(2,2,ps:pe)
                sabvsha_p(ps:pe) = forc_sols*ssha_p(1,1,ps:pe) + forc_solsd*ssha_p(1,2,ps:pe) &
@@ -162,29 +201,81 @@ CONTAINS
          ELSE                       !lake and ocean
             sabvg = forc_sols *(1.-alb(1,1)) + forc_soll *(1.-alb(2,1)) &
                   + forc_solsd*(1.-alb(1,2)) + forc_solld*(1.-alb(2,2))
-            sabg = sabvg
+            sabg  = sabvg
          ENDIF
 
-         IF (DEF_USE_SNICAR) THEN
+         ! calculate soil and snow solar absorption
+         sabg_soil = forc_sols*ssoi(1,1) + forc_solsd*ssoi(1,2) &
+                   + forc_soll*ssoi(2,1) + forc_solld*ssoi(2,2)
+         sabg_snow = forc_sols*ssno(1,1) + forc_solsd*ssno(1,2) &
+                   + forc_soll*ssno(2,1) + forc_solld*ssno(2,2)
 
-            IF (patchtype < 4) THEN !non lake and ocean
-               ! normalization
-               IF(sum(ssno(1,1,:))>0.) ssno(1,1,:) = (1-alb(1,1)-ssun(1,1)-ssha(1,1)) * ssno(1,1,:)/sum(ssno(1,1,:))
-               IF(sum(ssno(1,2,:))>0.) ssno(1,2,:) = (1-alb(1,2)-ssun(1,2)-ssha(1,2)) * ssno(1,2,:)/sum(ssno(1,2,:))
-               IF(sum(ssno(2,1,:))>0.) ssno(2,1,:) = (1-alb(2,1)-ssun(2,1)-ssha(2,1)) * ssno(2,1,:)/sum(ssno(2,1,:))
-               IF(sum(ssno(2,2,:))>0.) ssno(2,2,:) = (1-alb(2,2)-ssun(2,2)-ssha(2,2)) * ssno(2,2,:)/sum(ssno(2,2,:))
-            ELSE                    !lake and ocean
-               ! normalization
-               IF(sum(ssno(1,1,:))>0.) ssno(1,1,:) = (1-alb(1,1)) * ssno(1,1,:)/sum(ssno(1,1,:))
-               IF(sum(ssno(1,2,:))>0.) ssno(1,2,:) = (1-alb(1,2)) * ssno(1,2,:)/sum(ssno(1,2,:))
-               IF(sum(ssno(2,1,:))>0.) ssno(2,1,:) = (1-alb(2,1)) * ssno(2,1,:)/sum(ssno(2,1,:))
-               IF(sum(ssno(2,2,:))>0.) ssno(2,2,:) = (1-alb(2,2)) * ssno(2,2,:)/sum(ssno(2,2,:))
+         sabg_soil = sabg_soil * (1.-fsno)
+         sabg_snow = sabg_snow * fsno
+
+         ! balance check and adjustment for soil and snow absorption
+         ! this could happen when there is adjustment to ssun,ssha
+         IF (abs(sabg_soil+sabg_snow-sabg)>1.e-6) THEN
+            IF (.not. (idate(2)==1 .and. idate(3)==int(deltim))) THEN
+               print *, "MOD_NetSolar.F90: NOTE imbalance in spliting soil and snow surface!", &
+                         sabg_soil+sabg_snow-sabg
+               print *, "Patchtype = ", patchtype
+               print *, "sabg:", sabg, "sabg_soil:", sabg_soil, "sabg_snow", sabg_snow
+               print *, "sabg_soil+sabg_snow:", sabg_soil+sabg_snow, "fsno:", fsno
+            ENDIF
+
+            sabg_noadj = sabg_soil + sabg_snow
+
+            IF (sabg_noadj > 0.) THEN
+               sabg_soil = sabg_soil * sabg/sabg_noadj
+               sabg_snow = sabg_snow * sabg/sabg_noadj
+               ssoi(:,:) = ssoi(:,:) * sabg/sabg_noadj
+               ssno(:,:) = ssno(:,:) * sabg/sabg_noadj
+            ENDIF
+         ENDIF
+
+         ! snow layer absorption calculation and adjustment for SNICAR model
+         IF (DEF_USE_SNICAR) THEN
+            ! adjust snow layer absorption due to multiple reflection between ground and canopy
+            IF(sum(ssno_lyr(1,1,:))>0.) THEN
+               ssno_lyr(1,1,:) = ssno(1,1) * ssno_lyr(1,1,:)/sum(ssno_lyr(1,1,:))
+            ELSE
+               ssno_lyr(1,1,1) = ssno(1,1)
+            ENDIF
+
+            IF(sum(ssno_lyr(1,2,:))>0.) THEN
+               ssno_lyr(1,2,:) = ssno(1,2) * ssno_lyr(1,2,:)/sum(ssno_lyr(1,2,:))
+            ELSE
+               ssno_lyr(1,2,1) = ssno(1,2)
+            ENDIF
+
+            IF(sum(ssno_lyr(2,1,:))>0.) THEN
+               ssno_lyr(2,1,:) = ssno(2,1) * ssno_lyr(2,1,:)/sum(ssno_lyr(2,1,:))
+            ELSE
+               ssno_lyr(2,1,1) = ssno(2,1)
+            ENDIF
+
+            IF(sum(ssno_lyr(2,2,:))>0.) THEN
+               ssno_lyr(2,2,:) = ssno(2,2) * ssno_lyr(2,2,:)/sum(ssno_lyr(2,2,:))
+            ELSE
+               ssno_lyr(2,2,1) = ssno(2,2)
             ENDIF
 
             ! snow layer absorption
-            sabg_lyr(:) = forc_sols*ssno(1,1,:) + forc_solsd*ssno(1,2,:) &
-                        + forc_soll*ssno(2,1,:) + forc_solld*ssno(2,2,:)
+            sabg_snow_lyr(:) = forc_sols*ssno_lyr(1,1,:) + forc_solsd*ssno_lyr(1,2,:) &
+                             + forc_soll*ssno_lyr(2,1,:) + forc_solld*ssno_lyr(2,2,:)
+
+            ! convert to the whole area multiplied by snow fractional cover
+            sabg_snow_lyr(:) = sabg_snow_lyr(:)*fsno
+
+            ! attribute the first layer absorption to soil absorption
+            sabg_soil = sabg_soil + sabg_snow_lyr(1)
+            sabg_snow = sabg_snow - sabg_snow_lyr(1)
+
+            ! make the soil absorption consistent
+            sabg_snow_lyr(1) = sabg_soil
          ENDIF
+
       ENDIF
 
       solvd = forc_sols
@@ -229,3 +320,4 @@ CONTAINS
    END SUBROUTINE netsolar
 
 END MODULE MOD_NetSolar
+! ---------- EOP ------------
