@@ -250,7 +250,7 @@ SUBROUTINE Aggregation_ForestHeight ( &
             ENDIF
 
             CALL aggregation_request_data (landpatch, ipatch, gland, zip = USE_zip_for_aggregation, &
-               area = area_one, data_r8_2d_in1 = htop,   data_r8_2d_out1 = htop_one, &
+               area = area_one, data_r8_2d_in1 = htop, data_r8_2d_out1 = htop_one, &
                data_r8_3d_in1 = pftPCT, data_r8_3d_out1 = pct_one, n1_r8_3d_in1 = 16, lb1_r8_3d_in1 = 0)
 
             htop_patches(ipatch) = sum(htop_one * area_one) / sum(area_one)

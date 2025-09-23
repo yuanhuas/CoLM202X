@@ -145,14 +145,13 @@ MODULE MOD_Namelist
       character(len=256) :: dir
       character(len=256) :: gname
       character(len=256) :: fname
-      character(len=256) :: vname
    end type
 
    type :: rawdata
       type(datainfo) :: landcover
-      !type(datainfo) :: pft
-      !type(datainfo) :: htop
-      !type(datainfo) :: lai_sai
+      type(datainfo) :: pft
+      type(datainfo) :: lai_sai
+      type(datainfo) :: htop
    end type
 
    type (rawdata) :: DEF_rawdata
@@ -1547,6 +1546,24 @@ CONTAINS
       CALL mpi_bcast (DEF_Srfdata_CompressLevel              ,1   ,mpi_integer   ,p_address_master ,p_comm_glb ,p_err)
 
       CALL mpi_bcast (DEF_rawdata_namelist                   ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      ! 09/2025, added by yuan: rawdata info
+      CALL mpi_bcast (DEF_rawdata%landcover%dir              ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%landcover%gname            ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%landcover%fname            ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%pft%dir                    ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%pft%gname                  ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%pft%fname                  ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%lai_sai%dir                ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%lai_sai%gname              ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%lai_sai%fname              ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%htop%dir                   ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%htop%gname                 ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%htop%fname                 ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
       CALL mpi_bcast (DEF_USE_GLC30                          ,1   ,mpi_logical   ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_USE_ESACCI                         ,1   ,mpi_logical   ,p_address_master ,p_comm_glb ,p_err)
       ! 07/2023, added by yuan: subgrid setting related
@@ -1808,7 +1825,18 @@ CONTAINS
       DEF_rawdata%landcover%dir   = 'dir'
       DEF_rawdata%landcover%gname = 'gname'
       DEF_rawdata%landcover%fname = 'fname'
-      DEF_rawdata%landcover%vname = 'vname'
+
+      DEF_rawdata%pft%dir         = 'dir'
+      DEF_rawdata%pft%gname       = 'gname'
+      DEF_rawdata%pft%fname       = 'fname'
+
+      DEF_rawdata%lai_sai%dir     = 'dir'
+      DEF_rawdata%lai_sai%gname   = 'gname'
+      DEF_rawdata%lai_sai%fname   = 'fname'
+
+      DEF_rawdata%htop%dir        = 'dir'
+      DEF_rawdata%htop%gname      = 'gname'
+      DEF_rawdata%htop%fname      = 'fname'
 
    END SUBROUTINE set_rawdata_default
 

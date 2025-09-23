@@ -97,7 +97,7 @@ CONTAINS
          ! add parameter input for time year
          dir_5x5 = trim(DEF_dir_rawdata) // trim(DEF_rawdata%landcover%dir)
          file_patch = trim(DEF_rawdata%landcover%fname) // trim(cyear)
-         CALL read_5x5_data (dir_5x5, file_patch, grid_patch, trim(DEF_rawdata%landcover%vname), patchdata)
+         CALL read_5x5_data (dir_5x5, file_patch, grid_patch, 'LC', patchdata)
 
          !file_patch = trim(DEF_dir_rawdata)//'landtypes/landtype-igbp-modis-'//trim(cyear)//'.nc'
          !CALL ncio_read_block (file_patch, 'landtype', grid_patch, patchdata)
