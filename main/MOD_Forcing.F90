@@ -36,6 +36,7 @@ MODULE MOD_Forcing
 
    type (spatial_mapping_type) :: mg2p_forc   ! area weighted mapping from forcing to model unit
 
+   real(r8) :: forc_missing_value
    logical, allocatable :: forcmask_pch (:)
 
    ! for Forcing_Downscaling
@@ -134,8 +135,8 @@ CONTAINS
    type(timestamp)    :: tstamp
    character(len=256) :: filename, lndname, cyear
    integer            :: ivar, year, month, day, time_i
-   real(r8)           :: missing_value
    integer            :: ielm, istt, iend
+   type(block_data_real8_2d)              :: areagrid
 
    integer :: iblkme, xblk, yblk, xloc, yloc
 
@@ -201,10 +202,10 @@ CONTAINS
 
          IF (p_is_master) THEN
             CALL ncio_get_attr (filename, vname(1), trim(DEF_forcing%missing_value_name), &
-                                missing_value)
+                                forc_missing_value)
          ENDIF
 #ifdef USEMPI
-         CALL mpi_bcast (missing_value, 1, MPI_REAL8, p_address_master, p_comm_glb, p_err)
+         CALL mpi_bcast (forc_missing_value, 1, MPI_REAL8, p_address_master, p_comm_glb, p_err)
 #endif
 
          CALL ncio_read_block_time (filename, vname(1), gforc, time_i, metdata)
@@ -220,7 +221,7 @@ CONTAINS
       ENDIF
 
       IF (DEF_forcing%has_missing_value) THEN
-         CALL mg2p_forc%set_missing_value (metdata, missing_value, forcmask_pch)
+         CALL mg2p_forc%set_missing_value (metdata, forc_missing_value, forcmask_pch)
       ENDIF
 
       IF (p_is_worker .and. (numpatch > 0)) THEN
@@ -231,12 +232,13 @@ CONTAINS
       IF ((DEF_USE_Forcing_Downscaling).or.(DEF_USE_Forcing_Downscaling_Simple)) THEN
 
          IF (p_is_io) CALL allocate_block_data (gforc, topo_grid)
-         CALL mg2p_forc%pset2grid (forc_topo, topo_grid)
+         CALL mg2p_forc%pset2grid (forc_topo, topo_grid, msk = patchmask)
 
-         CALL block_data_division (topo_grid, mg2p_forc%areagrid)
+         CALL mg2p_forc%get_sumarea(areagrid, patchmask)
+         CALL block_data_division (topo_grid, areagrid)
 
          IF (p_is_io) CALL allocate_block_data (gforc, maxelv_grid)
-         CALL mg2p_forc%pset2grid_max (forc_topo, maxelv_grid)
+         CALL mg2p_forc%pset2grid_max (forc_topo, maxelv_grid, msk = patchmask)
 
 
          CALL mg2p_forc%allocate_part (forc_topo_grid  )
@@ -517,7 +519,8 @@ CONTAINS
          ENDDO
 
          ! preprocess for forcing data, only for QIAN data right now?
-         CALL metpreprocess (gforc, forcn)
+         CALL metpreprocess (gforc, forcn, &
+            DEF_forcing%has_missing_value, forcn_UB(1), forc_missing_value)
 
          CALL allocate_block_data (gforc, forc_xy_solarin)
 
@@ -600,6 +603,12 @@ CONTAINS
 
                   DO j = 1, gforc%ycnt(jb)
                      DO i = 1, gforc%xcnt(ib)
+
+                        IF (DEF_forcing%has_missing_value) THEN
+                           IF (forcn_UB(1)%blk(ib,jb)%val(i,j) == forc_missing_value) THEN
+                              CYCLE
+                           ENDIF
+                        ENDIF
 
                         ilat = gforc%ydsp(jb) + j
                         ilon = gforc%xdsp(ib) + i
@@ -879,7 +888,7 @@ CONTAINS
                   CALL downscale_wind_simple(forc_us(np), forc_vs(np), slp_type_patches(:,np), &
                            asp_type_patches(:,np), cur_patches(np))
                ENDDO
-               
+
             ENDIF
          ENDIF
 
