@@ -132,9 +132,6 @@ CONTAINS
       CALL mpi_barrier (p_comm_glb, p_err)
 #endif
 
-      CALL grid_patch%define_by_name ('colm_500m')
-      CALL pixel%assimilate_grid (grid_patch)
-      CALL pixel%map_to_grid (grid_patch)
 
       IF (p_is_io) THEN
          CALL allocate_block_data (grid_patch, lcdatafr)
