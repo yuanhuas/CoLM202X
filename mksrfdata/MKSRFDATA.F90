@@ -481,13 +481,13 @@ PROGRAM MKSRFDATA
 
 IF (.not. (skip_rest)) THEN
 
-      !CALL Aggregation_PercentagesPFT  (grid_pft,  dir_rawdata, dir_landdata, lc_year)
+      CALL Aggregation_PercentagesPFT  (grid_pft,  dir_rawdata, dir_landdata, lc_year)
 
-      !CALL Aggregation_LakeDepth       (grid_500m, dir_rawdata, dir_landdata, lc_year)
+      CALL Aggregation_LakeDepth       (grid_500m, dir_rawdata, dir_landdata, lc_year)
 
-      !CALL Aggregation_SoilParameters  (grid_soil, dir_rawdata, dir_landdata, lc_year)
+      CALL Aggregation_SoilParameters  (grid_soil, dir_rawdata, dir_landdata, lc_year)
 
-      !CALL Aggregation_SoilBrightness  (grid_500m, dir_rawdata, dir_landdata, lc_year)
+      CALL Aggregation_SoilBrightness  (grid_500m, dir_rawdata, dir_landdata, lc_year)
 
       IF (DEF_USE_BEDROCK) THEN
          CALL Aggregation_DBedrock     (grid_500m, dir_rawdata, dir_landdata, lc_year)
