@@ -420,27 +420,36 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
          allocate(SAI_pfts    (numpft  ))
       ENDIF
 
-      dir_5x5 = trim(dir_rawdata) // trim(DEF_rawdata%lai_sai%dir)
       DO iy = start_year, end_year
          write(cyear,'(i4.4)') iy
          CALL system('mkdir -p ' // trim(landdir) // trim(cyear))
 
-         IF (iy < 2000) THEN
-            write(cyear_bk,'(i4.4)') (iy / 5) * 5
-            fname = trim(DEF_rawdata%lai_sai%fname)//trim(cyear_bk)
-         ELSE
-            fname = trim(DEF_rawdata%lai_sai%fname)//trim(cyear)
-         ENDIF
-
          IF (p_is_master) THEN
             write(*,'(A,I4)') 'Aggregate LAI : ', iy
+         ENDIF
+
+         dir_5x5 = trim(dir_rawdata) // trim(DEF_rawdata%pft%dir)
+
+         IF (iy < 2000) THEN
+            write(cyear_bk,'(i4.4)') (iy / 5) * 5
+            fname = trim(DEF_rawdata%pft%fname)//trim(cyear_bk)
+         ELSE
+            fname = trim(DEF_rawdata%pft%fname)//trim(cyear)
          ENDIF
 
          IF (p_is_io) THEN
             CALL read_5x5_data_pft (dir_5x5, fname, gridlai, 'PCT_PFT', pftPCT)
          ENDIF
 
-         IF(.not. DEF_USE_LAIFEEDBACK)THEN
+         IF (.not. DEF_USE_LAIFEEDBACK)THEN
+            dir_5x5 = trim(dir_rawdata) // trim(DEF_rawdata%lai_sai%dir)
+            IF (iy < 2000) THEN
+               write(cyear_bk,'(i4.4)') (iy / 5) * 5
+               fname = trim(DEF_rawdata%lai_sai%fname)//trim(cyear_bk)
+            ELSE
+               fname = trim(DEF_rawdata%lai_sai%fname)//trim(cyear)
+            ENDIF
+
             DO month = 1, 12
                IF (p_is_io) THEN
                   IF (iy < 2000) THEN
