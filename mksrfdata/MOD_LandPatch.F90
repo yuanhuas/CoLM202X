@@ -30,6 +30,7 @@ MODULE MOD_LandPatch
 
    ! ---- Instance ----
    integer :: numpatch
+   type(grid_type)     :: grid_patch
    type(pixelset_type) :: landpatch
 
    type(subset_type)   :: elm_patch
@@ -44,7 +45,7 @@ MODULE MOD_LandPatch
 CONTAINS
 
    ! -------------------------------
-   SUBROUTINE landpatch_build (grid_patch, lc_year)
+   SUBROUTINE landpatch_build (lc_year)
 
    USE MOD_Precision
    USE MOD_SPMD_Task
@@ -65,7 +66,6 @@ CONTAINS
    IMPLICIT NONE
 
    integer, intent(in) :: lc_year
-   type(grid_type), intent(in) :: grid_patch
 
    ! Local Variables
    character(len=256) :: file_patch, dir_5x5
@@ -96,9 +96,9 @@ CONTAINS
 
 #ifndef LULC_USGS
          ! add parameter input for time year
-         dir_5x5 = trim(DEF_rawdata%landcover%dir)
-         suffix  = trim(DEF_rawdata%landcover%fname)//trim(cyear)
-         CALL read_5x5_data (dir_5x5, suffix, grid_patch, trim(DEF_rawdata%landcover%vname), patchdata)
+         dir_5x5   = trim(DEF_dir_rawdata) // trim(DEF_rawdata%landcover%dir)
+         file_patch= trim(DEF_rawdata%landcover%fname)//trim(cyear)
+         CALL read_5x5_data (dir_5x5, file_patch, grid_patch, 'LC', patchdata)
 #else
          !TODO: need usgs land cover type data
          file_patch = trim(DEF_dir_rawdata) //'/landtypes/landtype-usgs-update.nc'

@@ -21,6 +21,9 @@ MODULE MOD_LandUrban
 
    IMPLICIT NONE
 
+   ! ---- Instance ----
+   type(grid_type) :: grid_urban
+
    integer :: numurban
    type(pixelset_type) :: landurban
 
@@ -35,7 +38,7 @@ MODULE MOD_LandUrban
 CONTAINS
 
    ! -------------------------------
-   SUBROUTINE landurban_build (grid_urban, lc_year)
+   SUBROUTINE landurban_build (lc_year)
 
    USE MOD_Precision
    USE MOD_Vars_Global
@@ -57,7 +60,6 @@ CONTAINS
    IMPLICIT NONE
 
    integer, intent(in) :: lc_year
-   type(grid_type), intent(in) :: grid_urban
 
    ! Local Variables
    character(len=256) :: dir_urban
@@ -87,7 +89,7 @@ CONTAINS
    integer , allocatable :: urbclass (:)
    real(r8), allocatable :: area_one (:)
 
-   character(len=256) :: suffix, cyear
+   character(len=256) :: fname, cyear
 
       IF (p_is_master) THEN
          write(*,'(A)') 'Making urban type tiles:'
@@ -100,19 +102,17 @@ CONTAINS
       ! allocate and read the grided LCZ/NCAR urban type
       IF (p_is_io) THEN
 
-         dir_urban = trim(DEF_dir_rawdata) // '/urban_type'
-
          CALL allocate_block_data (grid_urban, data_urb_class)
          CALL flush_block_data (data_urb_class, 0)
 
          ! read urban type data
-         suffix = 'URBTYP'
+         dir_urban = trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_type%dir)
+         fname     = trim(DEF_rawdata%urban_type%fname)
+
 IF (DEF_URBAN_type_scheme == 1) THEN
-         CALL read_5x5_data (dir_urban, suffix, grid_urban, 'URBAN_DENSITY_CLASS', data_urb_class)
+         CALL read_5x5_data (dir_urban, fname, grid_urban, 'URBAN_DENSITY_CLASS', data_urb_class)
 ELSE IF (DEF_URBAN_type_scheme == 2) THEN
-         suffix = 'URBTYPE100m_LCZ.Demuzere'
-         dir_urban = trim(DEF_dir_rawdata) // '/urban_type/lcz'
-         CALL read_5x5_data (dir_urban, suffix, grid_urban, 'LCZ', data_urb_class)
+         CALL read_5x5_data (dir_urban, fname, grid_urban, 'LCZ', data_urb_class)
 ENDIF
 
 #ifdef USEMPI

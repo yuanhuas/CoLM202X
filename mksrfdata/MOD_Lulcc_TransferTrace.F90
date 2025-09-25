@@ -62,7 +62,7 @@ CONTAINS
    END SUBROUTINE allocate_LulccTransferTrace
 
 
-   SUBROUTINE MAKE_LulccTransferTrace (grid_patch, lc_year)
+   SUBROUTINE MAKE_LulccTransferTrace (lc_year)
 
    USE MOD_Precision
    USE MOD_Namelist
@@ -92,7 +92,6 @@ CONTAINS
    IMPLICIT NONE
 
    integer, intent(in) :: lc_year
-   type(grid_type), intent(in) :: grid_patch
 
 !-------------------------- Local Variables ----------------------------
    character(len=256) :: dir_5x5, suffix, lastyr, thisyr, dir_landdata, lndname
