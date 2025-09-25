@@ -29,4 +29,45 @@
   DEF_rawdata%htop%gname = 'colm_500m'
   DEF_rawdata%htop%fname = 'MOD'
 
+  ! ----- Urban -----
+  DEF_rawdata%urban_type%dir    = '/urban_type/lcz/'
+  DEF_rawdata%urban_type%gname  = 'colm_500m'
+  DEF_rawdata%urban_type%fname  = 'URBTYPE500m_LCZ.Demuzere'
+
+  DEF_rawdata%urban_roof%dir    = '/urban_morphology/roof_height_fraction_GHSL/'
+  DEF_rawdata%urban_roof%gname  = 'colm_500m'
+  DEF_rawdata%urban_roof%fname  = 'ROOF100m.GHSL.'
+
+  DEF_rawdata%urban_hl%dir      = '/urban_morphology/building_HL_GBFP/'
+  DEF_rawdata%urban_hl%gname    = 'colm_500m'
+  DEF_rawdata%urban_hl%fname    = 'HL500m_GHSL_GBFP'
+
+  DEF_rawdata%urban_htop%dir    = '/vegetation_morphology/tree_height_ETH/'
+  DEF_rawdata%urban_htop%gname  = 'colm_500m'
+  DEF_rawdata%urban_htop%fname  = 'Htop500m.ETH.'
+
+  DEF_rawdata%urban_fveg%dir    = '/urban_ecology/tree_fraction_GFCC/'
+  DEF_rawdata%urban_fveg%gname  = 'colm_500m'
+  DEF_rawdata%urban_fveg%fname  = 'PCTT500m.GFCC.'
+
+  DEF_rawdata%urban_flake%dir   = '/urban_ecology/water_fraction_glc/'
+  DEF_rawdata%urban_flake%gname = 'colm_500m'
+  DEF_rawdata%urban_flake%fname = 'PCTW500m.GLC.'
+
+  DEF_rawdata%urban_lsai%dir    = '/urban_ecology/lai_sai/'
+  DEF_rawdata%urban_lsai%gname  = 'colm_500m'
+  DEF_rawdata%urban_lsai%fname  = 'URBLSAI500m.'
+
+  DEF_rawdata%urban_pop%dir     = '/urban_human/population_density_LandScan/'
+  DEF_rawdata%urban_pop%gname   = 'colm_500m'
+  DEF_rawdata%urban_pop%fname   = 'POP1km.LandScan.'
+
+  DEF_rawdata%urban_lucy%dir    = '/urban_human/'
+  DEF_rawdata%urban_lucy%gname  = 'null'
+  DEF_rawdata%urban_lucy%fname  = 'null'
+
+  DEF_rawdata%urban_alb%dir     = '/urban_physical/roof_albedo/'
+  DEF_rawdata%urban_alb%gname   = 'colm_500m'
+  DEF_rawdata%urban_alb%fname   = 'ALB_ROOF500m_LCZ'
+
 /
