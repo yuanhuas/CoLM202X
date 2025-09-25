@@ -19,8 +19,9 @@
 
 #ifdef URBAN_MODEL
 SUBROUTINE Aggregation_Urban (dir_rawdata, dir_srfdata, lc_year, &
-                              grid_5km , grid_500m, &
-                              grid_100m, grid_30m)
+                              grid_lucy , grid_lsai, &
+                              grid_roof, grid_pop, grid_alb, &
+                              grid_pctt, grid_pctw)
 
    USE MOD_Precision
    USE MOD_Namelist
@@ -53,10 +54,11 @@ SUBROUTINE Aggregation_Urban (dir_rawdata, dir_srfdata, lc_year, &
 
    integer , intent(in) :: lc_year
 
-   type(grid_type), intent(in) :: grid_5km
-   type(grid_type), intent(in) :: grid_30m
-   type(grid_type), intent(in) :: grid_100m
-   type(grid_type), intent(in) :: grid_500m
+   type(grid_type), intent(in) :: grid_lucy
+   type(grid_type), intent(in) :: grid_lsai
+   type(grid_type), intent(in) :: grid_roof
+   type(grid_type), intent(in) :: grid_pctt, grid_pctw
+   type(grid_type), intent(in) :: grid_pop, grid_alb
 
    ! dimensions
    integer, parameter :: rid  = 33
@@ -147,7 +149,7 @@ SUBROUTINE Aggregation_Urban (dir_rawdata, dir_srfdata, lc_year, &
    integer , allocatable, dimension(:)     :: locpth
 
    ! landfile variables
-   character(len=256) landsrfdir, landdir, landname, suffix
+   character(len=256) landsrfdir, landdir, landname, fname
    character(len=4  ) cyear, c5year, cmonth, clay, c1, iyear
 
    ! local vars
@@ -199,7 +201,7 @@ SUBROUTINE Aggregation_Urban (dir_rawdata, dir_srfdata, lc_year, &
       ! a new array with urban type was used for look-up-table
 IF (DEF_URBAN_type_scheme == 1) THEN
       ! only used when urban patch have nan data of building height, building fraction and HL
-      landname = trim(dir_rawdata)//'urban/NCAR_urban_properties.nc'
+      landname = trim(dir_rawdata)//'urban_physical/NCAR_urban_properties.nc'
 
       CALL ncio_read_bcast_serial (landname,  "WTLUNIT_ROOF", wtroof_ncar )
       CALL ncio_read_bcast_serial (landname,  "HT_ROOF"     , htroof_ncar )
@@ -208,34 +210,33 @@ ENDIF
 
       ! allocate and read grided building height and fraction raw data
       IF (p_is_io) THEN
-         CALL allocate_block_data (grid_500m, reg_typid)
-         CALL allocate_block_data (grid_100m, wtroof   )
-         CALL allocate_block_data (grid_100m, htroof   )
+         CALL allocate_block_data (grid_urban, reg_typid)
+         CALL allocate_block_data (grid_roof , wtroof   )
+         CALL allocate_block_data (grid_roof , htroof   )
 
 IF (DEF_URBAN_type_scheme == 1) THEN
-         landdir = trim(dir_rawdata)//'urban_type/'
-         suffix  = 'URBTYP'
-         CALL read_5x5_data (landdir, suffix, grid_500m, "REGION_ID", reg_typid)
+         landdir= trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_type%dir)
+         fname  = trim(DEF_rawdata%urban_type%fname)
+         CALL read_5x5_data (landdir, fname, grid_urban, "REGION_ID", reg_typid)
 ENDIF
 
-         landdir = trim(dir_rawdata)//'/urban/'
-         suffix  = 'URBSRF'//trim(c5year)
+         landdir= trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_roof%dir)
 IF (DEF_Urban_geom_data == 1) THEN
-         landdir = trim(dir_rawdata)//'/urban_morphology/roof_height_fraction_GHSL'
-         suffix = 'ROOF100m.GHSL.'//trim(c5year)
-         CALL read_5x5_data (landdir, suffix, grid_100m, "PCT_ROOF", wtroof)
-         CALL read_5x5_data (landdir, suffix, grid_100m, "HT_ROOF" , htroof)
+         fname  = trim(DEF_rawdata%urban_roof%fname)//trim(c5year)
+         CALL read_5x5_data (landdir, fname, grid_roof, "PCT_ROOF", wtroof)
+         CALL read_5x5_data (landdir, fname, grid_roof, "HT_ROOF" , htroof)
 ELSE
-         CALL read_5x5_data (landdir, suffix, grid_500m, "PCT_ROOF_Li", wtroof)
-         CALL read_5x5_data (landdir, suffix, grid_500m, "HT_ROOF_Li" , htroof)
+         fname  = trim(DEF_rawdata%urban_roof%fname)
+         CALL read_5x5_data (landdir, fname, grid_roof, "PCT_ROOF", wtroof)
+         CALL read_5x5_data (landdir, fname, grid_roof, "HT_ROOF" , htroof)
 ENDIF
 
 #ifdef USEMPI
 IF (DEF_URBAN_type_scheme == 1) THEN
-         CALL aggregation_data_daemon (grid_500m, data_i4_2d_in1 = reg_typid, &
+         CALL aggregation_data_daemon (grid_roof, data_i4_2d_in1 = reg_typid, &
             data_r8_2d_in1 = wtroof, data_r8_2d_in2 = htroof)
 ELSE
-         CALL aggregation_data_daemon (grid_100m, data_r8_2d_in1 = wtroof, data_r8_2d_in2 = htroof)
+         CALL aggregation_data_daemon (grid_roof, data_r8_2d_in1 = wtroof, data_r8_2d_in2 = htroof)
 ENDIF
 #endif
       ENDIF
@@ -253,7 +254,7 @@ ENDIF
             urb_typidx = landurban%settyp(iurban)
 
 IF (DEF_URBAN_type_scheme == 1) THEN
-            CALL aggregation_request_data (landurban, iurban, grid_500m, zip = USE_zip_for_aggregation, area = area_one, &
+            CALL aggregation_request_data (landurban, iurban, grid_roof, zip = USE_zip_for_aggregation, area = area_one, &
                data_i4_2d_in1 = reg_typid, data_i4_2d_out1 = reg_typid_one, &
                data_r8_2d_in1 = wtroof, data_r8_2d_out1 = wt_roof_one, &
                data_r8_2d_in2 = htroof, data_r8_2d_out2 = ht_roof_one)
@@ -298,7 +299,7 @@ ELSE
 ENDIF
 
 ELSE IF (DEF_URBAN_type_scheme == 2) THEN
-            CALL aggregation_request_data (landurban, iurban, grid_100m, zip = USE_zip_for_aggregation, area = area_one, &
+            CALL aggregation_request_data (landurban, iurban, grid_roof, zip = USE_zip_for_aggregation, area = area_one, &
                data_r8_2d_in1 = wtroof, data_r8_2d_out1 = wt_roof_one, &
                data_r8_2d_in2 = htroof, data_r8_2d_out2 = ht_roof_one)
 
@@ -398,22 +399,20 @@ ENDIF
       ! tree height raw data is same from year to year
       IF (p_is_io) THEN
 
-         landdir = trim(dir_rawdata)//'/urban_ecology/tree_fraction_GFCC'
-         suffix  = 'PCTT30m.GFCC.'//trim(c5year)
+         landdir= trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_fveg%dir)
+         fname  = trim(DEF_rawdata%urban_fveg%fname) // trim(c5year)
 
-         CALL allocate_block_data (grid_30m, fvegu)
-         CALL read_5x5_data (landdir, suffix, grid_30m, "PCT_Tree", fvegu)
+         CALL allocate_block_data (grid_pctt, fvegu)
+         CALL read_5x5_data (landdir, fname, grid_pctt, "PCT_Tree", fvegu)
 
-         !landdir = trim(dir_rawdata)//'/vegetation_tree_height/Tolan'
-         !suffix  = 'Htop30m.Tolan'
-         landdir = '/tera10/yuanhua/xiangjy/CHnew/RG30m/output/v1'
-         suffix  = 'CanopyHeight_30m'
+         landdir= trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_htop%dir)
+         fname  = trim(DEF_rawdata%urban_htop%fname)
 
-         CALL allocate_block_data (grid_30m, htopu)
-         CALL read_5x5_data (landdir, suffix, grid_30m, "CH", htopu)
+         CALL allocate_block_data (grid_pctt, htopu)
+         CALL read_5x5_data (landdir, fname, grid_pctt, "CH", htopu)
 
 #ifdef USEMPI
-         CALL aggregation_data_daemon (grid_30m, &
+         CALL aggregation_data_daemon (grid_pctt, &
             data_r8_2d_in1 = fvegu, data_r8_2d_in2 = htopu)
 #endif
       ENDIF
@@ -428,7 +427,7 @@ ENDIF
 
          ! loop for urban patch to aggregate tree cover and height data with area-weighted average
          DO iurban = 1, numurban
-            CALL aggregation_request_data (landurban, iurban, grid_30m, zip = USE_zip_for_aggregation, area = area_one, &
+            CALL aggregation_request_data (landurban, iurban, grid_pctt, zip = USE_zip_for_aggregation, area = area_one, &
                data_r8_2d_in1 = fvegu, data_r8_2d_out1 = fvegu_one, &
                data_r8_2d_in2 = htopu, data_r8_2d_out2 = htopu_one)
 
@@ -502,8 +501,8 @@ ENDIF
 #endif
 
       IF (p_is_io) THEN
-         CALL allocate_block_data (grid_500m, ulai)
-         CALL allocate_block_data (grid_500m, usai)
+         CALL allocate_block_data (grid_lsai, ulai)
+         CALL allocate_block_data (grid_lsai, usai)
       ENDIF
 
       IF (p_is_worker) THEN
@@ -526,8 +525,8 @@ ENDIF
          CALL system('mkdir -p ' // trim(adjustl(landsrfdir)))
 
          ! allocate and read grided LSAI raw data
-         landdir = trim(dir_rawdata)//'/urban_ecology/lai_sai'
-         suffix  = 'URBLSAI500m.'//trim(iyear)
+         landdir= trim(dir_rawdata) // trim(DEF_rawdata%urban_lsai%dir)
+         fname  = trim(DEF_rawdata%urban_lsai%fname) // trim(iyear)
 
          ! loop for month
          DO imonth = 1, 12
@@ -540,12 +539,11 @@ ENDIF
 
             IF (p_is_io) THEN
 
-               CALL read_5x5_data_time (landdir, suffix, grid_500m, "URBAN_TREE_LAI", imonth, ulai)
-               CALL read_5x5_data_time (landdir, suffix, grid_500m, "URBAN_TREE_SAI", imonth, usai)
+               CALL read_5x5_data_time (landdir, fname, grid_lsai, "URBAN_TREE_LAI", imonth, ulai)
+               CALL read_5x5_data_time (landdir, fname, grid_lsai, "URBAN_TREE_SAI", imonth, usai)
 
 #ifdef USEMPI
-               CALL aggregation_data_daemon (grid_500m, &
-                  data_r8_2d_in1 = fvegu, data_r8_2d_in2 = ulai, data_r8_2d_in3 = usai)
+               CALL aggregation_data_daemon (grid_lsai, data_r8_2d_in1 = ulai, data_r8_2d_in2 = usai)
 #endif
             ENDIF
 
@@ -553,21 +551,20 @@ ENDIF
 
                ! loop for urban patch to aggregate LSAI data
                DO iurban = 1, numurban
-                  CALL aggregation_request_data (landurban, iurban, grid_500m, zip = USE_zip_for_aggregation, area = area_one, &
-                     data_r8_2d_in1 = fvegu, data_r8_2d_out1 = fvegu_one, &
-                     data_r8_2d_in2 = ulai   , data_r8_2d_out2 = ulai_one   , &
-                     data_r8_2d_in3 = usai   , data_r8_2d_out3 = slai_one   )
+                  CALL aggregation_request_data (landurban, iurban, grid_lsai, zip = USE_zip_for_aggregation, &
+                     data_r8_2d_in1 = ulai, data_r8_2d_out1 = ulai_one   , &
+                     data_r8_2d_in2 = usai, data_r8_2d_out2 = slai_one   )
 
-                  WHERE (fvegu_one < 0)
+                  WHERE (ulai_one < 0)
                      area_one = 0
                   END WHERE
 
                   ! area-weight average
-                  IF (sum(fvegu_one * area_one) > 0) THEN
-                     lai_urb(iurban) = sum(ulai_one * fvegu_one * area_one) / &
-                                       sum(fvegu_one * area_one)
-                     sai_urb(iurban) = sum(slai_one * fvegu_one * area_one) / &
-                                       sum(fvegu_one * area_one)
+                  IF (sum(area_one) > 0) THEN
+                     lai_urb(iurban) = sum(ulai_one * area_one) / &
+                                       sum(area_one)
+                     sai_urb(iurban) = sum(slai_one * area_one) / &
+                                       sum(area_one)
                   ENDIF
                ENDDO
 
@@ -621,14 +618,14 @@ ENDIF
       ! allocate and read grided water cover raw data
       IF (p_is_io) THEN
 
-         CALL allocate_block_data (grid_100m, flakeu)
+         CALL allocate_block_data (grid_pctw, flakeu)
 
-         landdir = trim(dir_rawdata)//'/urban_ecology/water_fraction_glc'
-         suffix  = 'PCTW100m.GLC.'//trim(c5year)
-         CALL read_5x5_data (landdir, suffix, grid_100m, "PCT_Water", flakeu)
+         landdir= trim(dir_rawdata) // trim(DEF_rawdata%urban_flake%dir)
+         fname  = trim(DEF_rawdata%urban_flake%fname) // trim(c5year)
+         CALL read_5x5_data (landdir, fname, grid_pctw, "PCT_Water", flakeu)
 
 #ifdef USEMPI
-         CALL aggregation_data_daemon (grid_100m, flakeu)
+         CALL aggregation_data_daemon (grid_pctw, flakeu)
 #endif
       ENDIF
 
@@ -639,7 +636,7 @@ ENDIF
          pct_water (:) = 0.
          ! loop for urban patch to aggregate water cover data with area-weighted average
          DO iurban = 1, numurban
-            CALL aggregation_request_data (landurban, iurban, grid_100m, zip = USE_zip_for_aggregation, area = area_one, &
+            CALL aggregation_request_data (landurban, iurban, grid_pctw, zip = USE_zip_for_aggregation, area = area_one, &
                data_r8_2d_in1 = flakeu, data_r8_2d_out1 = flakeu_one)
 
             WHERE (flakeu_one < 0)
@@ -683,11 +680,11 @@ ENDIF
       IF (p_is_io) THEN
 
          landname = TRIM(dir_rawdata)//'/urban_human/lucy/LUCY_regionid.nc'
-         CALL allocate_block_data (grid_5km, LUCY_reg)
-         CALL ncio_read_block (landname, 'LUCY_REGION_ID', grid_5km, LUCY_reg)
+         CALL allocate_block_data (grid_lucy, LUCY_reg)
+         CALL ncio_read_block (landname, 'LUCY_REGION_ID', grid_lucy, LUCY_reg)
 
 #ifdef USEMPI
-         CALL aggregation_data_daemon (grid_5km, data_i4_2d_in1 = LUCY_reg)
+         CALL aggregation_data_daemon (grid_lucy, data_i4_2d_in1 = LUCY_reg)
 #endif
       ENDIF
 
@@ -701,7 +698,7 @@ ENDIF
          ! of iurban patch, then assign the most frequency id to this urban patch
          DO iurban = 1, numurban
 
-            CALL aggregation_request_data (landurban, iurban, grid_5km, &
+            CALL aggregation_request_data (landurban, iurban, grid_lucy, &
                zip = USE_zip_for_aggregation, &
                data_i4_2d_in1 = LUCY_reg, data_i4_2d_out1 = LUCY_reg_one)
             ! the most frequency id to this urban patch
@@ -745,10 +742,10 @@ ENDIF
       ! NOTE, the population is year-by-year
       IF (p_is_io) THEN
 
-         CALL allocate_block_data (grid_100m, pop)
+         CALL allocate_block_data (grid_pop, pop)
 
-         landdir = TRIM(dir_rawdata)//'/urban_human/population_density_GHSL'
-         suffix  = 'POP100m.GHSL.'//trim(c5year)
+         landdir = TRIM(dir_rawdata) // trim(DEF_rawdata%urban_pop%dir)
+         fname  = trim(DEF_rawdata%urban_pop%fname) // trim(c5year)
 
          ! population data is year by year,
          ! so pop_i is calculated to determine the dimension of POP data reads
@@ -759,11 +756,11 @@ ENDIF
          ENDIF
 
          ! read the population data of total 5x5 region
-         ! CALL read_5x5_data_time (landdir, suffix, grid_500m, "POP_DEN", pop_i, pop)
-         CALL read_5x5_data (landdir, suffix, grid_100m, "POP_density", pop)
+         ! CALL read_5x5_data_time (landdir, fname, grid_500m, "POP_DEN", pop_i, pop)
+         CALL read_5x5_data (landdir, fname, grid_pop, "POP_density", pop)
 
 #ifdef USEMPI
-         CALL aggregation_data_daemon (grid_100m, data_r8_2d_in1 = pop)
+         CALL aggregation_data_daemon (grid_pop, data_r8_2d_in1 = pop)
 #endif
       ENDIF
 
@@ -777,7 +774,7 @@ ENDIF
          DO iurban = 1, numurban
             ! request all fine grid data and area of the iurban urban patch
             ! a one dimension vector will be returned
-            CALL aggregation_request_data (landurban, iurban, grid_100m, zip = USE_zip_for_aggregation, &
+            CALL aggregation_request_data (landurban, iurban, grid_pop, zip = USE_zip_for_aggregation, &
                area = area_one, data_r8_2d_in1 = pop, data_r8_2d_out1 = pop_one)
 
             WHERE (pop_one < 0)
@@ -845,9 +842,9 @@ ENDIF
 
 #ifdef USEMPI
 IF (DEF_URBAN_type_scheme == 1) THEN
-         CALL aggregation_data_daemon (grid_500m, data_i4_2d_in1 = reg_typid)
+         CALL aggregation_data_daemon (grid_urban, data_i4_2d_in1 = reg_typid)
 ELSE
-         CALL aggregation_data_daemon (grid_30m)
+         CALL aggregation_data_daemon (grid_patch)
 ENDIF
 #endif
       ENDIF
@@ -913,10 +910,10 @@ ENDIF
             urb_typidx = landurban%settyp(iurban)
 
 IF (DEF_URBAN_type_scheme == 1) THEN
-            CALL aggregation_request_data (landurban, iurban, grid_500m, zip = USE_zip_for_aggregation, &
+            CALL aggregation_request_data (landurban, iurban, grid_urban, zip = USE_zip_for_aggregation, &
                   area = area_one, data_i4_2d_in2 = reg_typid, data_i4_2d_out2 = reg_typid_one)
 ELSE
-            CALL aggregation_request_data (landurban, iurban, grid_30m, zip = USE_zip_for_aggregation, &
+            CALL aggregation_request_data (landurban, iurban, grid_patch, zip = USE_zip_for_aggregation, &
                   area = area_one)
 ENDIF
 

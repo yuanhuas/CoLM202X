@@ -15,37 +15,6 @@ MODULE MOD_Namelist
    IMPLICIT NONE
    SAVE
 
-   type datainfo
-      character(len=255) :: dir
-      character(len=255) :: res
-      character(len=255) :: fname
-      character(len=255) :: vname
-   end type datainfo
-
-   type rawdata
-      type(datainfo) landcover
-      !type(datainfo) pft
-      !type(datainfo) htop
-      !type(datainfo) lai_sai
-      !type(datainfo) soil
-      !type(datainfo) topo
-      type(datainfo) urban_type
-      type(datainfo) urban_htop
-      type(datainfo) urban_fveg
-      type(datainfo) urban_flake
-      type(datainfo) urban_lai
-      type(datainfo) urban_sai
-      type(datainfo) urban_lucy
-      type(datainfo) urban_pop
-      type(datainfo) urban_froof
-      type(datainfo) urban_hroof
-      type(datainfo) urban_hl
-      type(datainfo) urban_alb
-   end type rawdata
-
-   type (rawdata) :: DEF_rawdata
-   character(len=256) :: DEF_rawdata_namelist  = 'null'
-
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ! ----- Part 0: CASE name -----
 ! ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -178,12 +147,25 @@ MODULE MOD_Namelist
       character(len=256) :: fname
    end type
 
-   type :: rawdata
-      type(datainfo) :: landcover
-      type(datainfo) :: pft
-      type(datainfo) :: lai_sai
-      type(datainfo) :: htop
-   end type
+   type rawdata
+      type(datainfo) landcover
+      type(datainfo) pft
+      type(datainfo) htop
+      type(datainfo) lai_sai
+      !type(datainfo) soil
+      !type(datainfo) topo
+      type(datainfo) urban_type
+      type(datainfo) urban_htop
+      type(datainfo) urban_fveg
+      type(datainfo) urban_flake
+      type(datainfo) urban_lsai
+      type(datainfo) urban_lucy
+      type(datainfo) urban_pop
+      type(datainfo) urban_roof
+      type(datainfo) urban_hl
+      type(datainfo) urban_alb
+   end type rawdata
+
 
    type (rawdata) :: DEF_rawdata
 
@@ -1162,7 +1144,7 @@ CONTAINS
             CALL CoLM_Stop (' ***** ERROR: Problem reading namelist: '// trim(nlfile))
          ENDIF
          close(10)
-    
+
          CALL set_rawdata_default()
          open(10, status='OLD', file=trim(DEF_rawdata_namelist), form="FORMATTED")
          read(10, nml=nl_colm_rawdata, iostat=ierr)
@@ -1179,14 +1161,6 @@ CONTAINS
          read(10, nml=nl_colm_forcing, iostat=ierr)
          IF (ierr /= 0) THEN
             CALL CoLM_Stop (' ***** ERROR: Problem reading namelist: '// trim(DEF_forcing_namelist))
-         ENDIF
-         close(10)
-
-         print*, DEF_rawdata_namelist
-         open(10, status='OLD', file=trim(DEF_rawdata_namelist), form="FORMATTED")
-         read(10, nml=nl_colm_rawdata, iostat=ierr)
-         IF (ierr /= 0) THEN
-            CALL CoLM_Stop (' ***** ERROR: Problem reading namelist: '// trim(DEF_rawdata_namelist))
          ENDIF
          close(10)
 
@@ -1568,11 +1542,6 @@ CONTAINS
       CALL mpi_bcast (DEF_dir_output                         ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_dir_forcing                        ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
 
-      CALL mpi_bcast (DEF_rawdata%landcover%dir              ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
-      CALL mpi_bcast (DEF_rawdata%landcover%res              ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
-      CALL mpi_bcast (DEF_rawdata%landcover%fname            ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
-      CALL mpi_bcast (DEF_rawdata%landcover%vname            ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
-
       CALL mpi_bcast (DEF_dir_landdata                       ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_dir_restart                        ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_dir_history                        ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
@@ -1613,6 +1582,46 @@ CONTAINS
       CALL mpi_bcast (DEF_rawdata%htop%dir                   ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_rawdata%htop%gname                 ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_rawdata%htop%fname                 ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%urban_type%dir             ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_type%gname           ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_type%fname           ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%urban_roof%dir             ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_roof%gname           ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_roof%fname           ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%urban_hl%dir               ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_hl%gname             ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_hl%fname             ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%urban_lsai%dir             ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_lsai%gname           ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_lsai%fname           ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%urban_fveg%dir             ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_fveg%gname           ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_fveg%fname           ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%urban_flake%dir            ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_flake%gname          ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_flake%fname          ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%urban_htop%dir             ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_htop%gname           ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_htop%fname           ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%urban_pop%dir              ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_pop%gname            ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_pop%fname            ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%urban_lucy%dir             ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_lucy%gname           ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_lucy%fname           ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%urban_alb%dir              ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_alb%gname            ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_alb%fname            ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
 
       CALL mpi_bcast (DEF_USE_GLC30                          ,1   ,mpi_logical   ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_USE_ESACCI                         ,1   ,mpi_logical   ,p_address_master ,p_comm_glb ,p_err)
