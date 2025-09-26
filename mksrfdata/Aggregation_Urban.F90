@@ -551,7 +551,7 @@ ENDIF
 
                ! loop for urban patch to aggregate LSAI data
                DO iurban = 1, numurban
-                  CALL aggregation_request_data (landurban, iurban, grid_lsai, zip = USE_zip_for_aggregation, &
+                  CALL aggregation_request_data (landurban, iurban, grid_lsai, zip = USE_zip_for_aggregation, area = area_one, &
                      data_r8_2d_in1 = ulai, data_r8_2d_out1 = ulai_one   , &
                      data_r8_2d_in2 = usai, data_r8_2d_out2 = slai_one   )
 
