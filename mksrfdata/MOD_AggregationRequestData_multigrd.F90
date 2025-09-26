@@ -41,7 +41,7 @@ CONTAINS
    IMPLICIT NONE
 
    type (grid_type), intent(in) :: grid_in1
-   type (grid_type), intent(in), optional :: grid_in2
+   type (grid_type), intent(in) :: grid_in3
 
    ! 2D REAL data
    type (block_data_real8_2d), intent(in), optional :: data_r8_2d_in1
@@ -110,7 +110,7 @@ CONTAINS
                         idest, mpi_tag_data, p_comm_glb, p_err)
 
                    ENDIF
-              ENDIF
+               ENDIF
 
                IF (present(data_r8_2d_in2) .and. present(grid_in2)) THEN
                   IF (grdn == 2) THEN
@@ -136,7 +136,7 @@ CONTAINS
                         idest, mpi_tag_data, p_comm_glb, p_err)
 
                   ENDIF
-              ENDIF
+               ENDIF
 
                deallocate (sbuf_r8_1d)
 
@@ -229,7 +229,7 @@ CONTAINS
    integer, intent(in)  :: iset
 
    type (grid_type), intent(in) :: grid_in1
-   type (grid_type), intent(in), optional :: grid_in2
+   type (grid_type), intent(in) :: grid_in2
    !logical, intent(in) :: zip
 
    real(r8), allocatable, intent(out), optional :: area(:)
@@ -441,40 +441,42 @@ CONTAINS
             msk2 = (ipt2 == p_address_io(iproc))
             nreq2 = count(msk2)
 
-            smesg = (/p_iam_glb, nreq2, 2/)
+            IF (nreq2 > 0) THEN
+               smesg = (/p_iam_glb, nreq2, 2/)
 
-            idest = p_address_io(iproc)
-            CALL mpi_send (smesg, 3, MPI_INTEGER, idest, mpi_tag_mesg, p_comm_glb, p_err)
+               idest = p_address_io(iproc)
+               CALL mpi_send (smesg, 3, MPI_INTEGER, idest, mpi_tag_mesg, p_comm_glb, p_err)
 
-            allocate (ibuf (nreq2))
+               allocate (ibuf (nreq2))
 
-            ibuf = pack(xlist2(1:totalreq), msk2)
-            CALL mpi_send (ibuf, nreq2, MPI_INTEGER, idest, mpi_tag_data, p_comm_glb, p_err)
+               ibuf = pack(xlist2(1:totalreq), msk2)
+               CALL mpi_send (ibuf, nreq2, MPI_INTEGER, idest, mpi_tag_data, p_comm_glb, p_err)
 
-            ibuf = pack(ylist2(1:totalreq), msk2)
-            CALL mpi_send (ibuf, nreq2, MPI_INTEGER, idest, mpi_tag_data, p_comm_glb, p_err)
+               ibuf = pack(ylist2(1:totalreq), msk2)
+               CALL mpi_send (ibuf, nreq2, MPI_INTEGER, idest, mpi_tag_data, p_comm_glb, p_err)
 
-            isrc = idest
+               isrc = idest
 
-            allocate (rbuf_r8_1d (nreq2))
+               allocate (rbuf_r8_1d (nreq2))
 
-            IF (present(data_r8_2d_in2) .and. present(data_r8_2d_out2)) THEN
-               CALL mpi_recv (rbuf_r8_1d, nreq2, MPI_REAL8, &
-                  isrc, mpi_tag_data, p_comm_glb, p_stat, p_err)
-               CALL unpack_inplace (rbuf_r8_1d, msk2, data_r8_2d_out2)
+               IF (present(data_r8_2d_in2) .and. present(data_r8_2d_out2)) THEN
+                  CALL mpi_recv (rbuf_r8_1d, nreq2, MPI_REAL8, &
+                     isrc, mpi_tag_data, p_comm_glb, p_stat, p_err)
+                  CALL unpack_inplace (rbuf_r8_1d, msk2, data_r8_2d_out2)
+               ENDIF
+
+               deallocate (rbuf_r8_1d)
+
+               IF (present(data_r8_3d_in2) .and. present(data_r8_3d_out2)) THEN
+                  allocate (rbuf_r8_2d (n1_r8_3d_in2,nreq2))
+                  CALL mpi_recv (rbuf_r8_2d, n1_r8_3d_in2*nreq2, MPI_REAL8, &
+                     isrc, mpi_tag_data, p_comm_glb, p_stat, p_err)
+                  CALL unpack_inplace (rbuf_r8_2d, msk2, data_r8_3d_out2)
+                  deallocate (rbuf_r8_2d)
+               ENDIF
+
+               deallocate (ibuf)
             ENDIF
-
-            deallocate (rbuf_r8_1d)
-
-            IF (present(data_r8_3d_in2) .and. present(data_r8_3d_out2)) THEN
-               allocate (rbuf_r8_2d (n1_r8_3d_in2,nreq2))
-               CALL mpi_recv (rbuf_r8_2d, n1_r8_3d_in2*nreq2, MPI_REAL8, &
-                  isrc, mpi_tag_data, p_comm_glb, p_stat, p_err)
-               CALL unpack_inplace (rbuf_r8_2d, msk2, data_r8_3d_out2)
-               deallocate (rbuf_r8_2d)
-            ENDIF
-
-            deallocate (ibuf)
          ENDIF
       ENDDO
 
@@ -491,54 +493,45 @@ CONTAINS
       ENDIF
 #else
 
-!      DO ireq = 1, totalreq
-!
-!         xblk = grid_in%xblk(xlist(ireq))
-!         yblk = grid_in%yblk(ylist(ireq))
-!         xloc = grid_in%xloc(xlist(ireq))
-!         yloc = grid_in%yloc(ylist(ireq))
-!
-!         IF (present(data_r8_2d_in1) .and. present(data_r8_2d_out1)) THEN
-!            data_r8_2d_out1(ireq) = data_r8_2d_in1%blk(xblk,yblk)%val(xloc,yloc)
-!         ENDIF
-!
-!         IF (present(data_r8_2d_in2) .and. present(data_r8_2d_out2)) THEN
-!            data_r8_2d_out2(ireq) = data_r8_2d_in2%blk(xblk,yblk)%val(xloc,yloc)
-!         ENDIF
-!
-!         IF (present(data_r8_2d_in3) .and. present(data_r8_2d_out3)) THEN
-!            data_r8_2d_out3(ireq) = data_r8_2d_in3%blk(xblk,yblk)%val(xloc,yloc)
-!         ENDIF
-!
-!         IF (present(data_r8_2d_in4) .and. present(data_r8_2d_out4)) THEN
-!            data_r8_2d_out4(ireq) = data_r8_2d_in4%blk(xblk,yblk)%val(xloc,yloc)
-!         ENDIF
-!
-!         IF (present(data_r8_2d_in5) .and. present(data_r8_2d_out5)) THEN
-!            data_r8_2d_out5(ireq) = data_r8_2d_in5%blk(xblk,yblk)%val(xloc,yloc)
-!         ENDIF
-!
-!         IF (present(data_r8_2d_in6) .and. present(data_r8_2d_out6)) THEN
-!            data_r8_2d_out6(ireq) = data_r8_2d_in6%blk(xblk,yblk)%val(xloc,yloc)
-!         ENDIF
-!
-!         IF (present(data_r8_3d_in1) .and. present(data_r8_3d_out1) .and. present(n1_r8_3d_in1)) THEN
-!            data_r8_3d_out1(:,ireq) = data_r8_3d_in1%blk(xblk,yblk)%val(:,xloc,yloc)
-!         ENDIF
-!
-!         IF (present(data_r8_3d_in2) .and. present(data_r8_3d_out2) .and. present(n1_r8_3d_in2)) THEN
-!            data_r8_3d_out2(:,ireq) = data_r8_3d_in2%blk(xblk,yblk)%val(:,xloc,yloc)
-!         ENDIF
-!
-!         IF (present(data_i4_2d_in1) .and. present(data_i4_2d_out1)) THEN
-!            data_i4_2d_out1(ireq) = data_i4_2d_in1%blk(xblk,yblk)%val(xloc,yloc)
-!         ENDIF
-!
-!         IF (present(data_i4_2d_in2) .and. present(data_i4_2d_out2)) THEN
-!            data_i4_2d_out2(ireq) = data_i4_2d_in2%blk(xblk,yblk)%val(xloc,yloc)
-!         ENDIF
-!
-!      ENDDO
+      DO ireq = 1, totalreq
+
+         IF (present(data_r8_2d_in1) .and. present(data_r8_2d_out1)) THEN
+            xblk = grid_in1%xblk(xlist1(ireq))
+            yblk = grid_in1%yblk(ylist1(ireq))
+            xloc = grid_in1%xloc(xlist1(ireq))
+            yloc = grid_in1%yloc(ylist1(ireq))
+
+            data_r8_2d_out1(ireq) = data_r8_2d_in1%blk(xblk,yblk)%val(xloc,yloc)
+         ENDIF
+
+         IF (present(data_r8_2d_in2) .and. present(data_r8_2d_out2)) THEN
+            xblk = grid_in2%xblk(xlist2(ireq))
+            yblk = grid_in2%yblk(ylist2(ireq))
+            xloc = grid_in2%xloc(xlist2(ireq))
+            yloc = grid_in2%yloc(ylist2(ireq))
+
+            data_r8_2d_out2(ireq) = data_r8_2d_in2%blk(xblk,yblk)%val(xloc,yloc)
+         ENDIF
+
+         IF (present(data_r8_3d_in1) .and. present(data_r8_3d_out1) .and. present(n1_r8_3d_in1)) THEN
+            xblk = grid_in1%xblk(xlist1(ireq))
+            yblk = grid_in1%yblk(ylist1(ireq))
+            xloc = grid_in1%xloc(xlist1(ireq))
+            yloc = grid_in1%yloc(ylist1(ireq))
+
+            data_r8_3d_out1(:,ireq) = data_r8_3d_in1%blk(xblk,yblk)%val(:,xloc,yloc)
+         ENDIF
+
+         IF (present(data_r8_3d_in2) .and. present(data_r8_3d_out2) .and. present(n1_r8_3d_in2)) THEN
+            xblk = grid_in2%xblk(xlist2(ireq))
+            yblk = grid_in2%yblk(ylist2(ireq))
+            xloc = grid_in2%xloc(xlist2(ireq))
+            yloc = grid_in2%yloc(ylist2(ireq))
+
+            data_r8_3d_out2(:,ireq) = data_r8_3d_in2%blk(xblk,yblk)%val(:,xloc,yloc)
+         ENDIF
+
+      ENDDO
 
 #endif
 
