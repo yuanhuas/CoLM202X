@@ -17,7 +17,7 @@
   ! htop data
   DEF_rawdata%htop%dir   = '/vegetation_morphology/tree_height_Simard/'
   DEF_rawdata%htop%gname = 'colm_1km'
-  DEF_rawdata%htop%fname = 'Htop1km.Simard.'
+  DEF_rawdata%htop%fname = 'Htop1km.Simard'
 
   ! ----- Urban -----
   DEF_rawdata%urban_type%dir    = '/urban_type/lcz/'
