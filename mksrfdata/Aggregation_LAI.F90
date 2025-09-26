@@ -540,7 +540,7 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
                   ENDDO
 
 #ifdef USEMPI
-                  CALL aggregation_worker_done ()
+                  CALL aggregation_worker_done_multigrd ()
 #endif
                ENDIF
 
