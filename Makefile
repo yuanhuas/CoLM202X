@@ -50,6 +50,7 @@ OBJS_SHARED =    \
 				  MOD_RangeCheck.o             \
 				  MOD_SpatialMapping.o         \
 				  MOD_AggregationRequestData.o \
+				  MOD_AggregationRequestData_multigrd.o \
 				  MOD_PixelsetShared.o         \
 				  MOD_LandElm.o                \
 				  MOD_LandHRU.o                \

@@ -245,7 +245,7 @@ PROGRAM MKSRFDATA
 #ifdef LULC_USGS
       CALL grid_htop%define_by_name ('colm_1km')
 #else
-      CALL grid_htop%define_by_name (trim(DEF_rawdata%pft%gname))
+      CALL grid_htop%define_by_name (trim(DEF_rawdata%htop%gname))
 #endif
 
       ! define grid for soil parameters raw data
