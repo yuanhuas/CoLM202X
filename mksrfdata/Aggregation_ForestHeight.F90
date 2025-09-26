@@ -61,7 +61,7 @@ SUBROUTINE Aggregation_ForestHeight ( &
 
    ! for IGBP data
    character(len=256) :: dir_5x5, suffix
-   type (block_data_real8_2d) :: htop, htop_
+   type (block_data_real8_2d) :: htop
    type (block_data_real8_3d) :: pftPCT
    real(r8), allocatable :: htop_patches(:), htop_pfts(:), htop_pcs(:,:)
    real(r8), allocatable :: htop_one(:), area_one(:), pct_one(:,:)
@@ -214,7 +214,6 @@ SUBROUTINE Aggregation_ForestHeight ( &
 
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
       IF (p_is_io) THEN
-         !CALL allocate_block_data (grid_pft, htop )
          CALL allocate_block_data (grid_pft, pftPCT, N_PFT_modis, lb1 = 0)
          CALL allocate_block_data (gland   , htop)
       ENDIF
@@ -230,8 +229,6 @@ SUBROUTINE Aggregation_ForestHeight ( &
          dir_5x5= trim(DEF_dir_rawdata) // trim(DEF_rawdata%pft%dir)
          suffix = trim(DEF_rawdata%pft%fname)//trim(cyear)
          CALL read_5x5_data_pft (dir_5x5, suffix, grid_pft, 'PCT_PFT', pftPCT)
-         !print*, landpatch%nset
-         !CALL colm_1km_to_500m  (landpatch, gland, grid_pft, htop_, htop)
 #ifdef USEMPI
          CALL aggregation_data_daemon_multigrd (grid_in1 = grid_pft, data_r8_3d_in1 = pftPCT, n1_r8_3d_in1 = 16, &
             grid_in2 = gland, data_r8_2d_in2 = htop )
@@ -239,7 +236,6 @@ SUBROUTINE Aggregation_ForestHeight ( &
       ENDIF
 
       IF (p_is_worker) THEN
-         !CALL colm_1km_to_500m  (landpatch, gland, grid_pft, htop_, htop)
 
          allocate (htop_patches (numpatch))
          allocate (htop_pfts    (numpft  ))
@@ -263,14 +259,12 @@ SUBROUTINE Aggregation_ForestHeight ( &
             !   area = area_one, data_r8_2d_in1 = htop, data_r8_2d_out1 = htop_one, &
             !   data_r8_3d_in1 = pftPCT, data_r8_3d_out1 = pct_one, n1_r8_3d_in1 = 16, lb1_r8_3d_in1 = 0)
 
-            print*, 'request'
             CALL aggregation_request_data_multigrd(landpatch, ipatch, &
                grid_in1 = grid_pft, area = area_one, data_r8_3d_in1 = pftPCT, data_r8_3d_out1 = pct_one, &
                n1_r8_3d_in1 = 16, lb1_r8_3d_in1 = 0, &
                grid_in2 = gland,    data_r8_2d_in2 = htop, data_r8_2d_out2 = htop_one)
 
             htop_patches(ipatch) = sum(htop_one * area_one) / sum(area_one)
-            print*, htop_patches(ipatch)
 
 #ifndef CROP
             IF (patchtypes(landpatch%settyp(ipatch)) == 0) THEN
