@@ -606,9 +606,9 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
                      'MONTHLY_PFT_SAI', month, pftLSAI)
                ENDIF
 #ifdef USEMPI
-               CALL aggregation_data_daemon (gridlai, &
+               CALL aggregation_data_daemon_multigrd (grid_pft, &
                   data_r8_3d_in1 = pftPCT,  n1_r8_3d_in1 = 16, &
-                  data_r8_3d_in2 = pftLSAI, n1_r8_3d_in2 = 16)
+                  grid_in2 = gridlai, data_r8_3d_in2 = pftLSAI, n1_r8_3d_in2 = 16)
 #endif
             ENDIF
 
@@ -639,11 +639,11 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
                      CYCLE
                   ENDIF
 
-                  CALL aggregation_request_data (landpatch, ipatch, gridlai, &
-                     zip = USE_zip_for_aggregation, area = area_one, &
+                  CALL aggregation_request_data_multigrd (landpatch, ipatch, grid_pft, area = area_one, &
+                     ! zip = USE_zip_for_aggregation, area = area_one, &
                      data_r8_3d_in1 = pftPCT,  data_r8_3d_out1 = pct_pft_one, &
                      n1_r8_3d_in1 = 16, lb1_r8_3d_in1 = 0, &
-                     data_r8_3d_in2 = pftLSAI, data_r8_3d_out2 = sai_pft_one, &
+                     grid_in2 = gridlai, data_r8_3d_in2 = pftLSAI, data_r8_3d_out2 = sai_pft_one, &
                      n1_r8_3d_in2 = 16, lb1_r8_3d_in2 = 0)
 
                   IF (allocated(sai_one)) deallocate(sai_one)
@@ -685,7 +685,7 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
                ENDDO
 
 #ifdef USEMPI
-               CALL aggregation_worker_done ()
+               CALL aggregation_worker_done_multigrd ()
 #endif
             ENDIF
 

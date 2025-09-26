@@ -289,7 +289,7 @@ SUBROUTINE Aggregation_ForestHeight ( &
          ENDDO
 
 #ifdef USEMPI
-      CALL aggregation_worker_done ()
+      CALL aggregation_worker_done_multigrd ()
 #endif
       ENDIF
 
