@@ -559,10 +559,6 @@ CONTAINS
             smesg = (/p_iam_glb, -1, 1/)
             idest = p_address_io(iproc)
             CALL mpi_send (smesg, 3, MPI_INTEGER, idest, mpi_tag_mesg, p_comm_glb, p_err)
-
-            smesg = (/p_iam_glb, -1, 2/)
-            idest = p_address_io(iproc)
-            CALL mpi_send (smesg, 3, MPI_INTEGER, idest, mpi_tag_mesg, p_comm_glb, p_err)
           ENDDO
       ENDIF
 
