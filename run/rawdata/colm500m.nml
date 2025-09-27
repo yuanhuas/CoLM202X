@@ -1,33 +1,33 @@
 &nl_colm_rawdata
 
   ! land cover data
-  DEF_rawdata%landcover%dir   = '/landcover/modis/'
-  DEF_rawdata%landcover%gname = 'colm_500m'
-  DEF_rawdata%landcover%fname = 'LC500m.modis_igbp.'
+  DEF_rawdata%landcover%dir     = '/landcover/modis/'
+  DEF_rawdata%landcover%gname   = 'colm_500m'
+  DEF_rawdata%landcover%fname   = 'LC500m.modis_igbp.'
 
   ! pft data
-  !DEF_rawdata%pft%dir   = '/vegetation_pft/c2022/'
-  !DEF_rawdata%pft%gname = 'colm_500m'
-  !DEF_rawdata%pft%fname = 'PFT500m.'
-  DEF_rawdata%pft%dir   = '/plant_15s/'
-  DEF_rawdata%pft%gname = 'colm_500m'
-  DEF_rawdata%pft%fname = 'MOD'
+  DEF_rawdata%pft%dir           = '/vegetation_pft/c2022/'
+  DEF_rawdata%pft%gname         = 'colm_500m'
+  DEF_rawdata%pft%fname         = 'PFT500m.'
+  !DEF_rawdata%pft%dir          = '/plant_15s/'
+  !DEF_rawdata%pft%gname        = 'colm_500m'
+  !DEF_rawdata%pft%fname        = 'MOD'
 
   ! lai and sai data
-  !DEF_rawdata%lai_sai%dir   = '/vegetation_lai_sai/c2022/'
-  !DEF_rawdata%lai_sai%gname = 'colm_500m'
-  !DEF_rawdata%lai_sai%fname = 'LSAI500m.'
-  DEF_rawdata%lai_sai%dir   = '/plant_15s/'
-  DEF_rawdata%lai_sai%gname = 'colm_500m'
-  DEF_rawdata%lai_sai%fname = 'MOD'
+  DEF_rawdata%lai_sai%dir       = '/vegetation_lai_sai/c2022/'
+  DEF_rawdata%lai_sai%gname     = 'colm_500m'
+  DEF_rawdata%lai_sai%fname     = 'LSAI500m.'
+  !DEF_rawdata%lai_sai%dir      = '/plant_15s/'
+  !DEF_rawdata%lai_sai%gname    = 'colm_500m'
+  !DEF_rawdata%lai_sai%fname    = 'MOD'
 
   ! htop data
-  !DEF_rawdata%htop%dir   = '/vegetation_morphology/tree_height_Simard/'
-  !DEF_rawdata%htop%gname = 'colm_1km'
-  !DEF_rawdata%htop%fname = 'Htop1km.Simard.'
-  DEF_rawdata%htop%dir   = '/plant_15s/'
-  DEF_rawdata%htop%gname = 'colm_500m'
-  DEF_rawdata%htop%fname = 'MOD'
+  DEF_rawdata%htop%dir          = '/vegetation_morphology/tree_height_Simard/'
+  DEF_rawdata%htop%gname        = 'colm_1km'
+  DEF_rawdata%htop%fname        = 'Htop1km.Simard'
+  !DEF_rawdata%htop%dir         = '/plant_15s/'
+  !DEF_rawdata%htop%gname       = 'colm_500m'
+  !DEF_rawdata%htop%fname       = 'MOD'
 
   ! ----- Urban -----
   DEF_rawdata%urban_type%dir    = '/urban_type/lcz/'
