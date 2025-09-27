@@ -29,7 +29,6 @@ SUBROUTINE Aggregation_ForestHeight ( &
    USE MOD_RangeCheck
 #endif
    USE MOD_AggregationRequestData
-   USE MOD_AggregationRequestData_multigrd
    USE MOD_Utils
 
    USE MOD_Const_LC
@@ -60,7 +59,7 @@ SUBROUTINE Aggregation_ForestHeight ( &
    real(r8), allocatable :: tree_height_patches(:), tree_height_one(:)
 
    ! for IGBP data
-   character(len=256) :: dir_5x5, suffix
+   character(len=256) :: dir_5x5, fname
    type (block_data_real8_2d) :: htop
    type (block_data_real8_3d) :: pftPCT
    real(r8), allocatable :: htop_patches(:), htop_pfts(:), htop_pcs(:,:)
@@ -158,9 +157,10 @@ SUBROUTINE Aggregation_ForestHeight ( &
       ENDIF
 
       IF (p_is_io) THEN
-         dir_5x5 = trim(dir_rawdata) // '/plant_15s'
-         suffix  = 'MOD'//trim(cyear)
-         CALL read_5x5_data (dir_5x5, suffix, gland, 'HTOP', htop)
+
+         dir_5x5 = trim(dir_rawdata) // trim(DEF_rawdata%htop%dir)
+         fname = trim(DEF_rawdata%htop%fname)
+         CALL read_5x5_data (dir_5x5, fname, gland, 'HTOP', htop)
 #ifdef USEMPI
          CALL aggregation_data_daemon (gland, data_r8_2d_in1 = htop)
 #endif
@@ -218,19 +218,18 @@ SUBROUTINE Aggregation_ForestHeight ( &
          CALL allocate_block_data (gland   , htop)
       ENDIF
 
-      dir_5x5 = trim(dir_rawdata) // '/plant_15s'
-      suffix  = 'MOD'//trim(cyear)
-
       IF (p_is_io) THEN
-         dir_5x5= trim(DEF_dir_rawdata) // trim(DEF_rawdata%htop%dir)
-         suffix = trim(DEF_rawdata%htop%fname)
-         CALL read_5x5_data     (dir_5x5, suffix, gland   , 'HTOP',    htop)
+
+         dir_5x5 = trim(DEF_dir_rawdata) // trim(DEF_rawdata%htop%dir)
+         fname = trim(DEF_rawdata%htop%fname)
+         CALL read_5x5_data     (dir_5x5, fname, gland   , 'HTOP',    htop)
 
          dir_5x5= trim(DEF_dir_rawdata) // trim(DEF_rawdata%pft%dir)
-         suffix = trim(DEF_rawdata%pft%fname)//trim(cyear)
-         CALL read_5x5_data_pft (dir_5x5, suffix, grid_pft, 'PCT_PFT', pftPCT)
+         fname = trim(DEF_rawdata%pft%fname)//trim(cyear)
+         CALL read_5x5_data_pft (dir_5x5, fname, grid_pft, 'PCT_PFT', pftPCT)
+
 #ifdef USEMPI
-         CALL aggregation_data_daemon_multigrd (grid_in1 = grid_pft, data_r8_3d_in1 = pftPCT, n1_r8_3d_in1 = 16, &
+         CALL aggregation_data_daemon_multigrid (grid_in1 = grid_pft, data_r8_3d_in1 = pftPCT, n1_r8_3d_in1 = 16, &
             grid_in2 = gland, data_r8_2d_in2 = htop )
 #endif
       ENDIF
@@ -255,14 +254,10 @@ SUBROUTINE Aggregation_ForestHeight ( &
                CYCLE
             ENDIF
 
-            !CALL aggregation_request_data (landpatch, ipatch, grid_pft, zip = USE_zip_for_aggregation, &
-            !   area = area_one, data_r8_2d_in1 = htop, data_r8_2d_out1 = htop_one, &
-            !   data_r8_3d_in1 = pftPCT, data_r8_3d_out1 = pct_one, n1_r8_3d_in1 = 16, lb1_r8_3d_in1 = 0)
-
-            CALL aggregation_request_data_multigrd(landpatch, ipatch, &
+            CALL aggregation_request_data_multigrid(landpatch, ipatch, &
                grid_in1 = grid_pft, area = area_one, data_r8_3d_in1 = pftPCT, data_r8_3d_out1 = pct_one, &
                n1_r8_3d_in1 = 16, lb1_r8_3d_in1 = 0, &
-               grid_in2 = gland,    data_r8_2d_in2 = htop, data_r8_2d_out2 = htop_one)
+               grid_in2 = gland, data_r8_2d_in2 = htop, data_r8_2d_out2 = htop_one)
 
             htop_patches(ipatch) = sum(htop_one * area_one) / sum(area_one)
 
@@ -289,7 +284,7 @@ SUBROUTINE Aggregation_ForestHeight ( &
          ENDDO
 
 #ifdef USEMPI
-      CALL aggregation_worker_done_multigrd ()
+      CALL aggregation_worker_done_multigrid ()
 #endif
       ENDIF
 
