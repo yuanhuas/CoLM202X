@@ -101,7 +101,7 @@ SUBROUTINE Aggregation_Urban (dir_rawdata, dir_srfdata, lc_year, &
    real(r8), allocatable, dimension(:) :: ht_roof_one
    real(r8), allocatable, dimension(:) :: hlr_bld_one
    real(r8), allocatable, dimension(:) :: ulai_one
-   real(r8), allocatable, dimension(:) :: slai_one
+   real(r8), allocatable, dimension(:) :: usai_one
 
    ! urban morphological and thermal paras of NCAR data
    ! input variables, NCAR look-up-table data
@@ -171,7 +171,8 @@ SUBROUTINE Aggregation_Urban (dir_rawdata, dir_srfdata, lc_year, &
    integer , allocatable, dimension(:) :: typindex
    real(r8), allocatable :: LUCY_rid_r8 (:)
 #endif
-   logical  :: first_call_LSAI_urban
+   logical  :: first_call_LAI_urban, first_call_SAI_urban
+
 
 #ifdef SrfdataDiag
       allocate( typindex(N_URB) )
@@ -180,7 +181,8 @@ SUBROUTINE Aggregation_Urban (dir_rawdata, dir_srfdata, lc_year, &
       write(cyear,'(i4.4)') lc_year
       landsrfdir = trim(dir_srfdata) // '/urban/' // trim(cyear)
 
-      first_call_LSAI_urban = .true.
+      first_call_LAI_urban = .true.
+      first_call_SAI_urban = .true.
 
 #ifdef USEMPI
       CALL mpi_barrier (p_comm_glb, p_err)
@@ -409,7 +411,7 @@ ENDIF
          fname  = trim(DEF_rawdata%urban_htop%fname)
 
          CALL allocate_block_data (grid_pctt, htopu)
-         CALL read_5x5_data (landdir, fname, grid_pctt, "CH", htopu)
+         CALL read_5x5_data (landdir, fname, grid_pctt, "Htop", htopu)
 
 #ifdef USEMPI
          CALL aggregation_data_daemon (grid_pctt, &
@@ -502,15 +504,12 @@ ENDIF
 
       IF (p_is_io) THEN
          CALL allocate_block_data (grid_lsai, ulai)
-         CALL allocate_block_data (grid_lsai, usai)
       ENDIF
 
       IF (p_is_worker) THEN
          allocate (lai_urb (numurban))
-         allocate (sai_urb (numurban))
 
          lai_urb(:) = 0.
-         sai_urb(:) = 0.
       ENDIF
 
       DO iy = start_year, end_year
@@ -524,7 +523,7 @@ ENDIF
          landsrfdir = trim(dir_srfdata) // '/urban/' // trim(iyear) // '/LAI'
          CALL system('mkdir -p ' // trim(adjustl(landsrfdir)))
 
-         ! allocate and read grided LSAI raw data
+         ! allocate and read grided LAI raw data
          landdir= trim(dir_rawdata) // trim(DEF_rawdata%urban_lsai%dir)
          fname  = trim(DEF_rawdata%urban_lsai%fname) // trim(iyear)
 
@@ -534,16 +533,16 @@ ENDIF
             write(cmonth, '(i2.2)') imonth
 
             IF (p_is_master) THEN
-               write(*,'(A,I4,A1,I3,A1,I3)') 'Aggregate LAI&SAI :', iy, ':', imonth, '/', 12
+               write(*,'(A,I4,A1,I3,A1,I3)') 'Aggregate LAI :', iy, ':', imonth, '/', 12
             ENDIF
 
             IF (p_is_io) THEN
 
                CALL read_5x5_data_time (landdir, fname, grid_lsai, "URBAN_TREE_LAI", imonth, ulai)
-               CALL read_5x5_data_time (landdir, fname, grid_lsai, "URBAN_TREE_SAI", imonth, usai)
 
 #ifdef USEMPI
-               CALL aggregation_data_daemon (grid_lsai, data_r8_2d_in1 = ulai, data_r8_2d_in2 = usai)
+               CALL aggregation_data_daemon_multigrid (grid_in1 = grid_pctt, data_r8_2d_in1 = fvegu, &
+                  grid_in2 = grid_lsai, data_r8_2d_in2 = ulai)
 #endif
             ENDIF
 
@@ -551,25 +550,23 @@ ENDIF
 
                ! loop for urban patch to aggregate LSAI data
                DO iurban = 1, numurban
-                  CALL aggregation_request_data (landurban, iurban, grid_lsai, zip = USE_zip_for_aggregation, area = area_one, &
-                     data_r8_2d_in1 = ulai, data_r8_2d_out1 = ulai_one   , &
-                     data_r8_2d_in2 = usai, data_r8_2d_out2 = slai_one   )
+                  CALL aggregation_request_data_multigrid (landurban, iurban, &
+                     grid_in1 = grid_pctt, area = area_one, data_r8_2d_in1 = fvegu, data_r8_2d_out1 = fvegu_one, &
+                     grid_in2 = grid_lsai, data_r8_2d_in2 = ulai, data_r8_2d_out2 = ulai_one)
 
-                  WHERE (ulai_one < 0)
+                  WHERE (fvegu_one<0 .or. ulai_one<0)
                      area_one = 0
                   END WHERE
 
                   ! area-weight average
                   IF (sum(area_one) > 0) THEN
-                     lai_urb(iurban) = sum(ulai_one * area_one) / &
-                                       sum(area_one)
-                     sai_urb(iurban) = sum(slai_one * area_one) / &
-                                       sum(area_one)
+                     lai_urb(iurban) = sum(ulai_one * area_one * fvegu_one) / &
+                                       sum(area_one * fvegu_one)
                   ENDIF
                ENDDO
 
 #ifdef USEMPI
-            CALL aggregation_worker_done ()
+            CALL aggregation_worker_done_multigrid ()
 #endif
             ENDIF
 
@@ -579,24 +576,14 @@ ENDIF
             CALL ncio_define_dimension_vector (landname, landurban, 'urban')
             CALL ncio_write_vector (landname, 'TREE_LAI', 'urban', landurban, lai_urb, DEF_Srfdata_CompressLevel)
 
-            landname = trim(dir_srfdata) // '/urban/'//trim(iyear)//'/LAI/urban_SAI_'//trim(cmonth)//'.nc'
-            CALL ncio_create_file_vector (landname, landurban)
-            CALL ncio_define_dimension_vector (landname, landurban, 'urban')
-            CALL ncio_write_vector (landname, 'TREE_SAI', 'urban', landurban, sai_urb, DEF_Srfdata_CompressLevel)
-
 #ifdef SrfdataDiag
             typindex = (/(ityp, ityp = 1, N_URB)/)
             landname  = trim(dir_srfdata) // '/diag/LAI_urban_'//trim(iyear)//'.nc'
             CALL srfdata_map_and_write (lai_urb, landurban%settyp, typindex, m_urb2diag, &
                   -1.0e36_r8, landname, 'Urban_Tree_LAI', compress = 0, write_mode = 'one',  &
-                  lastdimname = 'Itime', lastdimvalue = imonth, defval = 0._r8, create_mode = first_call_LSAI_urban)
+                  lastdimname = 'Itime', lastdimvalue = imonth, defval = 0._r8, create_mode = first_call_LAI_urban)
 
-            landname  = trim(dir_srfdata) // '/diag/SAI_urban_'//trim(iyear)//'.nc'
-            CALL srfdata_map_and_write (sai_urb, landurban%settyp, typindex, m_urb2diag, &
-                  -1.0e36_r8, landname, 'Urban_Tree_SAI', compress = 0, write_mode = 'one',  &
-                  lastdimname = 'Itime', lastdimvalue = imonth, defval = 0._r8, create_mode = first_call_LSAI_urban)
-
-            IF (first_call_LSAI_urban) first_call_LSAI_urban = .false.
+            IF (first_call_LAI_urban) first_call_LAI_urban = .false.
 #endif
 
 #ifdef USEMPI
@@ -607,10 +594,101 @@ ENDIF
 
 #ifdef RangeCheck
             CALL check_vector_data ('Urban Tree LAI '//trim(c1), lai_urb)
+#endif
+         ENDDO
+         first_call_LAI_urban = .true.
+      ENDDO
+
+      IF (p_is_io) THEN
+         CALL allocate_block_data (grid_lsai, usai)
+      ENDIF
+
+      IF (p_is_worker) THEN
+         allocate (sai_urb (numurban))
+
+         sai_urb(:) = 0.
+      ENDIF
+
+      DO iy = start_year, end_year
+
+         IF (iy < 2000) THEN
+            write(iyear,'(i4.4)') 2000
+         ELSE
+            write(iyear,'(i4.4)') iy
+         ENDIF
+
+         ! allocate and read grided SAI raw data
+         landdir= trim(dir_rawdata) // trim(DEF_rawdata%urban_lsai%dir)
+         fname  = trim(DEF_rawdata%urban_lsai%fname) // trim(iyear)
+
+         ! loop for month
+         DO imonth = 1, 12
+
+            write(cmonth, '(i2.2)') imonth
+
+            IF (p_is_master) THEN
+               write(*,'(A,I4,A1,I3,A1,I3)') 'Aggregate SAI :', iy, ':', imonth, '/', 12
+            ENDIF
+
+            IF (p_is_io) THEN
+
+               CALL read_5x5_data_time (landdir, fname, grid_lsai, "URBAN_TREE_SAI", imonth, usai)
+
+#ifdef USEMPI
+               CALL aggregation_data_daemon_multigrid (grid_in1 = grid_pctt, data_r8_2d_in1 = fvegu, &
+                  grid_in2 = grid_lsai, data_r8_2d_in2 = usai)
+#endif
+            ENDIF
+
+            IF (p_is_worker) THEN
+               ! loop for urban patch to aggregate LSAI data
+               DO iurban = 1, numurban
+                  CALL aggregation_request_data_multigrid (landurban, iurban, &
+                     grid_in1 = grid_pctt, area = area_one, data_r8_2d_in1 = fvegu, data_r8_2d_out1 = fvegu_one, &
+                     grid_in2 = grid_lsai, data_r8_2d_in2 = usai , data_r8_2d_out2 = usai_one)
+
+                  WHERE (fvegu_one<0 .or. usai_one<0)
+                     area_one = 0
+                  END WHERE
+
+                  ! area-weight average
+                  IF (sum(area_one) > 0) THEN
+                     sai_urb(iurban) = sum(usai_one * area_one * fvegu_one) / &
+                                       sum(area_one * fvegu_one)
+                  ENDIF
+               ENDDO
+
+#ifdef USEMPI
+            CALL aggregation_worker_done_multigrid ()
+#endif
+            ENDIF
+
+            ! output
+            landname = trim(dir_srfdata) // '/urban/'//trim(iyear)//'/LAI/urban_SAI_'//trim(cmonth)//'.nc'
+            CALL ncio_create_file_vector (landname, landurban)
+            CALL ncio_define_dimension_vector (landname, landurban, 'urban')
+            CALL ncio_write_vector (landname, 'TREE_SAI', 'urban', landurban, sai_urb, DEF_Srfdata_CompressLevel)
+
+#ifdef SrfdataDiag
+            landname  = trim(dir_srfdata) // '/diag/SAI_urban_'//trim(iyear)//'.nc'
+            CALL srfdata_map_and_write (sai_urb, landurban%settyp, typindex, m_urb2diag, &
+                  -1.0e36_r8, landname, 'Urban_Tree_SAI', compress = 0, write_mode = 'one',  &
+                  lastdimname = 'Itime', lastdimvalue = imonth, defval = 0._r8, create_mode = first_call_SAI_urban)
+
+            IF (first_call_SAI_urban) first_call_SAI_urban = .false.
+#endif
+
+#ifdef USEMPI
+            CALL mpi_barrier (p_comm_glb, p_err)
+#endif
+
+            write(c1,'(i2.2)') imonth
+
+#ifdef RangeCheck
             CALL check_vector_data ('Urban Tree SAI '//trim(c1), sai_urb)
 #endif
          ENDDO
-         first_call_LSAI_urban = .true.
+         first_call_SAI_urban = .true.
       ENDDO
 
 
@@ -1297,7 +1375,7 @@ ENDIF
          IF ( allocated (wt_roof_one  ) ) deallocate (wt_roof_one  )
          IF ( allocated (ht_roof_one  ) ) deallocate (ht_roof_one  )
          IF ( allocated (ulai_one     ) ) deallocate (ulai_one     )
-         IF ( allocated (slai_one     ) ) deallocate (slai_one     )
+         IF ( allocated (usai_one     ) ) deallocate (usai_one     )
 
       ENDIF
 
