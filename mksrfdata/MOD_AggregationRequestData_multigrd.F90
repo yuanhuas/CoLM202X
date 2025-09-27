@@ -1,6 +1,6 @@
 #include <define.h>
 
-MODULE MOD_AggregationRequestData_multigrd
+MODULE MOD_AggregationRequestData_multigrid
 
 !-----------------------------------------------------------------------
 ! !DESCRIPTION:
@@ -17,18 +17,18 @@ MODULE MOD_AggregationRequestData_multigrd
 
    IMPLICIT NONE
 
-   PUBLIC :: aggregation_request_data_multigrd
+   PUBLIC :: aggregation_request_data_multigrid
 
 #ifdef USEMPI
-   PUBLIC :: aggregation_data_daemon_multigrd
-   PUBLIC :: aggregation_worker_done_multigrd
+   PUBLIC :: aggregation_data_daemon_multigrid
+   PUBLIC :: aggregation_worker_done_multigrid
 #endif
 
 ! ---- subroutines ----
 CONTAINS
 
 #ifdef USEMPI
-   SUBROUTINE aggregation_data_daemon_multigrd (grid_in1, data_r8_2d_in1, &
+   SUBROUTINE aggregation_data_daemon_multigrid (grid_in1, data_r8_2d_in1, &
          data_r8_3d_in1, n1_r8_3d_in1  ,&
          grid_in2, data_r8_2d_in2, &
          data_r8_3d_in2, n1_r8_3d_in2)
@@ -46,7 +46,6 @@ CONTAINS
    ! 2D REAL data
    type (block_data_real8_2d), intent(in), optional :: data_r8_2d_in1
    type (block_data_real8_2d), intent(in), optional :: data_r8_2d_in2
-
 
    ! 3D REAL data
    integer, intent(in), optional :: n1_r8_3d_in1
@@ -96,14 +95,12 @@ CONTAINS
                IF (present(data_r8_2d_in1)) THEN
                   IF (grdn == 1) THEN
                      DO ireq = 1, nreq
-                     !IF (grdn == 1) THEN
                         xblk = grid_in1%xblk(xlist(ireq))
                         yblk = grid_in1%yblk(ylist(ireq))
                         xloc = grid_in1%xloc(xlist(ireq))
                         yloc = grid_in1%yloc(ylist(ireq))
 
                         sbuf_r8_1d(ireq) = data_r8_2d_in1%blk(xblk,yblk)%val(xloc,yloc)
-                     !ENDIF
 
                      ENDDO
                      CALL mpi_send (sbuf_r8_1d, nreq, MPI_REAL8, &
@@ -115,21 +112,13 @@ CONTAINS
                IF (present(data_r8_2d_in2) .and. present(grid_in2)) THEN
                   IF (grdn == 2) THEN
                      DO ireq = 1, nreq
-                     !IF (grdn == 1) THEN
                         xblk = grid_in2%xblk(xlist(ireq))
                         yblk = grid_in2%yblk(ylist(ireq))
                         xloc = grid_in2%xloc(xlist(ireq))
                         yloc = grid_in2%yloc(ylist(ireq))
 
                         sbuf_r8_1d(ireq) = data_r8_2d_in2%blk(xblk,yblk)%val(xloc,yloc)
-                     !ELSE
-                     !   xblk = grid_in2%xblk(xlist(ireq))
-                     !   yblk = grid_in2%yblk(ylist(ireq))
-                     !   xloc = grid_in2%xloc(xlist(ireq))
-                     !   yloc = grid_in2%yloc(ylist(ireq))
 
-                     !   sbuf_r8_1d(ireq) = data2_r8_2d_in2%blk(xblk,yblk)%val(xloc,yloc)
-                     !ENDIF
                      ENDDO
 
                      CALL mpi_send (sbuf_r8_1d, nreq, MPI_REAL8, &
@@ -145,15 +134,15 @@ CONTAINS
                   allocate (sbuf_r8_2d (n1_r8_3d_in1,nreq))
                   IF (grdn == 1) THEN
                      DO ireq = 1, nreq
-                     !IF (grdn == 2) THEN
                         xblk = grid_in1%xblk(xlist(ireq))
                         yblk = grid_in1%yblk(ylist(ireq))
                         xloc = grid_in1%xloc(xlist(ireq))
                         yloc = grid_in1%yloc(ylist(ireq))
 
                         sbuf_r8_2d(:,ireq) = data_r8_3d_in1%blk(xblk,yblk)%val(:,xloc,yloc)
-                     !ENDIF
+
                      ENDDO
+
                      CALL mpi_send (sbuf_r8_2d, n1_r8_3d_in1*nreq, MPI_REAL8, &
                         idest, mpi_tag_data, p_comm_glb, p_err)
 
@@ -167,15 +156,15 @@ CONTAINS
                   allocate (sbuf_r8_2d (n1_r8_3d_in2,nreq))
                   IF (grdn == 2) THEN
                      DO ireq = 1, nreq
-                     !IF (grdn == 2) THEN
                         xblk = grid_in2%xblk(xlist(ireq))
                         yblk = grid_in2%yblk(ylist(ireq))
                         xloc = grid_in2%xloc(xlist(ireq))
                         yloc = grid_in2%yloc(ylist(ireq))
 
                         sbuf_r8_2d(:,ireq) = data_r8_3d_in2%blk(xblk,yblk)%val(:,xloc,yloc)
-                     !ENDIF
+
                      ENDDO
+
                      CALL mpi_send (sbuf_r8_2d, n1_r8_3d_in2*nreq, MPI_REAL8, &
                         idest, mpi_tag_data, p_comm_glb, p_err)
 
@@ -197,14 +186,13 @@ CONTAINS
 
       ENDIF
 
-   END SUBROUTINE aggregation_data_daemon_multigrd
+   END SUBROUTINE aggregation_data_daemon_multigrid
 
 
 #endif
 
    !----------------------------------------------------
-   SUBROUTINE aggregation_request_data_multigrd (     &
-!         pixelset, iset, grid_in, zip, area, &
+   SUBROUTINE aggregation_request_data_multigrid (     &
          pixelset, iset, grid_in1, area, &
          data_r8_2d_in1, data_r8_2d_out1, &
          data_r8_3d_in1, data_r8_3d_out1, n1_r8_3d_in1, lb1_r8_3d_in1, &
@@ -230,7 +218,6 @@ CONTAINS
 
    type (grid_type), intent(in) :: grid_in1
    type (grid_type), intent(in) :: grid_in2
-   !logical, intent(in) :: zip
 
    real(r8), allocatable, intent(out), optional :: area(:)
 
@@ -267,89 +254,29 @@ CONTAINS
       ipxend = pixelset%ipxend(iset)
       npxl   = ipxend - ipxstt + 1
 
-!      IF (zip) THEN
-!
-!         allocate (xsorted(npxl))
-!         allocate (ysorted(npxl))
-!
-!         nx = 0; ny = 0
-!         DO ipxl = ipxstt, ipxend
-!            xgrdthis = grid_in%xgrd(mesh(ie)%ilon(ipxl))
-!            ygrdthis = grid_in%ygrd(mesh(ie)%ilat(ipxl))
-!            CALL insert_into_sorted_list1 (xgrdthis, nx, xsorted, iloc)
-!            CALL insert_into_sorted_list1 (ygrdthis, ny, ysorted, iloc)
-!         ENDDO
-!
-!         allocate (xy2d (nx,ny));     xy2d(:,:) = 0
-!
-!         IF (present(area)) THEN
-!            allocate(area2d(nx,ny));  area2d(:,:) = 0.
-!         ENDIF
-!
-!         DO ipxl = ipxstt, ipxend
-!            xgrdthis = grid_in%xgrd(mesh(ie)%ilon(ipxl))
-!            ygrdthis = grid_in%ygrd(mesh(ie)%ilat(ipxl))
-!
-!            ix = find_in_sorted_list1(xgrdthis, nx, xsorted)
-!            iy = find_in_sorted_list1(ygrdthis, ny, ysorted)
-!
-!            xy2d(ix,iy) = xy2d(ix,iy) + 1
-!
-!            IF (present(area)) THEN
-!               area2d(ix,iy) = area2d(ix,iy) + areaquad (&
-!                  pixel%lat_s(mesh(ie)%ilat(ipxl)), pixel%lat_n(mesh(ie)%ilat(ipxl)), &
-!                  pixel%lon_w(mesh(ie)%ilon(ipxl)), pixel%lon_e(mesh(ie)%ilon(ipxl)) )
-!            ENDIF
-!         ENDDO
-!
-!         totalreq = count(xy2d > 0)
-!
-!         allocate (xlist (totalreq))
-!         allocate (ylist (totalreq))
-!
-!         IF (present(area)) allocate(area(totalreq))
-!
-!         ig = 0
-!         DO ix = 1, nx
-!            DO iy = 1, ny
-!               IF (xy2d(ix,iy) > 0) THEN
-!                  ig = ig + 1
-!                  xlist(ig) = xsorted(ix)
-!                  ylist(ig) = ysorted(iy)
-!                  IF (present(area)) area (ig) = area2d(ix,iy)
-!               ENDIF
-!            ENDDO
-!         ENDDO
-!
-!         deallocate (xsorted, ysorted, xy2d)
-!         IF (present(area)) deallocate (area2d)
-!
-!      ELSE
+      allocate(xlist1 (npxl))
+      allocate(ylist1 (npxl))
 
-         allocate(xlist1 (npxl))
-         allocate(ylist1 (npxl))
+      allocate(xlist2 (npxl))
+      allocate(ylist2 (npxl))
 
-         allocate(xlist2 (npxl))
-         allocate(ylist2 (npxl))
+      IF (present(area)) allocate (area (npxl))
 
-         IF (present(area)) allocate (area (npxl))
+      totalreq = npxl
+      DO ipxl = ipxstt, ipxend
+         xlist1(ipxl-ipxstt+1) = grid_in1%xgrd(mesh(ie)%ilon(ipxl))
+         ylist1(ipxl-ipxstt+1) = grid_in1%ygrd(mesh(ie)%ilat(ipxl))
 
-         totalreq = npxl
-         DO ipxl = ipxstt, ipxend
-            xlist1(ipxl-ipxstt+1) = grid_in1%xgrd(mesh(ie)%ilon(ipxl))
-            ylist1(ipxl-ipxstt+1) = grid_in1%ygrd(mesh(ie)%ilat(ipxl))
+         xlist2(ipxl-ipxstt+1) = grid_in2%xgrd(mesh(ie)%ilon(ipxl))
+         ylist2(ipxl-ipxstt+1) = grid_in2%ygrd(mesh(ie)%ilat(ipxl))
 
-            xlist2(ipxl-ipxstt+1) = grid_in2%xgrd(mesh(ie)%ilon(ipxl))
-            ylist2(ipxl-ipxstt+1) = grid_in2%ygrd(mesh(ie)%ilat(ipxl))
+         IF (present(area)) THEN
+            area(ipxl-ipxstt+1) = areaquad (&
+               pixel%lat_s(mesh(ie)%ilat(ipxl)), pixel%lat_n(mesh(ie)%ilat(ipxl)), &
+               pixel%lon_w(mesh(ie)%ilon(ipxl)), pixel%lon_e(mesh(ie)%ilon(ipxl)) )
+         ENDIF
+      ENDDO
 
-            IF (present(area)) THEN
-               area(ipxl-ipxstt+1) = areaquad (&
-                  pixel%lat_s(mesh(ie)%ilat(ipxl)), pixel%lat_n(mesh(ie)%ilat(ipxl)), &
-                  pixel%lon_w(mesh(ie)%ilon(ipxl)), pixel%lon_e(mesh(ie)%ilon(ipxl)) )
-            ENDIF
-         ENDDO
-
-!      ENDIF
 
       IF (present(data_r8_2d_in1) .and. present(data_r8_2d_out1))  allocate (data_r8_2d_out1 (totalreq))
       IF (present(data_r8_2d_in2) .and. present(data_r8_2d_out2))  allocate (data_r8_2d_out2 (totalreq))
@@ -535,11 +462,11 @@ CONTAINS
 
 #endif
 
-   END SUBROUTINE aggregation_request_data_multigrd
+   END SUBROUTINE aggregation_request_data_multigrid
 
 #ifdef USEMPI
 
-   SUBROUTINE aggregation_worker_done_multigrd ()
+   SUBROUTINE aggregation_worker_done_multigrid ()
 
    USE MOD_SPMD_Task
 
@@ -555,8 +482,8 @@ CONTAINS
           ENDDO
       ENDIF
 
-   END SUBROUTINE aggregation_worker_done_multigrd
+   END SUBROUTINE aggregation_worker_done_multigrid
 
 #endif
 
-END MODULE MOD_AggregationRequestData_multigrd
+END MODULE MOD_AggregationRequestData_multigrid
