@@ -94,7 +94,7 @@ CONTAINS
    integer, intent(in) :: lc_year
 
 !-------------------------- Local Variables ----------------------------
-   character(len=256) :: dir_5x5, suffix, lastyr, thisyr, dir_landdata, lndname
+   character(len=256) :: dir_5x5, fname, lastyr, thisyr, dir_landdata, lndname
    character(len=4)   :: c2
    integer :: i,ipatch,ipxl,ipxstt,ipxend,numpxl,ilc
    integer, allocatable, dimension(:) :: locpxl
@@ -134,16 +134,13 @@ CONTAINS
 
 
       IF (p_is_io) THEN
+
          CALL allocate_block_data (grid_patch, lcdatafr)
-         dir_5x5 = trim(DEF_dir_rawdata) // '/plant_15s'
-         suffix  = 'MOD'//trim(lastyr)
+         dir_5x5 = trim(DEF_dir_rawdata) // trim(DEF_rawdata%landcover%dir)
+         fname = trim(DEF_rawdata%landcover%fname)
+
          ! read the previous year land cover data
-         ! TODO: Add IF statement for using different LC products
-         ! IF use MODIS data THEN
-         CALL read_5x5_data (dir_5x5, suffix, grid_patch, 'LC', lcdatafr)
-         ! ELSE
-         ! 'LC_GLC' is not recomended for IGBP
-         !CALL read_5x5_data (dir_5x5, suffix, grid_patch, 'LC_GLC', lcdatafr)
+         CALL read_5x5_data (dir_5x5, fname, grid_patch, 'LC', lcdatafr)
 
 #ifdef USEMPI
          CALL aggregation_data_daemon (grid_patch, data_i4_2d_in1 = lcdatafr)
