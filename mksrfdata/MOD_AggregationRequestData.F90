@@ -886,7 +886,6 @@ CONTAINS
          ENDIF
       ENDDO
 
-
       IF (present(data_r8_2d_in1) .and. present(data_r8_2d_out1))  allocate (data_r8_2d_out1 (totalreq))
       IF (present(data_r8_2d_in2) .and. present(data_r8_2d_out2))  allocate (data_r8_2d_out2 (totalreq))
 
@@ -1107,7 +1106,6 @@ CONTAINS
    END SUBROUTINE
 
 #endif
-
 
    SUBROUTINE fillnan (vec, fill, defval)
 
