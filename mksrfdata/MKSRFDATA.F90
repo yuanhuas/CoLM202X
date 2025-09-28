@@ -97,7 +97,7 @@ PROGRAM MKSRFDATA
    real(r8) :: edges  ! southern edge of grid (degrees)
    real(r8) :: edgew  ! western edge of grid (degrees)
 
-   type (grid_type) :: grid_500m, grid_htop, grid_soil, grid_lai, grid_topo, grid_topo_factor
+   type (grid_type) :: grid_500m, grid_htop, grid_soil, grid_pft, grid_lai, grid_topo, grid_topo_factor
    type (grid_type) :: grid_urban_lucy, grid_urban_roof, grid_urban_pctt, grid_urban_pctw, grid_urban_pop, &
                        grid_urban_lsai, grid_urban_alb
    type (grid_type) :: grid_twi
