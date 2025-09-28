@@ -160,7 +160,7 @@ SUBROUTINE Aggregation_ForestHeight ( &
 
          dir_5x5 = trim(dir_rawdata) // trim(DEF_rawdata%htop%dir)
          fname = trim(DEF_rawdata%htop%fname)
-         CALL read_5x5_data (dir_5x5, fname, gland, 'HTOP', htop)
+         CALL read_5x5_data (dir_5x5, fname, gland, trim(DEF_rawdata%htop%vname), htop)
 #ifdef USEMPI
          CALL aggregation_data_daemon (gland, data_r8_2d_in1 = htop)
 #endif
@@ -173,8 +173,12 @@ SUBROUTINE Aggregation_ForestHeight ( &
          DO ipatch = 1, numpatch
 
             IF (landpatch%settyp(ipatch) /= 0) THEN
+
                CALL aggregation_request_data (landpatch, ipatch, gland, zip = USE_zip_for_aggregation, &
                   area = area_one, data_r8_2d_in1 = htop, data_r8_2d_out1 = htop_one)
+
+               where (htop_one < 0.) htop_one = 0.
+
                htop_patches(ipatch) = sum(htop_one * area_one) / sum(area_one)
             ENDIF
 
@@ -222,7 +226,7 @@ SUBROUTINE Aggregation_ForestHeight ( &
 
          dir_5x5 = trim(DEF_dir_rawdata) // trim(DEF_rawdata%htop%dir)
          fname = trim(DEF_rawdata%htop%fname)
-         CALL read_5x5_data     (dir_5x5, fname, gland   , 'HTOP',    htop)
+         CALL read_5x5_data     (dir_5x5, fname, gland   , trim(DEF_rawdata%htop%vname), htop)
 
          dir_5x5= trim(DEF_dir_rawdata) // trim(DEF_rawdata%pft%dir)
          fname = trim(DEF_rawdata%pft%fname)//trim(cyear)
@@ -258,6 +262,8 @@ SUBROUTINE Aggregation_ForestHeight ( &
                grid_in1 = grid_pft, area = area_one, data_r8_3d_in1 = pftPCT, data_r8_3d_out1 = pct_one, &
                n1_r8_3d_in1 = 16, lb1_r8_3d_in1 = 0, &
                grid_in2 = gland, data_r8_2d_in2 = htop, data_r8_2d_out2 = htop_one)
+
+            where (htop_one < 0.) htop_one = 0.
 
             htop_patches(ipatch) = sum(htop_one * area_one) / sum(area_one)
 
