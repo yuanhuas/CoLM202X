@@ -142,9 +142,10 @@ MODULE MOD_Namelist
    character(len=256) :: DEF_rawdata_namelist  = 'path/to/rawdata/namelist'
 
    type :: datainfo
-      character(len=256) :: dir
-      character(len=256) :: gname
-      character(len=256) :: fname
+      character(len=256) :: dir   = 'dir related to rawdata dir'
+      character(len=256) :: gname = 'grid name'
+      character(len=256) :: fname = 'file name'
+      character(len=256) :: vname = 'variable name'
    end type
 
    type rawdata
@@ -1577,6 +1578,7 @@ CONTAINS
       CALL mpi_bcast (DEF_rawdata%htop%dir                   ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_rawdata%htop%gname                 ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_rawdata%htop%fname                 ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%htop%vname                 ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
 
       CALL mpi_bcast (DEF_rawdata%urban_type%dir             ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_rawdata%urban_type%gname           ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
@@ -1876,21 +1878,7 @@ CONTAINS
 
    IMPLICIT NONE
 
-      DEF_rawdata%landcover%dir   = 'dir'
-      DEF_rawdata%landcover%gname = 'gname'
-      DEF_rawdata%landcover%fname = 'fname'
-
-      DEF_rawdata%pft%dir         = 'dir'
-      DEF_rawdata%pft%gname       = 'gname'
-      DEF_rawdata%pft%fname       = 'fname'
-
-      DEF_rawdata%lai_sai%dir     = 'dir'
-      DEF_rawdata%lai_sai%gname   = 'gname'
-      DEF_rawdata%lai_sai%fname   = 'fname'
-
-      DEF_rawdata%htop%dir        = 'dir'
-      DEF_rawdata%htop%gname      = 'gname'
-      DEF_rawdata%htop%fname      = 'fname'
+      DEF_rawdata%htop%vname      = 'HTOP'
 
    END SUBROUTINE set_rawdata_default
 
