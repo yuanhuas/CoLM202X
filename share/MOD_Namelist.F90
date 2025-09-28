@@ -1149,7 +1149,7 @@ CONTAINS
          ENDIF
          close(10)
 
-         IF ( trim(DEF_rawdata%landcover%fname) == "LC30m.GLC." ) THEN
+         IF ( trim(DEF_rawdata%landcover%fname) == "LC30m.GLC" ) THEN
             DEF_USE_GLC30 = .true.
          ENDIF
 

@@ -93,7 +93,7 @@ CONTAINS
          dir_5x5 = trim(DEF_dir_rawdata) // trim(DEF_rawdata%pft%dir)
          ! add parameter input for time year
          write(cyear,'(i4.4)') lc_year
-         fname  = trim(DEF_rawdata%pft%fname) // trim(cyear)
+         fname  = trim(DEF_rawdata%pft%fname) // '.' // trim(cyear)
          CALL read_5x5_data_pft (dir_5x5, fname, grid_pft, 'PCT_PFT', pctpft)
 
 #ifdef USEMPI

@@ -119,8 +119,8 @@ CONTAINS
       ! READ in urban data
       !-----------------------------------
 
-      lndname = trim(dir_landdata)//'/urban/'//trim(cyear)//'/WT_ROOF.nc'
-      CALL ncio_read_vector (lndname, 'WT_ROOF'       , landurban, froof   )
+      lndname = trim(dir_landdata)//'/urban/'//trim(cyear)//'/PCT_ROOF.nc'
+      CALL ncio_read_vector (lndname, 'PCT_ROOF'       , landurban, froof   )
 
       lndname = trim(dir_landdata)//'/urban/'//trim(cyear)//'/HT_ROOF.nc'
       CALL ncio_read_vector (lndname, 'HT_ROOF'       , landurban, hroof   )
