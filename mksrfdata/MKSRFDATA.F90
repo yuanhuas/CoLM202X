@@ -251,8 +251,8 @@ PROGRAM MKSRFDATA
       ! define grid for soil parameters raw data
       CALL grid_soil%define_by_name ('colm_500m')
 
-#if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
       ! define grid for PFT raw data
+#if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
       CALL grid_pft%define_by_name (trim(DEF_rawdata%pft%gname))
 #endif
 
@@ -278,7 +278,7 @@ PROGRAM MKSRFDATA
          CALL grid_topo_factor%define_by_name ('colm_500m')
       ENDIF
 
-      ! add by dong, only test for making urban data
+      ! define grid for urban data
 #ifdef URBAN_MODEL
       CALL grid_urban%define_by_name     (trim(DEF_rawdata%urban_type%gname ))
       CALL grid_urban_roof%define_by_name(trim(DEF_rawdata%urban_roof%gname ))
@@ -382,7 +382,6 @@ PROGRAM MKSRFDATA
       CALL pixel%map_to_grid (grid_urban_lucy)
 #endif
 
-
       ! build land elms
       CALL mesh_build ()
       CALL landelm_build
@@ -475,7 +474,6 @@ PROGRAM MKSRFDATA
 #endif
 
       !TODO: for lulcc, need to run for each year and SAVE to different subdirs
-
 #ifdef LULCC
       IF (lai_year<2000 .and. MOD(lai_year,5) /= 0) THEN
          CALL Aggregation_LAI          (grid_lai,  dir_rawdata, dir_landdata, lai_year)
@@ -522,11 +520,9 @@ IF (.not. (skip_rest)) THEN
       ENDIF
 
 #ifdef URBAN_MODEL
-      CALL Aggregation_urban (dir_rawdata, dir_landdata, lc_year, &
-                              grid_urban_lucy, grid_urban_lsai, &
-                              ! for 30m test
-                              grid_urban_roof, grid_urban_pop, grid_urban_alb, &
-                              grid_urban_pctt, grid_urban_pctw)
+      CALL Aggregation_urban (grid_urban_roof, grid_urban_pctt, grid_urban_lsai, grid_urban_pctw, &
+                              grid_urban_pop , grid_urban_lucy, grid_urban_alb , &
+                              dir_rawdata    , dir_landdata   , lc_year)
 #endif
 
       CALL Aggregation_SoilTexture     (grid_soil, dir_rawdata, dir_landdata, lc_year)
