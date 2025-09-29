@@ -70,9 +70,11 @@ SUBROUTINE Aggregation_Urban (grid_roof, grid_pctt, grid_lsai, grid_pctw, grid_p
    type(block_data_real8_2d) :: htopu
    type(block_data_real8_2d) :: flakeu
    type(block_data_real8_2d) :: wtroof
+   type(block_data_real8_2d) :: hlr
    type(block_data_real8_2d) :: htroof
    type(block_data_real8_2d) :: ulai
    type(block_data_real8_2d) :: usai
+   type(block_data_real8_2d) :: albroof
    type(block_data_int32_2d) :: reg_typid
 
    ! output variables
@@ -86,7 +88,6 @@ SUBROUTINE Aggregation_Urban (grid_roof, grid_pctt, grid_lsai, grid_pctw, grid_p
    real(r8), allocatable, dimension(:) :: lai_urb
    real(r8), allocatable, dimension(:) :: sai_urb
 
-   ! delete variables not used
    integer , allocatable, dimension(:) :: reg_typid_one
    integer , allocatable, dimension(:) :: LUCY_reg_one
    real(r8), allocatable, dimension(:) :: area_one
@@ -99,6 +100,10 @@ SUBROUTINE Aggregation_Urban (grid_roof, grid_pctt, grid_lsai, grid_pctw, grid_p
    real(r8), allocatable, dimension(:) :: hlr_bld_one
    real(r8), allocatable, dimension(:) :: ulai_one
    real(r8), allocatable, dimension(:) :: usai_one
+   real(r8), allocatable, dimension(:) :: alb_roof_one_
+
+   real(r8), allocatable, dimension(:,:,:) :: alb_roof_one, alb_wall_one, &
+                                              alb_gimp_one, alb_gper_one
 
    ! urban morphological and thermal paras of NCAR data
    ! input variables, NCAR look-up-table data
@@ -157,7 +162,6 @@ SUBROUTINE Aggregation_Urban (grid_roof, grid_pctt, grid_lsai, grid_pctw, grid_p
    real(r8) :: emroof, emwall, emgper , emgimp
    real(r8) :: cvroof(nl_roof), cvwall(nl_wall), cvgimp(nl_soil)
    real(r8) :: tkroof(nl_roof), tkwall(nl_wall), tkgimp(nl_soil)
-   real(r8) :: albroof(nr,ns), albwall(nr,ns), albgper(nr,nr), albgimp(nr,ns)
 
    ! index
    integer :: iurban, urb_typidx, urb_regidx
@@ -196,13 +200,12 @@ SUBROUTINE Aggregation_Urban (grid_roof, grid_pctt, grid_lsai, grid_pctw, grid_p
 
       write(c5year, '(i4.4)') int(lc_year/5)*5
 
-
       ! ******* Building morphology: PCT_ROOF, HT_ROOF, and HL *******
       ! if building data is missing, how to use look-up-table?
       ! a new array with urban type was used for look-up-table
 IF (DEF_URBAN_type_scheme == 1) THEN
       ! only used when urban patch have nan data of building height, building fraction and HL
-      landname = trim(dir_rawdata)//'urban_physical/NCAR_urban_properties.nc'
+      landname = trim(dir_rawdata)//'/urban_physical/NCAR_urban_properties.nc'
 
       CALL ncio_read_bcast_serial (landname,  "WTLUNIT_ROOF", wtroof_ncar )
       CALL ncio_read_bcast_serial (landname,  "HT_ROOF"     , htroof_ncar )
@@ -214,6 +217,7 @@ ENDIF
          CALL allocate_block_data (grid_urban, reg_typid)
          CALL allocate_block_data (grid_roof , wtroof   )
          CALL allocate_block_data (grid_roof , htroof   )
+         CALL allocate_block_data (grid_roof , hlr      )
 
 IF (DEF_URBAN_type_scheme == 1) THEN
          landdir= trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_type%dir)
@@ -230,18 +234,23 @@ ENDIF
          CALL read_5x5_data (landdir, fname, grid_roof, "PCT_ROOF", wtroof)
          CALL read_5x5_data (landdir, fname, grid_roof, "HT_ROOF" , htroof)
 
+         landdir= trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_hl%dir)
+         fname  = trim(DEF_rawdata%urban_hl%fname)
+         CALL read_5x5_data (landdir, fname, grid_roof, "HL_BLD"  , hlr   )
+
 #ifdef USEMPI
 IF (DEF_URBAN_type_scheme == 1) THEN
          CALL aggregation_data_daemon (grid_roof, data_i4_2d_in1 = reg_typid, &
-            data_r8_2d_in1 = wtroof, data_r8_2d_in2 = htroof)
+            data_r8_2d_in1 = wtroof, data_r8_2d_in2 = htroof, data_r8_2d_in3 = hlr)
 ELSE
-         CALL aggregation_data_daemon (grid_roof, data_r8_2d_in1 = wtroof, data_r8_2d_in2 = htroof)
+         CALL aggregation_data_daemon (grid_roof, data_r8_2d_in1 = wtroof, data_r8_2d_in2 = htroof, &
+            data_r8_2d_in3 = hlr)
 ENDIF
 #endif
       ENDIF
 
       IF (p_is_worker) THEN
-         allocate (pct_roof  (numurban))
+         allocate (pct_roof (numurban))
          allocate (ht_roof  (numurban))
          allocate (hlr_bld  (numurban))
 
@@ -256,16 +265,8 @@ IF (DEF_URBAN_type_scheme == 1) THEN
             CALL aggregation_request_data (landurban, iurban, grid_roof, zip = USE_zip_for_aggregation, area = area_one, &
                data_i4_2d_in1 = reg_typid, data_i4_2d_out1 = reg_typid_one, &
                data_r8_2d_in1 = wtroof, data_r8_2d_out1 = wt_roof_one, &
-               data_r8_2d_in2 = htroof, data_r8_2d_out2 = ht_roof_one)
-
-            IF (.not. allocated(hlr_bld_one))  THEN
-               allocate (hlr_bld_one (size(area_one)))
-               hlr_bld_one = 0.
-            ELSE
-               deallocate (hlr_bld_one)
-               allocate (hlr_bld_one (size(area_one)))
-               hlr_bld_one = 0.
-            ENDIF
+               data_r8_2d_in2 = htroof, data_r8_2d_out2 = ht_roof_one, &
+               data_r8_2d_in3 = hlr   , data_r8_2d_out3 = hlr_bld_one)
 
             ! RG_-45_65_-50_70 of NCAR has no urban data,
             ! all urban patches of this area are assigned to region 30
@@ -285,31 +286,21 @@ IF (DEF_URBAN_type_scheme == 1) THEN
                ht_roof_one = htroof_ncar(urb_typidx,reg_typid_one)
             END WHERE
 
-IF (DEF_USE_CANYON_HWR) THEN
-            WHERE (hlr_bld_one <= 0)
-               hlr_bld_one = hwrbld_ncar(urb_typidx,reg_typid_one)
-            END WHERE
-ELSE
-            WHERE (hlr_bld_one <= 0)
+IF(DEF_USE_CANYON_HWR) THEN
+            hlr_bld_one = -999.
+ENDIF
+
+            WHERE (hlr_bld_one<=0 .or. hlr_bld_one>5)
                hlr_bld_one = hwrbld_ncar(urb_typidx,reg_typid_one) &
                            *(1-sqrt(wtroof_ncar(urb_typidx,reg_typid_one))) &
                            /sqrt(wtroof_ncar(urb_typidx,reg_typid_one))
             END WHERE
-ENDIF
 
 ELSE IF (DEF_URBAN_type_scheme == 2) THEN
             CALL aggregation_request_data (landurban, iurban, grid_roof, zip = USE_zip_for_aggregation, area = area_one, &
                data_r8_2d_in1 = wtroof, data_r8_2d_out1 = wt_roof_one, &
-               data_r8_2d_in2 = htroof, data_r8_2d_out2 = ht_roof_one)
-
-            IF (.not. allocated(hlr_bld_one))  THEN
-               allocate (hlr_bld_one (size(area_one)))
-               hlr_bld_one = 0.
-            ELSE
-               deallocate (hlr_bld_one)
-               allocate (hlr_bld_one (size(area_one)))
-               hlr_bld_one = 0.
-            ENDIF
+               data_r8_2d_in2 = htroof, data_r8_2d_out2 = ht_roof_one, &
+               data_r8_2d_in3 = hlr   , data_r8_2d_out3 = hlr_bld_one)
 
             WHERE (wt_roof_one <= 0)
                wt_roof_one = wtroof_lcz(urb_typidx)
@@ -319,28 +310,21 @@ ELSE IF (DEF_URBAN_type_scheme == 2) THEN
                ht_roof_one = htroof_lcz(urb_typidx)
             END WHERE
 
-IF (DEF_USE_CANYON_HWR) THEN
-            WHERE (hlr_bld_one <= 0)
-               hlr_bld_one = hwrbld_lcz(urb_typidx)
-            END WHERE
-ELSE
-            WHERE (hlr_bld_one <= 0)
+IF(DEF_USE_CANYON_HWR) THEN
+            hlr_bld_one = -999.
+ENDIF
+
+           WHERE (hlr_bld_one<=0 .or. hlr_bld_one>5)
                hlr_bld_one = hwrbld_lcz(urb_typidx) &
                            *(1-sqrt(wtroof_lcz(urb_typidx))) &
                            /sqrt(wtroof_lcz(urb_typidx))
             END WHERE
-ENDIF
-
 ENDIF
             ! area-weight average
             pct_roof(iurban) = sum(wt_roof_one * area_one) / sum(area_one)
             ht_roof (iurban) = sum(ht_roof_one * area_one) / sum(area_one)
             hlr_bld (iurban) = sum(hlr_bld_one * area_one) / sum(area_one)
 
-IF (DEF_USE_CANYON_HWR) THEN
-            ! IF the parameter read is canyon H/W ratio, convert it to H/R ratio
-            hlr_bld(iurban) = hlr_bld(iurban)*(1-sqrt(pct_roof(iurban)))/sqrt(pct_roof(iurban))
-ENDIF
          ENDDO
 
 #ifdef USEMPI
@@ -466,7 +450,7 @@ ENDIF
          -1.0e36_r8, landname, 'PCT_TREE', compress = 0, write_mode = 'one', defval = 0._r8, create_mode = .true.)
 
       typindex = (/(ityp, ityp = 1, N_URB)/)
-      landname  = trim(dir_model_landdata) // '/diag/htop_urban_'//trim(cyear)//'.nc'
+      landname  = trim(dir_model_landdata) // '/diag/urban_ecology_'//trim(cyear)//'.nc'
       CALL srfdata_map_and_write (htop_urb, landurban%settyp, typindex, m_urb2diag, &
          -1.0e36_r8, landname, 'HTOP', compress = 0, write_mode = 'one', defval = 0._r8, create_mode = .false.)
 #endif
@@ -882,7 +866,7 @@ ENDIF
 
 IF (DEF_URBAN_type_scheme == 1) THEN
       ! look up table of NCAR urban properties (using look-up tables)
-      landname = TRIM(dir_rawdata)//'urban/NCAR_urban_properties.nc'
+      landname = TRIM(dir_rawdata)//'/urban_physical/NCAR_urban_properties.nc'
 
       CALL ncio_read_bcast_serial (landname,  "WTROAD_PERV"   , fgper_ncar  )
       CALL ncio_read_bcast_serial (landname,  "EM_ROOF"       , emroof_ncar )
@@ -907,11 +891,18 @@ ENDIF
 
       IF (p_is_io) THEN
 
+         CALL allocate_block_data (grid_alb, albroof)
+
+         landdir= trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_alb%dir)
+         fname  = trim(DEF_rawdata%urban_alb%fname)
+         CALL read_5x5_data (landdir, fname, grid_alb, "ALB_ROOF", albroof)
+
 #ifdef USEMPI
 IF (DEF_URBAN_type_scheme == 1) THEN
-         CALL aggregation_data_daemon (grid_urban, data_i4_2d_in1 = reg_typid)
+         CALL aggregation_data_daemon (grid_urban, data_i4_2d_in1 = reg_typid, data_r8_2d_in1 = albroof)
 ELSE
-         CALL aggregation_data_daemon (grid_patch)
+         CALL aggregation_data_daemon_multigrid (grid_in1 = grid_patch, &
+            grid_in2 = grid_alb, data_r8_2d_in2 = albroof)
 ENDIF
 #endif
       ENDIF
@@ -984,12 +975,29 @@ IF (DEF_URBAN_type_scheme == 1) THEN
             CALL aggregation_request_data (landurban, iurban, grid_urban, zip = USE_zip_for_aggregation, &
                   area = area_one, data_i4_2d_in2 = reg_typid, data_i4_2d_out2 = reg_typid_one)
 ELSE
-            CALL aggregation_request_data (landurban, iurban, grid_patch, zip = USE_zip_for_aggregation, &
-                  area = area_one)
+            CALL aggregation_request_data_multigrid (landurban, iurban, grid_in1 = grid_patch, area = area_one, &
+               grid_in2 = grid_alb, data_r8_2d_in2 = albroof, data_r8_2d_out2 = alb_roof_one_)
 ENDIF
 
             sumarea          = sum(area_one)
             area_urb(iurban) = sumarea
+
+            IF (.not. allocated (alb_roof_one)) THEN
+               allocate (alb_roof_one (nr, ns, size(area_one)))
+               allocate (alb_wall_one (nr, ns, size(area_one)))
+               allocate (alb_gimp_one (nr, ns, size(area_one)))
+               allocate (alb_gper_one (nr, ns, size(area_one)))
+            ELSE
+               deallocate (alb_roof_one)
+               deallocate (alb_wall_one)
+               deallocate (alb_gimp_one)
+               deallocate (alb_gper_one)
+
+               allocate (alb_roof_one (nr, ns, size(area_one)))
+               allocate (alb_wall_one (nr, ns, size(area_one)))
+               allocate (alb_gimp_one (nr, ns, size(area_one)))
+               allocate (alb_gper_one (nr, ns, size(area_one)))
+            ENDIF
 
             ! loop for each finer grid to aggregate data
             DO ipxl = 1, size(area_one)
@@ -1026,10 +1034,15 @@ IF (DEF_URBAN_type_scheme == 1) THEN
                tkwall   (:) = tkwall_ncar (urb_typidx,urb_regidx,:)
                tkgimp   (:) = tkgimp_ncar (urb_typidx,urb_regidx,:)
 
-               albroof(:,:) = albroof_ncar(urb_typidx,urb_regidx,:,:)
-               albwall(:,:) = albwall_ncar(urb_typidx,urb_regidx,:,:)
-               albgper(:,:) = albgper_ncar(urb_typidx,urb_regidx,:,:)
-               albgimp(:,:) = albgimp_ncar(urb_typidx,urb_regidx,:,:)
+               IF (alb_roof_one_(ipxl) > 0) THEN
+                  alb_roof_one(:,:,ipxl) = alb_roof_one_(ipxl)
+               ELSE
+                  alb_roof_one(:,:,ipxl) = albroof_ncar(urb_typidx,urb_regidx,:,:)
+               ENDIF
+
+               alb_wall_one(:,:,ipxl) = albwall_ncar(urb_typidx,urb_regidx,:,:)
+               alb_gper_one(:,:,ipxl) = albgper_ncar(urb_typidx,urb_regidx,:,:)
+               alb_gimp_one(:,:,ipxl) = albgimp_ncar(urb_typidx,urb_regidx,:,:)
 
 ELSE IF (DEF_URBAN_type_scheme == 2) THEN
 
@@ -1053,10 +1066,15 @@ ELSE IF (DEF_URBAN_type_scheme == 2) THEN
                tkwall   (:) = tkwall_lcz (urb_typidx)
                tkgimp   (:) = tkgimp_lcz (urb_typidx)
 
-               albroof(:,:) = albroof_lcz(urb_typidx)
-               albwall(:,:) = albwall_lcz(urb_typidx)
-               albgper(:,:) = albgper_lcz(urb_typidx)
-               albgimp(:,:) = albgimp_lcz(urb_typidx)
+               IF (alb_roof_one_(ipxl) > 0) THEN
+                  alb_roof_one(:,:,ipxl) = alb_roof_one_(ipxl)
+               ELSE
+                  alb_roof_one(:,:,ipxl) = albroof_lcz(urb_typidx)
+               ENDIF
+
+               alb_wall_one(:,:,ipxl) = albwall_lcz(urb_typidx)
+               alb_gper_one(:,:,ipxl) = albgper_lcz(urb_typidx)
+               alb_gimp_one(:,:,ipxl) = albgimp_lcz(urb_typidx)
 ENDIF
 
                fgper   (iurban) = fgper    (iurban) + fgper_  * area_one(ipxl)
@@ -1089,10 +1107,10 @@ ENDIF
                tk_roof (:,iurban) = tk_roof (:,iurban) + tkroof(:) * area_one(ipxl)
                tk_wall (:,iurban) = tk_wall (:,iurban) + tkwall(:) * area_one(ipxl)
 
-               alb_roof(:,:,iurban) = alb_roof(:,:,iurban) + albroof(:,:) * area_one(ipxl)
-               alb_wall(:,:,iurban) = alb_wall(:,:,iurban) + albwall(:,:) * area_one(ipxl)
-               alb_gimp(:,:,iurban) = alb_gimp(:,:,iurban) + albgimp(:,:) * area_one(ipxl)
-               alb_gper(:,:,iurban) = alb_gper(:,:,iurban) + albgper(:,:) * area_one(ipxl)
+               alb_roof(:,:,iurban) = alb_roof(:,:,iurban) + alb_roof_one(:,:,ipxl) * area_one(ipxl)
+               alb_wall(:,:,iurban) = alb_wall(:,:,iurban) + alb_wall_one(:,:,ipxl) * area_one(ipxl)
+               alb_gimp(:,:,iurban) = alb_gimp(:,:,iurban) + alb_gimp_one(:,:,ipxl) * area_one(ipxl)
+               alb_gper(:,:,iurban) = alb_gper(:,:,iurban) + alb_gper_one(:,:,ipxl) * area_one(ipxl)
 
             ENDDO
 
@@ -1152,7 +1170,11 @@ ENDIF
          urb_pct(:) = area_urb(:)/sarea_urb(:)
 
 #ifdef USEMPI
+IF (DEF_URBAN_type_scheme == 1) THEN
          CALL aggregation_worker_done ()
+ELSE
+         CALL aggregation_worker_done_multigrid ()
+ENDIF
 #endif
       ENDIF
 
