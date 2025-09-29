@@ -3,17 +3,17 @@
   ! land cover data
   DEF_rawdata%landcover%dir     = '/landcover/glc/'
   DEF_rawdata%landcover%gname   = 'colm_30m'
-  DEF_rawdata%landcover%fname   = 'LC30m.GLC.'
+  DEF_rawdata%landcover%fname   = 'LC30m.GLC'
 
   ! pft data
   DEF_rawdata%pft%dir           = '/vegetation_pft/c2022/'
   DEF_rawdata%pft%gname         = 'colm_500m'
-  DEF_rawdata%pft%fname         = 'PFT500m.'
+  DEF_rawdata%pft%fname         = 'PFT500m'
 
   ! lai and sai data
   DEF_rawdata%lai_sai%dir       = '/vegetation_lai_sai/c2022/'
   DEF_rawdata%lai_sai%gname     = 'colm_500m'
-  DEF_rawdata%lai_sai%fname     = 'LSAI500m.'
+  DEF_rawdata%lai_sai%fname     = 'LSAI500m'
 
   ! htop data
   DEF_rawdata%htop%dir          = '/vegetation_morphology/tree_height_Simard/'
@@ -27,7 +27,7 @@
 
   DEF_rawdata%urban_roof%dir    = '/urban_morphology/roof_height_fraction_GHSL/'
   DEF_rawdata%urban_roof%gname  = 'colm_100m'
-  DEF_rawdata%urban_roof%fname  = 'ROOF100m.GHSL.'
+  DEF_rawdata%urban_roof%fname  = 'ROOF100m.GHSL'
 
   DEF_rawdata%urban_hl%dir      = '/urban_morphology/building_HL_GBFP/'
   DEF_rawdata%urban_hl%gname    = 'colm_100m'
@@ -35,23 +35,23 @@
 
   DEF_rawdata%urban_htop%dir    = '/vegetation_morphology/tree_height_ETH/'
   DEF_rawdata%urban_htop%gname  = 'colm_30m'
-  DEF_rawdata%urban_htop%fname  = 'LC30m.GLC.'
+  DEF_rawdata%urban_htop%fname  = 'Htop30m.ETH'
 
   DEF_rawdata%urban_fveg%dir    = '/urban_ecology/tree_fraction_GFCC/'
   DEF_rawdata%urban_fveg%gname  = 'colm_30m'
-  DEF_rawdata%urban_fveg%fname  = 'PCTT30m.GFCC.'
+  DEF_rawdata%urban_fveg%fname  = 'PCTT30m.GFCC'
 
   DEF_rawdata%urban_flake%dir   = '/urban_ecology/water_fraction_glc/'
   DEF_rawdata%urban_flake%gname = 'colm_100m'
-  DEF_rawdata%urban_flake%fname = 'PCTW100m.GLC.'
+  DEF_rawdata%urban_flake%fname = 'PCTW100m.GLC'
 
   DEF_rawdata%urban_lsai%dir    = '/urban_ecology/lai_sai/'
   DEF_rawdata%urban_lsai%gname  = 'colm_500m'
-  DEF_rawdata%urban_lsai%fname  = 'URBLSAI500m.'
+  DEF_rawdata%urban_lsai%fname  = 'URBLSAI500m'
 
   DEF_rawdata%urban_pop%dir     = '/urban_human/population_density_LandScan/'
   DEF_rawdata%urban_pop%gname   = 'colm_500m'
-  DEF_rawdata%urban_pop%fname   = 'POP1km.LandScan.'
+  DEF_rawdata%urban_pop%fname   = 'POP1km.LandScan'
 
   DEF_rawdata%urban_lucy%dir    = '/urban_human/'
   DEF_rawdata%urban_lucy%gname  = 'null'
