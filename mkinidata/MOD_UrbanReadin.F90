@@ -217,17 +217,14 @@ CONTAINS
                flake(u) = 0.
             ENDIF
 
+            fveg_urb(u) = fveg_urb(u)/100. !urban tree percent
             IF (flake(u) > 0) THEN
-               IF (froof(u) >= 1-flake(u)-fveg(u)) THEN
-                  froof(u) = 0.9
-               ELSE
-                  froof(u) = froof(u)/(1.-flake(u))
-               ENDIF
+               froof(u) = min(froof(u), 1.-flake(u)-fveg(u))
+               froof(u) = froof(u)/(1.-flake(u))
             ENDIF
 
             IF (DEF_URBAN_TREE) THEN
                ! set tree fractional cover (<= 1.-froof)
-               fveg_urb(u) = fveg_urb(u)/100. !urban tree percent
                IF (flake(u) < 1.) THEN
                   fveg_urb(u) = fveg_urb(u)/(1.-flake(u))
                ELSE
