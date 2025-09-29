@@ -18,11 +18,8 @@
 !-----------------------------------------------------------------------
 
 #ifdef URBAN_MODEL
-SUBROUTINE Aggregation_Urban (dir_rawdata, dir_srfdata, lc_year, &
-                              grid_lucy , grid_lsai, &
-                              grid_roof, grid_pop, grid_alb, &
-                              grid_pctt, grid_pctw)
-
+SUBROUTINE Aggregation_Urban (grid_roof, grid_pctt, grid_lsai, grid_pctw, grid_pop, grid_lucy, grid_alb, &
+                              dir_rawdata, dir_model_landdata, lc_year)
    USE MOD_Precision
    USE MOD_Namelist
    USE MOD_SPMD_Task
@@ -50,7 +47,7 @@ SUBROUTINE Aggregation_Urban (dir_rawdata, dir_srfdata, lc_year, &
    IMPLICIT NONE
 
    character(len=256), intent(in) :: dir_rawdata
-   character(len=256), intent(in) :: dir_srfdata
+   character(len=256), intent(in) :: dir_model_landdata
 
    integer , intent(in) :: lc_year
 
@@ -79,15 +76,15 @@ SUBROUTINE Aggregation_Urban (dir_rawdata, dir_srfdata, lc_year, &
    type(block_data_int32_2d) :: reg_typid
 
    ! output variables
-   integer , ALLOCATABLE, dimension(:) :: LUCY_rid
-   real(r8), ALLOCATABLE, dimension(:) :: pop_den
-   real(r8), ALLOCATABLE, dimension(:) :: pct_tree
-   real(r8), ALLOCATABLE, dimension(:) :: htop_urb
-   real(r8), ALLOCATABLE, dimension(:) :: pct_water
-   real(r8), ALLOCATABLE, dimension(:) :: pct_roof
-   real(r8), ALLOCATABLE, dimension(:) :: ht_roof
-   real(r8), ALLOCATABLE, dimension(:) :: lai_urb
-   real(r8), ALLOCATABLE, dimension(:) :: sai_urb
+   integer , allocatable, dimension(:) :: LUCY_rid
+   real(r8), allocatable, dimension(:) :: pop_den
+   real(r8), allocatable, dimension(:) :: pct_tree
+   real(r8), allocatable, dimension(:) :: htop_urb
+   real(r8), allocatable, dimension(:) :: pct_water
+   real(r8), allocatable, dimension(:) :: pct_roof
+   real(r8), allocatable, dimension(:) :: ht_roof
+   real(r8), allocatable, dimension(:) :: lai_urb
+   real(r8), allocatable, dimension(:) :: sai_urb
 
    ! delete variables not used
    integer , allocatable, dimension(:) :: reg_typid_one
@@ -117,36 +114,36 @@ SUBROUTINE Aggregation_Urban (dir_rawdata, dir_srfdata, lc_year, &
                                                 albgimp_ncar, albgper_ncar
 
    ! output variables, vector data
-   real(r8), ALLOCATABLE, dimension(:)     :: area_urb
-   real(r8), ALLOCATABLE, dimension(:)     :: sarea_urb
-   real(r8), ALLOCATABLE, dimension(:)     :: urb_pct
+   real(r8), allocatable, dimension(:)     :: area_urb
+   real(r8), allocatable, dimension(:)     :: sarea_urb
+   real(r8), allocatable, dimension(:)     :: urb_pct
 
-   real(r8), ALLOCATABLE, dimension(:)     :: hlr_bld
-   real(r8), ALLOCATABLE, dimension(:)     :: fgper
-   real(r8), ALLOCATABLE, dimension(:)     :: fgimp
-   real(r8), ALLOCATABLE, dimension(:)     :: fisa
-   real(r8), ALLOCATABLE, dimension(:)     :: em_roof
-   real(r8), ALLOCATABLE, dimension(:)     :: em_wall
-   real(r8), ALLOCATABLE, dimension(:)     :: em_gimp
-   real(r8), ALLOCATABLE, dimension(:)     :: em_gper
-   real(r8), ALLOCATABLE, dimension(:)     :: thk_roof
-   real(r8), ALLOCATABLE, dimension(:)     :: thk_wall
-   real(r8), ALLOCATABLE, dimension(:)     :: tbld_min
-   real(r8), ALLOCATABLE, dimension(:)     :: tbld_max
+   real(r8), allocatable, dimension(:)     :: hlr_bld
+   real(r8), allocatable, dimension(:)     :: fgper
+   real(r8), allocatable, dimension(:)     :: fgimp
+   real(r8), allocatable, dimension(:)     :: fisa
+   real(r8), allocatable, dimension(:)     :: em_roof
+   real(r8), allocatable, dimension(:)     :: em_wall
+   real(r8), allocatable, dimension(:)     :: em_gimp
+   real(r8), allocatable, dimension(:)     :: em_gper
+   real(r8), allocatable, dimension(:)     :: thk_roof
+   real(r8), allocatable, dimension(:)     :: thk_wall
+   real(r8), allocatable, dimension(:)     :: tbld_min
+   real(r8), allocatable, dimension(:)     :: tbld_max
 
-   real(r8), ALLOCATABLE, dimension(:,:)   :: cv_wgt
-   real(r8), ALLOCATABLE, dimension(:,:)   :: tk_wgt
-   real(r8), ALLOCATABLE, dimension(:,:)   :: cv_roof
-   real(r8), ALLOCATABLE, dimension(:,:)   :: cv_wall
-   real(r8), ALLOCATABLE, dimension(:,:)   :: cv_gimp
-   real(r8), ALLOCATABLE, dimension(:,:)   :: tk_roof
-   real(r8), ALLOCATABLE, dimension(:,:)   :: tk_wall
-   real(r8), ALLOCATABLE, dimension(:,:)   :: tk_gimp
+   real(r8), allocatable, dimension(:,:)   :: cv_wgt
+   real(r8), allocatable, dimension(:,:)   :: tk_wgt
+   real(r8), allocatable, dimension(:,:)   :: cv_roof
+   real(r8), allocatable, dimension(:,:)   :: cv_wall
+   real(r8), allocatable, dimension(:,:)   :: cv_gimp
+   real(r8), allocatable, dimension(:,:)   :: tk_roof
+   real(r8), allocatable, dimension(:,:)   :: tk_wall
+   real(r8), allocatable, dimension(:,:)   :: tk_gimp
 
-   real(r8), ALLOCATABLE, dimension(:,:,:) :: alb_roof
-   real(r8), ALLOCATABLE, dimension(:,:,:) :: alb_wall
-   real(r8), ALLOCATABLE, dimension(:,:,:) :: alb_gimp
-   real(r8), ALLOCATABLE, dimension(:,:,:) :: alb_gper
+   real(r8), allocatable, dimension(:,:,:) :: alb_roof
+   real(r8), allocatable, dimension(:,:,:) :: alb_wall
+   real(r8), allocatable, dimension(:,:,:) :: alb_gimp
+   real(r8), allocatable, dimension(:,:,:) :: alb_gper
 
    integer , allocatable, dimension(:)     :: locpth
 
@@ -181,7 +178,7 @@ SUBROUTINE Aggregation_Urban (dir_rawdata, dir_srfdata, lc_year, &
 #endif
 
       write(cyear,'(i4.4)') lc_year
-      landsrfdir = trim(dir_srfdata) // '/urban/' // trim(cyear)
+      landsrfdir = trim(dir_model_landdata) // '/urban/' // trim(cyear)
 
       first_call_LAI_urban = .true.
       first_call_SAI_urban = .true.
@@ -225,15 +222,13 @@ IF (DEF_URBAN_type_scheme == 1) THEN
 ENDIF
 
          landdir= trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_roof%dir)
-IF (DEF_Urban_geom_data == 1) THEN
+IF (index(DEF_rawdata%urban_roof%fname, 'GHSL')>0) THEN
          fname  = trim(DEF_rawdata%urban_roof%fname)//'.'//trim(c5year)
-         CALL read_5x5_data (landdir, fname, grid_roof, "PCT_ROOF", wtroof)
-         CALL read_5x5_data (landdir, fname, grid_roof, "HT_ROOF" , htroof)
 ELSE
          fname  = trim(DEF_rawdata%urban_roof%fname)
+ENDIF
          CALL read_5x5_data (landdir, fname, grid_roof, "PCT_ROOF", wtroof)
          CALL read_5x5_data (landdir, fname, grid_roof, "HT_ROOF" , htroof)
-ENDIF
 
 #ifdef USEMPI
 IF (DEF_URBAN_type_scheme == 1) THEN
@@ -354,24 +349,24 @@ ENDIF
       ENDIF
 
       ! output
-      landname = trim(dir_srfdata) // '/urban/'//trim(cyear)//'/PCT_ROOF.nc'
+      landname = trim(dir_model_landdata) // '/urban/'//trim(cyear)//'/PCT_ROOF.nc'
       CALL ncio_create_file_vector (landname, landurban)
       CALL ncio_define_dimension_vector (landname, landurban, 'urban')
       CALL ncio_write_vector (landname, 'PCT_ROOF', 'urban', landurban, pct_roof, DEF_Srfdata_CompressLevel)
 
-      landname = trim(dir_srfdata) // '/urban/'//trim(cyear)//'/HT_ROOF.nc'
+      landname = trim(dir_model_landdata) // '/urban/'//trim(cyear)//'/HT_ROOF.nc'
       CALL ncio_create_file_vector (landname, landurban)
       CALL ncio_define_dimension_vector (landname, landurban, 'urban')
       CALL ncio_write_vector (landname, 'HT_ROOF', 'urban', landurban, ht_roof, DEF_Srfdata_CompressLevel)
 
-      landname = trim(dir_srfdata) // '/urban/'//trim(cyear)//'/HLR_BLD.nc'
+      landname = trim(dir_model_landdata) // '/urban/'//trim(cyear)//'/HLR_BLD.nc'
       CALL ncio_create_file_vector (landname, landurban)
       CALL ncio_define_dimension_vector (landname, landurban, 'urban')
       CALL ncio_write_vector (landname, 'BUILDING_HLR'  , 'urban', landurban, hlr_bld, DEF_Srfdata_CompressLevel)
 
 #ifdef SrfdataDiag
       typindex = (/(ityp, ityp = 1, N_URB)/)
-      landname  = trim(dir_srfdata) // '/diag/urban_morphology_'//trim(cyear)//'.nc'
+      landname  = trim(dir_model_landdata) // '/diag/urban_morphology_'//trim(cyear)//'.nc'
       CALL srfdata_map_and_write (ht_roof, landurban%settyp, typindex, m_urb2diag, &
          -1.0e36_r8, landname, 'HT_ROOF', compress = 0, write_mode = 'one', defval = 0._r8, create_mode = .true.)
 
@@ -454,24 +449,24 @@ ENDIF
       ENDIF
 
       ! output
-      landname = trim(dir_srfdata) // '/urban/'//trim(cyear)//'/PCT_Tree.nc'
+      landname = trim(dir_model_landdata) // '/urban/'//trim(cyear)//'/PCT_Tree.nc'
       CALL ncio_create_file_vector (landname, landurban)
       CALL ncio_define_dimension_vector (landname, landurban, 'urban')
       CALL ncio_write_vector (landname, 'PCT_Tree', 'urban', landurban, pct_tree, DEF_Srfdata_CompressLevel)
 
-      landname = trim(dir_srfdata) // '/urban/'//trim(cyear)//'/htop_urb.nc'
+      landname = trim(dir_model_landdata) // '/urban/'//trim(cyear)//'/htop_urb.nc'
       CALL ncio_create_file_vector (landname, landurban)
       CALL ncio_define_dimension_vector (landname, landurban, 'urban')
       CALL ncio_write_vector (landname, 'URBAN_TREE_TOP', 'urban', landurban, htop_urb, DEF_Srfdata_CompressLevel)
 
 #ifdef SrfdataDiag
       typindex = (/(ityp, ityp = 1, N_URB)/)
-      landname  = trim(dir_srfdata) // '/diag/urban_ecology_'//trim(cyear)//'.nc'
+      landname  = trim(dir_model_landdata) // '/diag/urban_ecology_'//trim(cyear)//'.nc'
       CALL srfdata_map_and_write (pct_tree, landurban%settyp, typindex, m_urb2diag, &
          -1.0e36_r8, landname, 'PCT_TREE', compress = 0, write_mode = 'one', defval = 0._r8, create_mode = .true.)
 
       typindex = (/(ityp, ityp = 1, N_URB)/)
-      landname  = trim(dir_srfdata) // '/diag/htop_urban_'//trim(cyear)//'.nc'
+      landname  = trim(dir_model_landdata) // '/diag/htop_urban_'//trim(cyear)//'.nc'
       CALL srfdata_map_and_write (htop_urb, landurban%settyp, typindex, m_urb2diag, &
          -1.0e36_r8, landname, 'HTOP', compress = 0, write_mode = 'one', defval = 0._r8, create_mode = .false.)
 #endif
@@ -518,7 +513,7 @@ ENDIF
             write(cyear,'(i4.4)') iy
          ENDIF
 
-         landsrfdir = trim(dir_srfdata) // '/urban/' // trim(cyear) // '/LAI'
+         landsrfdir = trim(dir_model_landdata) // '/urban/' // trim(cyear) // '/LAI'
          CALL system('mkdir -p ' // trim(adjustl(landsrfdir)))
 
          ! allocate and read grided LAI raw data
@@ -569,14 +564,14 @@ ENDIF
             ENDIF
 
             ! output
-            landname = trim(dir_srfdata) // '/urban/'//trim(cyear)//'/LAI/urban_LAI_'//trim(cmonth)//'.nc'
+            landname = trim(dir_model_landdata) // '/urban/'//trim(cyear)//'/LAI/urban_LAI_'//trim(cmonth)//'.nc'
             CALL ncio_create_file_vector (landname, landurban)
             CALL ncio_define_dimension_vector (landname, landurban, 'urban')
             CALL ncio_write_vector (landname, 'TREE_LAI', 'urban', landurban, lai_urb, DEF_Srfdata_CompressLevel)
 
 #ifdef SrfdataDiag
             typindex = (/(ityp, ityp = 1, N_URB)/)
-            landname  = trim(dir_srfdata) // '/diag/urban_ecology_'//trim(cyear)//'.nc'
+            landname  = trim(dir_model_landdata) // '/diag/urban_ecology_'//trim(cyear)//'.nc'
             CALL srfdata_map_and_write (lai_urb, landurban%settyp, typindex, m_urb2diag, &
                   -1.0e36_r8, landname, 'Urban_Tree_LAI', compress = 0, write_mode = 'one',  &
                   lastdimname = 'Itime', lastdimvalue = imonth, defval = 0._r8, create_mode = .false.)!first_call_LAI_urban)
@@ -660,13 +655,13 @@ ENDIF
             ENDIF
 
             ! output
-            landname = trim(dir_srfdata) // '/urban/'//trim(cyear)//'/LAI/urban_SAI_'//trim(cmonth)//'.nc'
+            landname = trim(dir_model_landdata) // '/urban/'//trim(cyear)//'/LAI/urban_SAI_'//trim(cmonth)//'.nc'
             CALL ncio_create_file_vector (landname, landurban)
             CALL ncio_define_dimension_vector (landname, landurban, 'urban')
             CALL ncio_write_vector (landname, 'TREE_SAI', 'urban', landurban, sai_urb, DEF_Srfdata_CompressLevel)
 
 #ifdef SrfdataDiag
-            landname  = trim(dir_srfdata) // '/diag/urban_ecology_'//trim(cyear)//'.nc'
+            landname  = trim(dir_model_landdata) // '/diag/urban_ecology_'//trim(cyear)//'.nc'
             CALL srfdata_map_and_write (sai_urb, landurban%settyp, typindex, m_urb2diag, &
                   -1.0e36_r8, landname, 'TREE_SAI', compress = 0, write_mode = 'one',  &
                   lastdimname = 'Itime', lastdimvalue = imonth, defval = 0._r8, create_mode = .false.)!first_call_SAI_urban)
@@ -726,14 +721,14 @@ ENDIF
       ENDIF
 
       ! output
-      landname = trim(dir_srfdata) // '/urban/'//trim(cyear)//'/PCT_Water.nc'
+      landname = trim(dir_model_landdata) // '/urban/'//trim(cyear)//'/PCT_Water.nc'
       CALL ncio_create_file_vector (landname, landurban)
       CALL ncio_define_dimension_vector (landname, landurban, 'urban')
       CALL ncio_write_vector (landname, 'PCT_Water', 'urban', landurban, pct_water, DEF_Srfdata_CompressLevel)
 
 #ifdef SrfdataDiag
       typindex = (/(ityp, ityp = 1, N_URB)/)
-      landname  = trim(dir_srfdata) // '/diag/urban_ecology_'//trim(cyear)//'.nc'
+      landname  = trim(dir_model_landdata) // '/diag/urban_ecology_'//trim(cyear)//'.nc'
       CALL srfdata_map_and_write (pct_water, landurban%settyp, typindex, m_urb2diag, &
          -1.0e36_r8, landname, 'PCT_WATER', compress = 0, write_mode = 'one', defval = 0._r8, create_mode = .false.)
 #endif
@@ -782,14 +777,14 @@ ENDIF
       ENDIF
 
       ! output
-      landname = trim(dir_srfdata) // '/urban/'//trim(cyear)//'/LUCY_region_id.nc'
+      landname = trim(dir_model_landdata) // '/urban/'//trim(cyear)//'/LUCY_region_id.nc'
       CALL ncio_create_file_vector (landname, landurban)
       CALL ncio_define_dimension_vector (landname, landurban, 'urban')
       CALL ncio_write_vector (landname, 'LUCY_id', 'urban', landurban, LUCY_rid, DEF_Srfdata_CompressLevel)
 
 #ifdef SrfdataDiag
       typindex = (/(ityp, ityp = 1, N_URB)/)
-      landname  = trim(dir_srfdata) // '/diag/urban_human_'//trim(cyear)//'.nc'
+      landname  = trim(dir_model_landdata) // '/diag/urban_human_'//trim(cyear)//'.nc'
 
       IF (allocated(LUCY_rid)) THEN
          allocate (LUCY_rid_r8 (size(LUCY_rid)))
@@ -864,14 +859,14 @@ ENDIF
       ENDIF
 
       ! output
-      landname = trim(dir_srfdata) // '/urban/'//trim(cyear)//'/POP.nc'
+      landname = trim(dir_model_landdata) // '/urban/'//trim(cyear)//'/POP.nc'
       CALL ncio_create_file_vector (landname, landurban)
       CALL ncio_define_dimension_vector (landname, landurban, 'urban')
       CALL ncio_write_vector (landname, 'POP_DEN', 'urban', landurban, pop_den, DEF_Srfdata_CompressLevel)
 
 #ifdef SrfdataDiag
       typindex = (/(ityp, ityp = 1, N_URB)/)
-      landname  = trim(dir_srfdata) // '/diag/urban_human_'//trim(cyear)//'.nc'
+      landname  = trim(dir_model_landdata) // '/diag/urban_human_'//trim(cyear)//'.nc'
       CALL srfdata_map_and_write (pop_den, landurban%settyp, typindex, m_urb2diag, &
          -1.0e36_r8, landname, 'POPULATION_DEN', compress = 0, write_mode = 'one', defval = 0._r8, create_mode = .false.)
 #endif
@@ -1157,15 +1152,13 @@ ENDIF
          urb_pct(:) = area_urb(:)/sarea_urb(:)
 
 #ifdef USEMPI
-!IF (DEF_URBAN_type_scheme == 1) THEN
          CALL aggregation_worker_done ()
-!ENDIF
 #endif
       ENDIF
 
       !output
       write(cyear,'(i4.4)') lc_year
-      landname = trim(dir_srfdata) // '/urban/'//trim(cyear)//'/urban.nc'
+      landname = trim(dir_model_landdata) // '/urban/'//trim(cyear)//'/urban.nc'
       CALL ncio_create_file_vector (landname, landurban)
 
       CALL ncio_define_dimension_vector (landname, landurban, 'urban')
@@ -1197,12 +1190,12 @@ ENDIF
 
 #ifdef SrfdataDiag
       typindex = (/(ityp, ityp = 1, N_URB)/)
-      landname  = trim(dir_srfdata) // '/diag/urban_type_'//trim(cyear)//'.nc'
+      landname  = trim(dir_model_landdata) // '/diag/urban_type_'//trim(cyear)//'.nc'
       CALL srfdata_map_and_write (urb_pct, landurban%settyp, typindex, m_urb2diag, &
          -1.0e36_r8, landname, 'PCT_TYPE', compress = 0, write_mode = 'one', &
          stat_mode = 'fraction', defval = 0._r8, pctshared = urb_pct, create_mode = .true.)
 
-      landname  = trim(dir_srfdata) // '/diag/urban_morphology_'//trim(cyear)//'.nc'
+      landname  = trim(dir_model_landdata) // '/diag/urban_morphology_'//trim(cyear)//'.nc'
       CALL srfdata_map_and_write (fgimp, landurban%settyp, typindex, m_urb2diag, &
          -1.0e36_r8, landname, 'WT_IMPG', compress = 0, write_mode = 'one', &
          defval = 0._r8, create_mode = .false.)
@@ -1212,7 +1205,7 @@ ENDIF
          defval = 0._r8, create_mode = .false.)
 
       typindex = (/(ityp, ityp = 1, N_URB)/)
-      landname  = trim(dir_srfdata) // '/diag/urban_phyical_'//trim(cyear)//'.nc'
+      landname  = trim(dir_model_landdata) // '/diag/urban_phyical_'//trim(cyear)//'.nc'
       CALL srfdata_map_and_write (fgper, landurban%settyp, typindex, m_urb2diag, &
          -1.0e36_r8, landname, 'WTROAD_PERV', compress = 0, write_mode = 'one', &
          defval = 0._r8, create_mode = .true.)
