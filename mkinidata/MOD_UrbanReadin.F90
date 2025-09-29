@@ -219,7 +219,7 @@ CONTAINS
 
             fveg_urb(u) = fveg_urb(u)/100. !urban tree percent
             IF (flake(u) > 0) THEN
-               froof(u) = min(froof(u), 1.-flake(u)-fveg(u))
+               froof(u) = min(froof(u), 1.-flake(u)-fveg_urb(u))
                froof(u) = froof(u)/(1.-flake(u))
             ENDIF
 
