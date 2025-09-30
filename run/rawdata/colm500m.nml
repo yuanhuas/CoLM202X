@@ -36,7 +36,7 @@
 
   DEF_rawdata%urban_roof%dir    = '/urban_morphology/roof_height_fraction_GHSL/'
   DEF_rawdata%urban_roof%gname  = 'colm_500m'
-  DEF_rawdata%urban_roof%fname  = 'ROOF100m.GHSL'
+  DEF_rawdata%urban_roof%fname  = 'ROOF500m.GHSL'
 
   DEF_rawdata%urban_hl%dir      = '/urban_morphology/building_HL_GBFP/'
   DEF_rawdata%urban_hl%gname    = 'colm_500m'
