@@ -208,11 +208,11 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
                      IF (iy < 2000) THEN
                         ! every 5 years one file
                         write(cyear_bk,'(i4.4)') (iy / 5) * 5
-                        fname = trim(DEF_rawdata%lai_sai%fname)//trim(cyear_bk)
+                        fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear_bk)
                         CALL read_5x5_data_time (dir_5x5, fname, gridlai, &
                                    'MONTHLY_LC_LAI_'//trim(cyear), itime, LAI)
                      ELSE
-                        fname = trim(DEF_rawdata%lai_sai%fname)//trim(cyear)
+                        fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear)
                         CALL read_5x5_data_time (dir_5x5, fname, gridlai, &
                                                  'MONTHLY_LC_LAI', itime, LAI)
                      ENDIF
@@ -301,9 +301,9 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
             write(cyear,'(i4.4)') iy
             IF (iy < 2000) THEN
                write(cyear_bk,'(i4.4)') (iy / 5) * 5
-               fname = trim(DEF_rawdata%lai_sai%fname)//trim(cyear_bk)
+               fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear_bk)
             ELSE
-               fname = trim(DEF_rawdata%lai_sai%fname)//trim(cyear)
+               fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear)
             ENDIF
 
             DO itime = 1, 12
@@ -409,8 +409,8 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
 #endif
 
       IF (p_is_io) THEN
-         CALL allocate_block_data (gridlai, pftLSAI, N_PFT_modis, lb1 = 0)
-         CALL allocate_block_data (gridlai, pftPCT,  N_PFT_modis, lb1 = 0)
+         CALL allocate_block_data (gridlai , pftLSAI, N_PFT_modis, lb1 = 0)
+         CALL allocate_block_data (grid_pft, pftPCT,  N_PFT_modis, lb1 = 0)
       ENDIF
 
       IF (p_is_worker) THEN
@@ -420,27 +420,36 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
          allocate(SAI_pfts    (numpft  ))
       ENDIF
 
-      dir_5x5 = trim(dir_rawdata) // trim(DEF_rawdata%lai_sai%dir)
       DO iy = start_year, end_year
          write(cyear,'(i4.4)') iy
          CALL system('mkdir -p ' // trim(landdir) // trim(cyear))
-
-         IF (iy < 2000) THEN
-            write(cyear_bk,'(i4.4)') (iy / 5) * 5
-            fname = trim(DEF_rawdata%lai_sai%fname)//trim(cyear_bk)
-         ELSE
-            fname = trim(DEF_rawdata%lai_sai%fname)//trim(cyear)
-         ENDIF
 
          IF (p_is_master) THEN
             write(*,'(A,I4)') 'Aggregate LAI : ', iy
          ENDIF
 
-         IF (p_is_io) THEN
-            CALL read_5x5_data_pft (dir_5x5, fname, gridlai, 'PCT_PFT', pftPCT)
+         dir_5x5 = trim(dir_rawdata) // trim(DEF_rawdata%pft%dir)
+
+         IF (iy < 2000) THEN
+            write(cyear_bk,'(i4.4)') (iy / 5) * 5
+            fname = trim(DEF_rawdata%pft%fname)//'.'//trim(cyear_bk)
+         ELSE
+            fname = trim(DEF_rawdata%pft%fname)//'.'//trim(cyear)
          ENDIF
 
-         IF(.not. DEF_USE_LAIFEEDBACK)THEN
+         IF (p_is_io) THEN
+            CALL read_5x5_data_pft (dir_5x5, fname, grid_pft, 'PCT_PFT', pftPCT)
+         ENDIF
+
+         IF (.not. DEF_USE_LAIFEEDBACK)THEN
+            dir_5x5 = trim(dir_rawdata) // trim(DEF_rawdata%lai_sai%dir)
+            IF (iy < 2000) THEN
+               write(cyear_bk,'(i4.4)') (iy / 5) * 5
+               fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear_bk)
+            ELSE
+               fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear)
+            ENDIF
+
             DO month = 1, 12
                IF (p_is_io) THEN
                   IF (iy < 2000) THEN
@@ -451,9 +460,9 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
                         'MONTHLY_PFT_LAI', month, pftLSAI)
                   ENDIF
 #ifdef USEMPI
-                  CALL aggregation_data_daemon (gridlai, &
+                  CALL aggregation_data_daemon_multigrid (grid_pft, &
                      data_r8_3d_in1 = pftPCT,  n1_r8_3d_in1 = 16, &
-                     data_r8_3d_in2 = pftLSAI, n1_r8_3d_in2 = 16)
+                     grid_in2=gridlai, data_r8_3d_in2 = pftLSAI, n1_r8_3d_in2 = 16)
 #endif
                ENDIF
 
@@ -484,11 +493,10 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
                         CYCLE
                      ENDIF
 
-                     CALL aggregation_request_data (landpatch, ipatch, gridlai, &
-                        zip = USE_zip_for_aggregation, area = area_one, &
+                     CALL aggregation_request_data_multigrid (landpatch, ipatch, grid_pft, area_one, &
                         data_r8_3d_in1 = pftPCT,  data_r8_3d_out1 = pct_pft_one, &
                         n1_r8_3d_in1 = 16, lb1_r8_3d_in1 = 0, &
-                        data_r8_3d_in2 = pftLSAI, data_r8_3d_out2 = lai_pft_one, &
+                        grid_in2=gridlai, data_r8_3d_in2 = pftLSAI, data_r8_3d_out2 = lai_pft_one, &
                         n1_r8_3d_in2 = 16, lb1_r8_3d_in2 = 0)
 
                      IF (allocated(lai_one)) deallocate(lai_one)
@@ -531,7 +539,7 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
                   ENDDO
 
 #ifdef USEMPI
-                  CALL aggregation_worker_done ()
+                  CALL aggregation_worker_done_multigrid ()
 #endif
                ENDIF
 
@@ -597,9 +605,9 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
                      'MONTHLY_PFT_SAI', month, pftLSAI)
                ENDIF
 #ifdef USEMPI
-               CALL aggregation_data_daemon (gridlai, &
+               CALL aggregation_data_daemon_multigrid (grid_pft, &
                   data_r8_3d_in1 = pftPCT,  n1_r8_3d_in1 = 16, &
-                  data_r8_3d_in2 = pftLSAI, n1_r8_3d_in2 = 16)
+                  grid_in2 = gridlai, data_r8_3d_in2 = pftLSAI, n1_r8_3d_in2 = 16)
 #endif
             ENDIF
 
@@ -630,11 +638,10 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
                      CYCLE
                   ENDIF
 
-                  CALL aggregation_request_data (landpatch, ipatch, gridlai, &
-                     zip = USE_zip_for_aggregation, area = area_one, &
+                  CALL aggregation_request_data_multigrid (landpatch, ipatch, grid_pft, area = area_one, &
                      data_r8_3d_in1 = pftPCT,  data_r8_3d_out1 = pct_pft_one, &
                      n1_r8_3d_in1 = 16, lb1_r8_3d_in1 = 0, &
-                     data_r8_3d_in2 = pftLSAI, data_r8_3d_out2 = sai_pft_one, &
+                     grid_in2 = gridlai, data_r8_3d_in2 = pftLSAI, data_r8_3d_out2 = sai_pft_one, &
                      n1_r8_3d_in2 = 16, lb1_r8_3d_in2 = 0)
 
                   IF (allocated(sai_one)) deallocate(sai_one)
@@ -677,7 +684,7 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
                ENDDO
 
 #ifdef USEMPI
-               CALL aggregation_worker_done ()
+               CALL aggregation_worker_done_multigrid ()
 #endif
             ENDIF
 
