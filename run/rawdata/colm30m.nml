@@ -19,7 +19,6 @@
   DEF_rawdata%htop%dir          = '/vegetation_morphology/tree_height_Tolan/'
   DEF_rawdata%htop%gname        = 'colm_30m'
   DEF_rawdata%htop%fname        = 'Htop30m.Tolan'
-  DEF_rawdata%htop%vname        = 'Htop'
 
   ! ----- Urban -----
   DEF_rawdata%urban_type%dir    = '/urban_type/lcz/'
