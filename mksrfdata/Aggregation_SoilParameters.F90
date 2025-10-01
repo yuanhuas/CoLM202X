@@ -341,7 +341,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (vf_quartz_mineral_s_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'vf_quartz_mineral_s_l'//trim(c), compress = 1, write_mode = 'one', &
+            -1.0e36_r8, lndname, 'vf_quartz_mineral_s_l'//trim(c), compress = 6, write_mode = 'one', &
             create_mode = (nsl==1))
 #endif
 
@@ -485,7 +485,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (vf_gravels_s_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'vf_gravels_s_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'vf_gravels_s_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          lndname = trim(landdir)//'/vf_sand_s_l'//trim(c)//'_patches.nc'
@@ -498,7 +498,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (vf_sand_s_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'vf_sand_s_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'vf_sand_s_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          lndname = trim(landdir)//'/vf_om_s_l'//trim(c)//'_patches.nc'
@@ -511,7 +511,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (vf_om_s_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'vf_om_s_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'vf_om_s_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          lndname = trim(landdir)//'/BA_alpha_l'//trim(c)//'_patches.nc'
@@ -524,7 +524,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (BA_alpha_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'BA_alpha_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'BA_alpha_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          lndname = trim(landdir)//'/BA_beta_l'//trim(c)//'_patches.nc'
@@ -537,7 +537,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (BA_beta_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'BA_beta_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'BA_beta_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          ! (5) gravimetric fraction of gravels
@@ -604,7 +604,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (wf_gravels_s_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'wf_gravels_s_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'wf_gravels_s_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          ! (6) gravimetric fraction of sand
@@ -671,7 +671,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (wf_sand_s_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'wf_sand_s_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'wf_sand_s_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
 
@@ -885,7 +885,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (theta_r_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'theta_r_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'theta_r_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          lndname = trim(landdir)//'/alpha_vgm_l'//trim(c)//'_patches.nc'
@@ -898,7 +898,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (alpha_vgm_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'alpha_vgm_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'alpha_vgm_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          lndname = trim(landdir)//'/n_vgm_l'//trim(c)//'_patches.nc'
@@ -911,7 +911,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (n_vgm_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'n_vgm_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'n_vgm_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          lndname = trim(landdir)//'/theta_s_l'//trim(c)//'_patches.nc'
@@ -924,7 +924,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (theta_s_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'theta_s_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'theta_s_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          lndname = trim(landdir)//'/k_s_l'//trim(c)//'_patches.nc'
@@ -937,7 +937,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (k_s_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'k_s_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'k_s_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          lndname = trim(landdir)//'/L_vgm_l'//trim(c)//'_patches.nc'
@@ -950,7 +950,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (L_vgm_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'L_vgm_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'L_vgm_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
 #endif
@@ -1121,7 +1121,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (theta_s_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'theta_s_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'theta_s_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          lndname = trim(landdir)//'/k_s_l'//trim(c)//'_patches.nc'
@@ -1134,7 +1134,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (k_s_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'k_s_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'k_s_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 #endif
 
@@ -1148,7 +1148,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (psi_s_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'psi_s_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'psi_s_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          lndname = trim(landdir)//'/lambda_l'//trim(c)//'_patches.nc'
@@ -1161,7 +1161,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (lambda_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'lambda_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'lambda_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          ! (15) heat capacity of soil solids [J/(m3 K)]
@@ -1227,7 +1227,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (csol_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'csol_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'csol_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          ! (16) thermal conductivity of unfrozen saturated soil [W/m-K]
@@ -1293,7 +1293,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (tksatu_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'tksatu_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'tksatu_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          ! (17) thermal conductivity of frozen saturated soil [W/m-K]
@@ -1359,7 +1359,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (tksatf_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'tksatf_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'tksatf_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          ! (18) thermal conductivity for dry soil [W/(m-K)]
@@ -1425,7 +1425,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (tkdry_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'tkdry_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'tkdry_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          ! (19) thermal conductivity of soil solids [W/m-K]
@@ -1491,7 +1491,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (k_solids_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'k_solids_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'k_solids_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          ! (20) OM_density [kg/m3]
@@ -1558,7 +1558,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (OM_density_s_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'OM_density_s_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'OM_density_s_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          ! (21) bulk density of soil (GRAVELS + OM + Mineral Soils)
@@ -1626,7 +1626,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (BD_all_s_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'BD_all_s_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'BD_all_s_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
          ! (22) volumetric fraction of clay
@@ -1693,7 +1693,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (vf_clay_s_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'vf_clay_s_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'vf_clay_s_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
 
@@ -1761,7 +1761,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (wf_om_s_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'wf_om_s_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'wf_om_s_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
 
 
@@ -1829,7 +1829,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          typpatch = (/(ityp, ityp = 0, N_land_classification)/)
          lndname  = trim(dir_model_landdata) // '/diag/soil_parameters_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (wf_clay_s_patches, landpatch%settyp, typpatch, m_patch2diag, &
-            -1.0e36_r8, lndname, 'wf_clay_s_l'//trim(c), compress = 1, write_mode = 'one')
+            -1.0e36_r8, lndname, 'wf_clay_s_l'//trim(c), compress = 6, write_mode = 'one')
 #endif
       ENDDO
 
