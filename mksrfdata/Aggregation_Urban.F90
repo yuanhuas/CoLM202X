@@ -388,7 +388,7 @@ ENDIF
          fname  = trim(DEF_rawdata%urban_htop%fname)
 
          CALL allocate_block_data (grid_pctt, htopu)
-         CALL read_5x5_data (landdir, fname, grid_pctt, "Htop", htopu)
+         CALL read_5x5_data (landdir, fname, grid_pctt, trim(DEF_rawdata%urban_htop%vname), htopu)
 
 #ifdef USEMPI
          CALL aggregation_data_daemon (grid_pctt, &

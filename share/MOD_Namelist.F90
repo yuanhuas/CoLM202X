@@ -364,7 +364,7 @@ MODULE MOD_Namelist
    !irrigation allocated method
    integer            :: DEF_IRRIGATION_ALLOCATION = 1
 
-   !photosynthesis stress option 
+   !photosynthesis stress option
    logical            :: DEF_USE_NOSTRESSNITROGEN = .false.
 
    !root resistance factors option
@@ -1032,10 +1032,10 @@ CONTAINS
       DEF_LAI_END_YEAR,                       &
       DEF_LAI_CHANGE_YEARLY,                  &
       DEF_USE_LAIFEEDBACK,                    & !add by Xingjie Lu, use for updating LAI with leaf carbon
-      DEF_USE_IRRIGATION,                     & !add by Hongbin Liang @ sysu 
-      DEF_IRRIGATION_ALLOCATION,              & !add by Hongbin Liang @ sysu 
-      DEF_USE_NOSTRESSNITROGEN,               & !add by Hongbin Liang @ sysu 
-      DEF_RSTFAC,                             & !add by Hongbin Liang @ sysu 
+      DEF_USE_IRRIGATION,                     & !add by Hongbin Liang @ sysu
+      DEF_IRRIGATION_ALLOCATION,              & !add by Hongbin Liang @ sysu
+      DEF_USE_NOSTRESSNITROGEN,               & !add by Hongbin Liang @ sysu
+      DEF_RSTFAC,                             & !add by Hongbin Liang @ sysu
       DEF_LC_YEAR,                            &
       DEF_LULCC_SCHEME,                       &
 
@@ -1648,6 +1648,7 @@ ENDIF
       CALL mpi_bcast (DEF_rawdata%urban_htop%dir             ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_rawdata%urban_htop%gname           ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_rawdata%urban_htop%fname           ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_htop%vname           ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
 
       CALL mpi_bcast (DEF_rawdata%urban_pop%dir              ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_rawdata%urban_pop%gname            ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
@@ -1925,7 +1926,8 @@ ENDIF
 
    IMPLICIT NONE
 
-      DEF_rawdata%htop%vname      = 'HTOP'
+      DEF_rawdata%htop%vname          = 'HTOP'
+      DEF_rawdata%urban_htop%vname    = 'HTOP'
 
    END SUBROUTINE set_rawdata_default
 
@@ -2190,7 +2192,7 @@ ENDIF
 
       IF(DEF_USE_IRRIGATION)THEN
          CALL sync_hist_vars_one (DEF_hist_vars%sum_irrig                    , set_defaults)
-         CALL sync_hist_vars_one (DEF_hist_vars%sum_deficit_irrig            , set_defaults)    
+         CALL sync_hist_vars_one (DEF_hist_vars%sum_deficit_irrig            , set_defaults)
          CALL sync_hist_vars_one (DEF_hist_vars%sum_irrig_count              , set_defaults)
          CALL sync_hist_vars_one (DEF_hist_vars%waterstorage                 , set_defaults)
          CALL sync_hist_vars_one (DEF_hist_vars%groundwater_demand           , set_defaults)
