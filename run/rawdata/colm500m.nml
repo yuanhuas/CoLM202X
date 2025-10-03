@@ -9,25 +9,16 @@
   DEF_rawdata%pft%dir           = '/vegetation_pft/c2022/'
   DEF_rawdata%pft%gname         = 'colm_500m'
   DEF_rawdata%pft%fname         = 'PFT500m'
-  !DEF_rawdata%pft%dir          = '/plant_15s/'
-  !DEF_rawdata%pft%gname        = 'colm_500m'
-  !DEF_rawdata%pft%fname        = 'MOD'
 
   ! lai and sai data
   DEF_rawdata%lai_sai%dir       = '/vegetation_lai_sai/c2022/'
   DEF_rawdata%lai_sai%gname     = 'colm_500m'
   DEF_rawdata%lai_sai%fname     = 'LSAI500m'
-  !DEF_rawdata%lai_sai%dir      = '/plant_15s/'
-  !DEF_rawdata%lai_sai%gname    = 'colm_500m'
-  !DEF_rawdata%lai_sai%fname    = 'MOD'
 
   ! htop data
   DEF_rawdata%htop%dir          = '/vegetation_morphology/tree_height_Simard/'
   DEF_rawdata%htop%gname        = 'colm_1km'
   DEF_rawdata%htop%fname        = 'Htop1km.Simard'
-  !DEF_rawdata%htop%dir         = '/plant_15s/'
-  !DEF_rawdata%htop%gname       = 'colm_500m'
-  !DEF_rawdata%htop%fname       = 'MOD'
 
   ! ----- Urban -----
   DEF_rawdata%urban_type%dir    = '/urban_type/lcz/'
