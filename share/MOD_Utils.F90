@@ -572,7 +572,7 @@ CONTAINS
 
             DO WHILE (iright - ileft > 1)
                i = (iright + ileft) / 2
-               IF (y >= lat(i)) THEN
+               IF (y>lat(i) .or. abs(y-lat(i))<1.e-10) THEN
                   ileft = i
                ELSE
                   iright = i
@@ -591,7 +591,7 @@ CONTAINS
 
             DO WHILE (iright - ileft > 1)
                i = (iright + ileft) / 2
-               IF (y >= lat(i)) THEN
+               IF (y>lat(i) .or. abs(y-lat(i))<1.e-10) THEN
                   iright = i
                ELSE
                   ileft = i
@@ -670,9 +670,13 @@ CONTAINS
    real(r8), intent(in) :: lon, west, east ! [-180, 180)
 
       IF (west >= east) THEN
-         lon_between_floor = (lon >= west) .or. (lon < east)
+        !lon_between_floor = (lon >= west) .or.  (lon < east)
+         lon_between_floor = (lon>west .or.  abs(lon-west)<1.e-10) .or.  &
+                             (lon<east .and. abs(lon-east)>1.e-10)
       ELSE
-         lon_between_floor = (lon >= west) .and. (lon < east)
+        !lon_between_floor = (lon >= west) .and. (lon < east)
+         lon_between_floor = (lon>west .or.  abs(lon-west)<1.e-10) .and. &
+                             (lon<east .and. abs(lon-east)>1.e-10)
       ENDIF
 
    END FUNCTION lon_between_floor
@@ -683,12 +687,16 @@ CONTAINS
    USE MOD_Precision
    IMPLICIT NONE
 
-   real(r8), intent(in) :: lon, west, east ! [-180, 180)
+   real(r8), intent(in) :: lon, west, east ! (-180, 180]
 
       IF (west >= east) THEN
-         lon_between_ceil = (lon > west) .or. (lon <= east)
+        !lon_between_ceil = (lon > west) .or.  (lon <= east)
+         lon_between_ceil = (lon>west .and. abs(lon-west)>1.e-10) .or.  &
+                            (lon<east .or.  abs(lon-east)<1.e-10)
       ELSE
-         lon_between_ceil = (lon > west) .and. (lon <= east)
+        !lon_between_ceil = (lon > west) .and. (lon <= east)
+         lon_between_ceil = (lon>west .and. abs(lon-west)>1.e-10) .and. &
+                            (lon<east .or.  abs(lon-east)<1.e-10)
       ENDIF
 
    END FUNCTION lon_between_ceil
