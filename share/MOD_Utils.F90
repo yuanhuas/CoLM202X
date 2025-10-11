@@ -629,7 +629,7 @@ CONTAINS
 
             DO WHILE (iright - ileft > 1)
                i = (iright + ileft) / 2
-               IF (y > lat(i)) THEN
+               IF (y-lat(i) > 1.e-10) THEN
                   ileft = i
                ELSE
                   iright = i
@@ -648,7 +648,7 @@ CONTAINS
 
             DO WHILE (iright - ileft > 1)
                i = (iright + ileft) / 2
-               IF (y > lat(i)) THEN
+               IF (y-lat(i) > 1.e-10) THEN
                   iright = i
                ELSE
                   ileft = i
