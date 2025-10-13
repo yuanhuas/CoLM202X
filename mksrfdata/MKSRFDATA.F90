@@ -98,8 +98,8 @@ PROGRAM MKSRFDATA
    real(r8) :: edgew  ! western edge of grid (degrees)
 
    type (grid_type) :: grid_500m, grid_htop, grid_soil, grid_lai, grid_topo, grid_topo_factor
-   type (grid_type) :: grid_urban_lucy, grid_urban_roof, grid_urban_pctt, grid_urban_pctw, grid_urban_pop, &
-                       grid_urban_lsai, grid_urban_alb
+   type (grid_type) :: grid_urban_lucy, grid_urban_fgper, grid_urban_roof, grid_urban_pctt, grid_urban_pctw, &
+                       grid_urban_pop , grid_urban_lsai , grid_urban_alb
    type (grid_type) :: grid_twi
 
    integer   :: lc_year, lai_year
@@ -280,14 +280,15 @@ PROGRAM MKSRFDATA
 
       ! define grid for urban data
 #ifdef URBAN_MODEL
-      CALL grid_urban%define_by_name     (trim(DEF_rawdata%urban_type%gname ))
-      CALL grid_urban_roof%define_by_name(trim(DEF_rawdata%urban_roof%gname ))
-      CALL grid_urban_lsai%define_by_name(trim(DEF_rawdata%urban_lsai%gname ))
-      CALL grid_urban_pctt%define_by_name(trim(DEF_rawdata%urban_fveg%gname ))
-      CALL grid_urban_pctw%define_by_name(trim(DEF_rawdata%urban_flake%gname))
-      CALL grid_urban_alb%define_by_name (trim(DEF_rawdata%urban_alb%gname  ))
-      CALL grid_urban_pop%define_by_name (trim(DEF_rawdata%urban_pop%gname  ))
-      CALL grid_urban_lucy%define_by_name('colm_5km' )
+      CALL grid_urban%define_by_name      (trim(DEF_rawdata%urban_type%gname ))
+      CALL grid_urban_roof%define_by_name (trim(DEF_rawdata%urban_roof%gname ))
+      CALL grid_urban_fgper%define_by_name(trim(DEF_rawdata%urban_fgper%gname))
+      CALL grid_urban_lsai%define_by_name (trim(DEF_rawdata%urban_lsai%gname ))
+      CALL grid_urban_pctt%define_by_name (trim(DEF_rawdata%urban_fveg%gname ))
+      CALL grid_urban_pctw%define_by_name (trim(DEF_rawdata%urban_flake%gname))
+      CALL grid_urban_alb%define_by_name  (trim(DEF_rawdata%urban_alb%gname  ))
+      CALL grid_urban_pop%define_by_name  (trim(DEF_rawdata%urban_pop%gname  ))
+      CALL grid_urban_lucy%define_by_name ('colm_5km' )
 #endif
 
       ! assimilate grids to build pixels
@@ -326,14 +327,15 @@ PROGRAM MKSRFDATA
       ENDIF
 
 #ifdef URBAN_MODEL
-      CALL pixel%assimilate_grid (grid_urban     )
-      CALL pixel%assimilate_grid (grid_urban_roof)
-      CALL pixel%assimilate_grid (grid_urban_pctt)
-      CALL pixel%assimilate_grid (grid_urban_pctw)
-      CALL pixel%assimilate_grid (grid_urban_lsai)
-      CALL pixel%assimilate_grid (grid_urban_pop )
-      CALL pixel%assimilate_grid (grid_urban_alb )
-      CALL pixel%assimilate_grid (grid_urban_lucy)
+      CALL pixel%assimilate_grid (grid_urban      )
+      CALL pixel%assimilate_grid (grid_urban_roof )
+      CALL pixel%assimilate_grid (grid_urban_fgper)
+      CALL pixel%assimilate_grid (grid_urban_pctt )
+      CALL pixel%assimilate_grid (grid_urban_pctw )
+      CALL pixel%assimilate_grid (grid_urban_lsai )
+      CALL pixel%assimilate_grid (grid_urban_pop  )
+      CALL pixel%assimilate_grid (grid_urban_alb  )
+      CALL pixel%assimilate_grid (grid_urban_lucy )
 #endif
 
       ! map pixels to grid coordinates
@@ -372,14 +374,15 @@ PROGRAM MKSRFDATA
       ENDIF
 
 #ifdef URBAN_MODEL
-      CALL pixel%map_to_grid (grid_urban     )
-      CALL pixel%map_to_grid (grid_urban_roof)
-      CALL pixel%map_to_grid (grid_urban_pctt)
-      CALL pixel%map_to_grid (grid_urban_pctw)
-      CALL pixel%map_to_grid (grid_urban_lsai)
-      CALL pixel%map_to_grid (grid_urban_pop )
-      CALL pixel%map_to_grid (grid_urban_alb )
-      CALL pixel%map_to_grid (grid_urban_lucy)
+      CALL pixel%map_to_grid (grid_urban      )
+      CALL pixel%map_to_grid (grid_urban_roof )
+      CALL pixel%map_to_grid (grid_urban_fgper)
+      CALL pixel%map_to_grid (grid_urban_pctt )
+      CALL pixel%map_to_grid (grid_urban_pctw )
+      CALL pixel%map_to_grid (grid_urban_lsai )
+      CALL pixel%map_to_grid (grid_urban_pop  )
+      CALL pixel%map_to_grid (grid_urban_alb  )
+      CALL pixel%map_to_grid (grid_urban_lucy )
 #endif
 
       ! build land elms
@@ -520,9 +523,9 @@ IF (.not. (skip_rest)) THEN
       ENDIF
 
 #ifdef URBAN_MODEL
-      CALL Aggregation_urban (grid_urban_roof, grid_urban_pctt, grid_urban_lsai, grid_urban_pctw, &
-                              grid_urban_pop , grid_urban_lucy, grid_urban_alb , &
-                              dir_rawdata    , dir_landdata   , lc_year)
+      CALL Aggregation_urban (grid_urban_roof, grid_urban_fgper, grid_urban_pctt, grid_urban_lsai, grid_urban_pctw, &
+                              grid_urban_pop , grid_urban_lucy , grid_urban_alb , &
+                              dir_rawdata    , dir_landdata    , lc_year)
 #endif
 
       CALL Aggregation_SoilTexture     (grid_soil, dir_rawdata, dir_landdata, lc_year)

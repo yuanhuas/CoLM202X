@@ -33,6 +33,10 @@
   DEF_rawdata%urban_hl%gname    = 'colm_100m'
   DEF_rawdata%urban_hl%fname    = 'HL100m_GHSL_GBFP'
 
+  DEF_rawdata%urban_fgper%dir   = '/urban_morphology/pervious_fraction_Liao/'
+  DEF_rawdata%urban_fgper%gname = 'colm_1km'
+  DEF_rawdata%urban_fgper%fname = 'Fgper1km_Liao'
+
   DEF_rawdata%urban_htop%dir    = '/vegetation_morphology/tree_height_ETH/'
   DEF_rawdata%urban_htop%gname  = 'colm_30m'
   DEF_rawdata%urban_htop%fname  = 'Htop30m.ETH'

@@ -164,6 +164,7 @@ MODULE MOD_Namelist
       type(datainfo) :: urban_pop
       type(datainfo) :: urban_roof
       type(datainfo) :: urban_hl
+      type(datainfo) :: urban_fgper
       type(datainfo) :: urban_alb
    end type rawdata
 
@@ -1632,6 +1633,10 @@ ENDIF
       CALL mpi_bcast (DEF_rawdata%urban_hl%dir               ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_rawdata%urban_hl%gname             ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_rawdata%urban_hl%fname             ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%urban_fgper%dir            ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_fgper%gname          ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%urban_fgper%fname          ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
 
       CALL mpi_bcast (DEF_rawdata%urban_lsai%dir             ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_rawdata%urban_lsai%gname           ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)

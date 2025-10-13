@@ -8,8 +8,8 @@
 ! 2. Land subgrid type classification:
 !    Select one of the following options.
 #undef LULC_USGS
-#undef LULC_IGBP
-#define LULC_IGBP_PFT
+#define LULC_IGBP
+#undef LULC_IGBP_PFT
 #undef LULC_IGBP_PC
 
 ! 2.1 3D Urban model (put it temporarily here):
@@ -39,8 +39,8 @@
 
 ! 5. Hydrological process options.
 ! 5.1 Two soil hydraulic models can be used.
-#define   Campbell_SOIL_MODEL
-#undef  vanGenuchten_Mualem_SOIL_MODEL
+#undef   Campbell_SOIL_MODEL
+#define  vanGenuchten_Mualem_SOIL_MODEL
 ! 5.2 If defined, lateral flow is modeled.
 #define CatchLateralFlow
 !    Conflicts :
@@ -49,14 +49,13 @@
 #endif
 
 ! 6. If defined, CaMa-Flood model will be used.
-#define CaMa_Flood
+#undef CaMa_Flood
 #if (defined SinglePoint)
 #undef CaMa_Flood
 #endif
 
-
 ! 7. If defined, BGC model is used.
-#define BGC
+#undef BGC
 
 !    Conflicts :  only used when LULC_IGBP_PFT is defined.
 #ifndef LULC_IGBP_PFT
@@ -65,7 +64,7 @@
 #endif
 #endif
 ! 7.1 If defined, CROP model is used
-#define CROP
+#undef CROP
 !    Conflicts : only used when BGC is defined
 #ifndef BGC
 #undef CROP
