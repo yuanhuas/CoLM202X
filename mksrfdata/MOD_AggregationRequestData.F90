@@ -1529,6 +1529,8 @@ CONTAINS
                   CALL unpack_inplace (rbuf_i4_1d, msk4, data_i4_2d_out4)
                ENDIF
 
+               deallocate (rbuf_i4_1d)
+
                allocate (rbuf_r8_1d (nreq4))
 
                IF (present(data_r8_2d_in4) .and. present(data_r8_2d_out4)) THEN
@@ -1578,6 +1580,8 @@ CONTAINS
                      isrc, mpi_tag_data, p_comm_glb, p_stat, p_err)
                   CALL unpack_inplace (rbuf_i4_1d, msk5, data_i4_2d_out5)
                ENDIF
+
+               deallocate (rbuf_i4_1d)
 
                allocate (rbuf_r8_1d (nreq5))
 

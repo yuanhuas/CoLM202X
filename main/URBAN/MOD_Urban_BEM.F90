@@ -5,7 +5,7 @@ MODULE MOD_Urban_BEM
    USE MOD_Precision
    USE MOD_Vars_Global
    USE MOD_Const_Physical
-   USE MOD_Namelist, only: DEF_LC_YEAR
+   USE MOD_Namelist, only: DEF_simulation_time
    USE MOD_TimeManager
    USE MOD_Urban_Const_LCZ
    USE MOD_Urban_Shortwave, only: MatrixInverse
@@ -74,7 +74,9 @@ CONTAINS
 ! !REVISIONS:
 !
 !  11/2022, Hua Yuan: Add option for constant AC.
-!  TODO@wenzong: add revision history here & annotations below.
+!  11/2025, Wenzong Dong: The coefficient of waste heat for cooling
+!           has been adjusted from 0.6 to 0.3 and the effective
+!           AC usage rate explicitly considered.
 !
 !-----------------------------------------------------------------------
 
@@ -86,13 +88,13 @@ CONTAINS
 
    real(r8), intent(in) :: &
         deltim,          &! seconds in a time step [second]
-        patchlonr,       &!
+        patchlonr,       &! longitude in radians
         rhoair,          &! density air [kg/m3]
         fcover(0:2),     &! fractional cover of roof, wall
         H,               &! average building height [m]
         troom_max,       &! maximum temperature of inner building
         troom_min,       &! minimum temperature of inner building
-        weekend(24),     &!
+        weekend(24),     &! Diurnal traffic flow profile of weekend
         troof_nl_bef,    &! roof temperature at layer nl_roof
         twsun_nl_bef,    &! sunlit wall temperature at layer nl_wall
         twsha_nl_bef,    &! shaded wall temperature at layer nl_wall
@@ -130,16 +132,16 @@ CONTAINS
         f_wsha            ! weight factor for shaded wall
 
    real(r8) :: &
-        ldate(3),        &!
+        ldate(3),        &! local time (year, julian day, seconds)
         A(4,4),          &! Heat transfer matrix
         Ainv(4,4),       &! Inverse of Heat transfer matrix
         B(4),            &! B for Ax=B
         X(4)              ! x for Ax=B
 
    real(r8) :: &
-        londeg,          &!
-        AC_factor,       &!
-        Fadj,            &!
+        londeg,          &! longitude of path [degree]
+        Fadj,            &! flux used to adjust the indoor air temperatur
+        Uac,             &! Effective AC usage ratio
         troom_pro,       &! projected room temperature
         troom_bef,       &! temperature of inner building
         troof_inner_bef, &! temperature of inner roof
@@ -151,6 +153,8 @@ CONTAINS
 
    ! Option for continuous AC
    logical, parameter :: Constant_AC  = .true.
+
+   ! Option for effective AC
    logical, parameter :: Effective_AC = .true.
 
 !-----------------------------------------------------------------------
@@ -266,15 +270,11 @@ CONTAINS
          Fhac = 0.5*hcv_wall*(twsha_inner_bef-troom_bef)*f_wsha &
               + 0.5*hcv_wall*(twsha_inner-troom)*f_wsha + Fhac
 
-         AC_factor = weekend(tloc)/maxval(weekend)
-
-         IF (AC_factor > 1) AC_factor = 1
-
          IF ( Effective_AC ) THEN
 
-            Fhac = Fhac*AC_factor
+            Uac  = weekend(tloc)/maxval(weekend)
 
-            IF ( heating ) Fhac = Fhac
+            Fhac = Fhac*Uac
 
             Fadj = Fhac - 0.5*hcv_roof*(troof_inner_bef-troom_bef) &
                  - 0.5*hcv_wall*(twsun_inner_bef-troom_bef)*f_wsun &

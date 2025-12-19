@@ -8,9 +8,9 @@
 ! 2. Land subgrid type classification:
 !    Select one of the following options.
 #undef LULC_USGS
-#define LULC_IGBP
+#undef LULC_IGBP
 #undef LULC_IGBP_PFT
-#undef LULC_IGBP_PC
+#define LULC_IGBP_PC
 
 ! 2.1 3D Urban model (put it temporarily here):
 #undef URBAN_MODEL
@@ -53,6 +53,15 @@
 #if (defined SinglePoint)
 #undef CaMa_Flood
 #endif
+#ifndef USEMPI
+#undef CaMa_Flood
+#endif
+
+#define GridRiverLakeFlow
+!    Conflicts :
+#if (defined CATCHMENT || defined SinglePoint)
+#undef GridRiverLakeFlow
+#endif
 
 ! 7. If defined, BGC model is used.
 #undef BGC
@@ -64,7 +73,7 @@
 #endif
 #endif
 ! 7.1 If defined, CROP model is used
-#define CROP
+#undef CROP
 !    Conflicts : only used when BGC is defined
 #ifndef BGC
 #undef CROP

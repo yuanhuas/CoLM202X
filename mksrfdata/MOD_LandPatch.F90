@@ -143,9 +143,9 @@ CONTAINS
             allocate (types (ipxstt:ipxend))
 
 #ifdef CATCHMENT
-            CALL aggregation_request_data (landhru, iset, grid_patch, zip = .true., &
+            CALL aggregation_request_data (landhru, iset, grid_patch, zip = .false., &
 #else
-            CALL aggregation_request_data (landelm, iset, grid_patch, zip = .true., &
+            CALL aggregation_request_data (landelm, iset, grid_patch, zip = .false., &
 #endif
                data_i4_2d_in1 = patchdata, data_i4_2d_out1 = ibuff)
 

@@ -309,7 +309,7 @@ IF (DEF_URBAN_type_scheme == 1) THEN
                ht_roof_one = htroof_ncar(urb_typidx,reg_typid_one)
             ENDIF
 
-            IF (all(f_gper_one < 0)) THEN
+            IF (all(f_gper_one <= 0)) THEN
                f_gper_one = fgper_ncar(urb_typidx,reg_typid_one)
             ENDIF
 
@@ -807,7 +807,7 @@ ENDIF
                zip = USE_zip_for_aggregation, &
                data_i4_2d_in1 = LUCY_reg, data_i4_2d_out1 = LUCY_reg_one)
             ! the most frequency id to this urban patch
-            LUCY_rid(iurban) = num_max_frequency (LUCY_reg_one)
+            LUCY_rid(iurban) = num_max_frequency (LUCY_reg_one, 0)
          ENDDO
 #ifdef USEMPI
          CALL aggregation_worker_done ()
