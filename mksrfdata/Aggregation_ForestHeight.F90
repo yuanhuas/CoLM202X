@@ -96,6 +96,131 @@ SUBROUTINE Aggregation_ForestHeight ( &
       CALL mpi_barrier (p_comm_glb, p_err)
 #endif
 
+#ifdef LULC_USGS
+      lndname = trim(dir_rawdata)//'/Forest_Height.nc'
+
+      IF (p_is_io) THEN
+         CALL allocate_block_data (gland, tree_height)
+         CALL ncio_read_block (lndname, 'forest_height', gland, tree_height)
+
+#ifdef USEMPI
+         CALL aggregation_data_daemon (gland, data_r8_2d_in1 = tree_height)
+#endif
+      ENDIF
+
+      IF (p_is_worker) THEN
+
+         allocate (tree_height_patches (numpatch))
+
+         DO ipatch = 1, numpatch
+            L = landpatch%settyp(ipatch)
+
+            IF(L/=0 .and. L/=1 .and. L/=16 .and. L/=24)THEN
+               ! NOT OCEAN(0)/URBAN and BUILT-UP(1)/WATER BODIES(16)/ICE(24)
+               CALL aggregation_request_data (landpatch, ipatch, gland, zip = USE_zip_for_aggregation, &
+                  data_r8_2d_in1 = tree_height, data_r8_2d_out1 = tree_height_one)
+               tree_height_patches (ipatch) = median (tree_height_one, size(tree_height_one))
+            ELSE
+               tree_height_patches (ipatch) = -1.0e36_r8
+            ENDIF
+         ENDDO
+
+#ifdef USEMPI
+         CALL aggregation_worker_done ()
+#endif
+      ENDIF
+
+#ifdef USEMPI
+      CALL mpi_barrier (p_comm_glb, p_err)
+#endif
+
+#ifdef RangeCheck
+      CALL check_vector_data ('htop_patches ', tree_height_patches)
+#endif
+
+      lndname = trim(landdir)//'/htop_patches.nc'
+      CALL ncio_create_file_vector (lndname, landpatch)
+      CALL ncio_define_dimension_vector (lndname, landpatch, 'patch')
+      CALL ncio_write_vector (lndname, 'htop_patches', 'patch', landpatch, tree_height_patches, DEF_Srfdata_CompressLevel)
+
+#ifdef SrfdataDiag
+      typpatch = (/(ityp, ityp = 0, N_land_classification)/)
+      lndname  = trim(dir_model_landdata) // '/diag/htop_patch_' // trim(cyear) // '.nc'
+      CALL srfdata_map_and_write (tree_height_patches, landpatch%settyp, typpatch, m_patch2diag, &
+         -1.0e36_r8, lndname, 'htop', compress = 6, write_mode = 'one', defval=0._r8, create_mode=.true.)
+#endif
+
+      IF (p_is_worker) THEN
+         deallocate ( tree_height_patches )
+      ENDIF
+#endif
+
+
+#ifdef LULC_IGBP
+      IF (p_is_io) THEN
+         CALL allocate_block_data (gland, htop)
+      ENDIF
+
+      IF (p_is_io) THEN
+
+         dir_5x5 = trim(dir_rawdata) // trim(DEF_rawdata%htop%dir)
+         fname = trim(DEF_rawdata%htop%fname)
+         CALL read_5x5_data (dir_5x5, fname, gland, trim(DEF_rawdata%htop%vname), htop)
+#ifdef USEMPI
+         CALL aggregation_data_daemon (gland, data_r8_2d_in1 = htop)
+#endif
+      ENDIF
+
+      IF (p_is_worker) THEN
+
+         allocate (htop_patches (numpatch))
+
+         DO ipatch = 1, numpatch
+
+            IF (landpatch%settyp(ipatch) /= 0) THEN
+
+               CALL aggregation_request_data (landpatch, ipatch, gland, zip = USE_zip_for_aggregation, &
+                  area = area_one, data_r8_2d_in1 = htop, data_r8_2d_out1 = htop_one)
+
+               where (htop_one < 0.) htop_one = 0.
+
+               htop_patches(ipatch) = sum(htop_one * area_one) / sum(area_one)
+            ENDIF
+
+         ENDDO
+
+#ifdef USEMPI
+         CALL aggregation_worker_done ()
+#endif
+      ENDIF
+
+#ifdef USEMPI
+      CALL mpi_barrier (p_comm_glb, p_err)
+#endif
+
+#ifdef RangeCheck
+      CALL check_vector_data ('HTOP_patches ', htop_patches)
+#endif
+
+      lndname = trim(landdir)//'/htop_patches.nc'
+      CALL ncio_create_file_vector (lndname, landpatch)
+      CALL ncio_define_dimension_vector (lndname, landpatch, 'patch')
+      CALL ncio_write_vector (lndname, 'htop_patches', 'patch', landpatch, htop_patches, DEF_Srfdata_CompressLevel)
+
+#ifdef SrfdataDiag
+      typpatch = (/(ityp, ityp = 0, N_land_classification)/)
+      lndname  = trim(dir_model_landdata) // '/diag/htop_patch_' // trim(cyear) // '.nc'
+      CALL srfdata_map_and_write (htop_patches, landpatch%settyp, typpatch, m_patch2diag, &
+         -1.0e36_r8, lndname, 'htop', compress = 6, write_mode = 'one', defval=0._r8, create_mode=.true.)
+#endif
+
+      IF (p_is_worker) THEN
+         IF (allocated(htop_patches)) deallocate (htop_patches)
+         IF (allocated(htop_one    )) deallocate (htop_one    )
+         IF (allocated(area_one    )) deallocate (area_one    )
+      ENDIF
+#endif
+
 ! ================PFT/PC htop
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
       IF (p_is_io) THEN
