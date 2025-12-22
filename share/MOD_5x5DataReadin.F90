@@ -286,7 +286,7 @@ CONTAINS
    END SUBROUTINE read_5x5_data_real8
 
    ! -----
-   SUBROUTINE read_5x5_data_pft (dir_5x5, sfx, grid, dataname, rdata)
+   SUBROUTINE read_5x5_data_pft (dir_5x5, sfx, grid, dataname, rdata, lb, ub)
 
    USE MOD_Precision
    USE MOD_SPMD_Task
@@ -299,7 +299,7 @@ CONTAINS
    character (len=*), intent(in) :: dir_5x5
    character (len=*), intent(in) :: sfx
    type (grid_type),  intent(in) :: grid
-
+   integer, intent(in), optional :: lb, ub
    character (len=*), intent(in) :: dataname
    type (block_data_real8_3d), intent(inout) :: rdata
 
@@ -349,17 +349,32 @@ CONTAINS
 
                inquire(file=file_5x5, exist=fexists)
                IF (fexists) THEN
-                  allocate (dcache (i1-i0+1,j1-j0+1,0:N_PFT_modis-1))
+                  
+                  IF (present(lb) .and. present(ub)) THEN
+                     allocate (dcache (i1-i0+1,j1-j0+1,lb:ub))
 
-                  CALL nccheck( nf90_open(trim(file_5x5), NF90_NOWRITE, ncid) )
-                  CALL nccheck( nf90_inq_varid(ncid, trim(dataname), varid) )
-                  CALL nccheck( nf90_get_var(ncid, varid, dcache, &
-                     (/i0,j0,1/), (/i1-i0+1,j1-j0+1,N_PFT_modis/)) )
-                  CALL nccheck( nf90_close(ncid) )
+                     CALL nccheck( nf90_open(trim(file_5x5), NF90_NOWRITE, ncid) )
+                     CALL nccheck( nf90_inq_varid(ncid, trim(dataname), varid) )
+                     CALL nccheck( nf90_get_var(ncid, varid, dcache, &
+                        (/i0,j0,lb/), (/i1-i0+1,j1-j0+1,ub/)) )
+                     CALL nccheck( nf90_close(ncid) )
 
-                  DO ipft = 0, N_PFT_modis-1
-                     rdata%blk(iblk,jblk)%val(ipft,il0:il1,jl0:jl1) = dcache(:,:,ipft)
-                  ENDDO
+                     DO ipft = lb, ub
+                        rdata%blk(iblk,jblk)%val(ipft,il0:il1,jl0:jl1) = dcache(:,:,ipft)
+                     ENDDO
+                  ELSE
+                     allocate (dcache (i1-i0+1,j1-j0+1,0:N_PFT_modis-1))
+
+                     CALL nccheck( nf90_open(trim(file_5x5), NF90_NOWRITE, ncid) )
+                     CALL nccheck( nf90_inq_varid(ncid, trim(dataname), varid) )
+                     CALL nccheck( nf90_get_var(ncid, varid, dcache, &
+                        (/i0,j0,1/), (/i1-i0+1,j1-j0+1,N_PFT_modis/)) )
+                     CALL nccheck( nf90_close(ncid) )
+
+                     DO ipft = 0, N_PFT_modis-1
+                        rdata%blk(iblk,jblk)%val(ipft,il0:il1,jl0:jl1) = dcache(:,:,ipft)
+                     ENDDO
+                  ENDIF
 
                   deallocate (dcache)
                ENDIF

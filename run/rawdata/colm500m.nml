@@ -16,9 +16,22 @@
   DEF_rawdata%lai_sai%fname     = 'LSAI500m'
 
   ! htop data
-  DEF_rawdata%htop%dir          = '/vegetation_morphology/tree_height_Simard/'
-  DEF_rawdata%htop%gname        = 'colm_1km'
-  DEF_rawdata%htop%fname        = 'Htop1km.Simard'
+  DEF_rawdata%htop%dir          = '/vegetation_morphology/tree_height_Tolan/'
+  DEF_rawdata%htop%gname        = 'colm_500m'
+  DEF_rawdata%htop%fname        = 'Htop500m.Tolan'
+  DEF_rawdata%htop%vname        = 'HTOP_90'
+
+  ! crown depth data
+  DEF_rawdata%cdepth%dir          = '/vegetation_morphology/tree_crown/'
+  DEF_rawdata%cdepth%gname        = 'colm_500m'
+  DEF_rawdata%cdepth%fname        = 'CrownStructure500m_CH90'
+  DEF_rawdata%cdepth%vname        = 'CROWN_DEPTH'
+
+  ! crown aspect ratio data
+  DEF_rawdata%cratio%dir          = '/vegetation_morphology/tree_crown/'
+  DEF_rawdata%cratio%gname        = 'colm_500m'
+  DEF_rawdata%cratio%fname        = 'CrownStructure500m_CH90'
+  DEF_rawdata%cratio%vname        = 'ASPECT_RATIO'
 
   ! ----- Urban -----
   DEF_rawdata%urban_type%dir    = '/urban_type/lcz/'
@@ -40,6 +53,7 @@
   DEF_rawdata%urban_htop%dir    = '/vegetation_morphology/tree_height_ETH/'
   DEF_rawdata%urban_htop%gname  = 'colm_500m'
   DEF_rawdata%urban_htop%fname  = 'Htop500m.ETH'
+  DEF_rawdata%urban_htop%vname  = 'HTOP'
 
   DEF_rawdata%urban_fveg%dir    = '/urban_ecology/tree_fraction_GFCC/'
   DEF_rawdata%urban_fveg%gname  = 'colm_500m'

@@ -139,7 +139,7 @@ MODULE MOD_Namelist
 
    ! ----- rawdata definition -----
 
-   character(len=256) :: DEF_rawdata_namelist  = 'path/to/rawdata/namelist'
+   character(len=256) :: DEF_rawdata_namelist  = 'null'
 
    type :: datainfo
       character(len=256) :: dir   = 'dir related to rawdata dir'
@@ -152,6 +152,8 @@ MODULE MOD_Namelist
       type(datainfo) :: landcover
       type(datainfo) :: pft
       type(datainfo) :: htop
+      type(datainfo) :: cdepth
+      type(datainfo) :: cratio
       type(datainfo) :: lai_sai
      !type(datainfo) :: soil
      !type(datainfo) :: topo
@@ -1156,7 +1158,7 @@ CONTAINS
 
       ! ----- open the namelist file -----
       IF (p_is_master) THEN
-
+         ! print*, DEF_rawdata_namelist
          open(10, status='OLD', file=nlfile, form="FORMATTED")
          read(10, nml=nl_colm, iostat=ierr)
          IF (ierr /= 0) THEN
@@ -1164,7 +1166,7 @@ CONTAINS
          ENDIF
          close(10)
 
-         CALL set_rawdata_default()
+         ! CALL set_rawdata_default()
          open(10, status='OLD', file=trim(DEF_rawdata_namelist), form="FORMATTED")
          read(10, nml=nl_colm_rawdata, iostat=ierr)
          IF (ierr /= 0) THEN
@@ -1622,6 +1624,16 @@ ENDIF
       CALL mpi_bcast (DEF_rawdata%htop%fname                 ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_rawdata%htop%vname                 ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
 
+      CALL mpi_bcast (DEF_rawdata%cdepth%dir                   ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%cdepth%gname                 ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%cdepth%fname                 ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%cdepth%vname                 ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%cratio%dir                   ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%cratio%gname                 ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%cratio%fname                 ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%cratio%vname                 ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
       CALL mpi_bcast (DEF_rawdata%urban_type%dir             ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_rawdata%urban_type%gname           ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_rawdata%urban_type%fname           ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
@@ -1932,6 +1944,9 @@ ENDIF
    IMPLICIT NONE
 
       DEF_rawdata%htop%vname          = 'HTOP'
+      ! DEF_rawdata%htop%vname          = 'HTOP_90'
+      DEF_rawdata%cdepth%vname        = 'CROWN_DEPTH'
+      DEF_rawdata%cratio%vname        = 'ASPECT_RATIO'
       DEF_rawdata%urban_htop%vname    = 'HTOP'
 
    END SUBROUTINE set_rawdata_default

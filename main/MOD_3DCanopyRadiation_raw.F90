@@ -96,7 +96,7 @@ CONTAINS
    real(r8), allocatable :: fabd(:,:), fabi(:,:), fadd(:,:)
    real(r8), allocatable :: ftdd(:,:), ftid(:,:), ftii(:,:)
    real(r8), allocatable :: rho (:,:), tau (:,:)
-   real(r8), allocatable :: csiz(:), chgt(:), cratio(:), chil(:), lsai(:)
+   real(r8), allocatable :: csiz(:), chgt(:), chil(:), lsai(:)
    real(r8), allocatable :: fsun_id(:), fsun_ii(:), psun(:)
    real(r8), allocatable :: phi1(:), phi2(:), gdir(:), fcover(:)
 
@@ -141,7 +141,6 @@ CONTAINS
       allocate (tau    (ps:pe, 2) )
       allocate (csiz   (ps:pe)    )
       allocate (chgt   (ps:pe)    )
-      allocate (cratio (ps:pe)    )
       allocate (chil   (ps:pe)    )
       allocate (lsai   (ps:pe)    )
       allocate (canlay (ps:pe)    )
@@ -158,8 +157,6 @@ CONTAINS
       ftdd=1.; ftid=0.; ftii=1.; fadd=0.;
       csiz(:) = (htop_p(ps:pe) - hbot_p(ps:pe)) / 2
       chgt(:) = (htop_p(ps:pe) + hbot_p(ps:pe)) / 2
-      cratio(:) = cratio_p(ps:pe)
-      print*, 'cratio = ', cratio
       lsai(:) = lai_p(ps:pe) + sai_p(ps:pe)
       fcover(ps:pe) = pftfrac(ps:pe) / sum(pftfrac(ps:pe))
 
@@ -190,7 +187,7 @@ CONTAINS
       ENDDO
 
       ! CALL 3D canopy radiation transfer model
-      CALL ThreeDCanopy(ps, pe, canlay, fcover(ps:pe), csiz, chgt, cratio, chil, czen, &
+      CALL ThreeDCanopy(ps, pe, canlay, fcover(ps:pe), csiz, chgt, chil, czen, &
                         lsai, rho, tau, albg(:,1), albg(:,2), albd, albi, &
                         fabd, fabi, ftdd, ftid, ftii, fadd, psun, fsun_id, fsun_ii, &
                         thermk_p(ps:pe), fshade_p(ps:pe) )
@@ -272,7 +269,6 @@ CONTAINS
       deallocate (tau     )
       deallocate (csiz    )
       deallocate (chgt    )
-      deallocate (cratio  )
       deallocate (chil    )
       deallocate (lsai    )
       deallocate (canlay  )
@@ -288,7 +284,7 @@ CONTAINS
 #endif
 
 
-   SUBROUTINE ThreeDCanopy(ps, pe, canlay, fcover, csiz, chgt, cratio, chil, coszen, &
+   SUBROUTINE ThreeDCanopy(ps, pe, canlay, fcover, csiz, chgt, chil, coszen, &
                            lsai, rho, tau, albgrd, albgri, albd, albi, &
                            fabd, fabi, ftdd, ftid, ftii, fadd, psun, &
                            fsun_id, fsun_ii, thermk, fshade)
@@ -327,8 +323,7 @@ CONTAINS
    real(r8), intent(in)  :: chgt  (ps:pe)        !central height of crown
    ! NOTE: The 'cdcw' parameter will be activated in the new release, accompanied by
    !       a new set of canopy structure data. Currently we set cdcw = 1, i.e., sphere
-   ! real(r8)              :: cdcw  (ps:pe)        !crown depth to crown width
-   real(r8), intent(in)  :: cratio  (ps:pe)        !crown depth to crown width
+   real(r8)              :: cdcw  (ps:pe)        !crown depth to crown width
    real(r8), intent(in)  :: chil  (ps:pe)        !leaf angle distribution parameter
    real(r8), intent(in)  :: lsai  (ps:pe)        !LAI+SAI
    real(r8), intent(in)  :: rho   (ps:pe,numrad) !leaf/stem refl weighted by fraction LAI and SAI
@@ -388,8 +383,7 @@ CONTAINS
    real(r8) :: hbot_lay(nlay)            !average canopy bottom in layer
    real(r8) :: chgt_lay(nlay)            !average canopy height in layer
    real(r8) :: csiz_lay(nlay)            !average canopy size in layer
-   ! real(r8) :: cdcw_lay(nlay)            !crown depth to crown width for layers
-   real(r8) :: cratio_lay(nlay)            !crown depth to crown width for layers
+   real(r8) :: cdcw_lay(nlay)            !crown depth to crown width for layers
    real(r8) :: omg_lay(nlay,numrad)      !average omega for all three layer
    real(r8) :: rho_lay(nlay,numrad)      !average rho for all three layer
    real(r8) :: tau_lay(nlay,numrad)      !average tau for all three layer
@@ -490,19 +484,14 @@ CONTAINS
       phi1 = 0.5 - 0.633 * chil - 0.33 * chil * chil
       phi2 = 0.877 * ( 1. - 2. * phi1 )
 
-      ! cdcw = 1.
+      cdcw = 1.
       cosz = coszen
-      print*, 'cosz = ', cosz
       zenith = acos(coszen)
-      ! cosz = cosz * sqrt(1 / (cdcw**2*sin(zenith)**2 + cos(zenith)**2))
-      cosz = cosz * sqrt(1 / (cratio**2*sin(zenith)**2 + cos(zenith)**2))
+      cosz = cosz * sqrt(1 / (cdcw**2*sin(zenith)**2 + cos(zenith)**2))
 
       cosd = cos(60._r8/180._r8*pi)
       zenith = 60._r8/180._r8*pi
-      ! cosd = cosd * sqrt(1 / (cdcw**2*sin(zenith)**2 + cos(zenith)**2))
-      cosd = cosd * sqrt(1 / (cratio**2*sin(zenith)**2 + cos(zenith)**2))
-      print*, 'cosz = ', cosz
-      print*, 'cosd = ', cosd
+      cosd = cosd * sqrt(1 / (cdcw**2*sin(zenith)**2 + cos(zenith)**2))
 
       ! 11/07/2018: calculate gee FUNCTION consider LAD
       gdir = phi1 + phi2*cosz
@@ -512,8 +501,7 @@ CONTAINS
 
       fc0 = D0
       omg_lay  = D0; rho_lay  = D0; tau_lay  = D0
-      ! chgt_lay = D0; cdcw_lay = D0; hbot_lay = D0
-      chgt_lay = D0; cratio_lay = D0; hbot_lay = D0
+      chgt_lay = D0; cdcw_lay = D0; hbot_lay = D0
       csiz_lay = D0; lsai_lay = D0
       cosz_lay = D0; cosd_lay = D0
       gdir_lay = D0; gdif_lay = D0
@@ -532,8 +520,7 @@ CONTAINS
 
             csiz_lay(clev) = csiz_lay(clev) + fcover(ip)*csiz(ip)
             chgt_lay(clev) = chgt_lay(clev) + fcover(ip)*chgt(ip)
-            ! cdcw_lay(clev) = cdcw_lay(clev) + fcover(ip)*cdcw(ip)
-            cratio_lay(clev) = cratio_lay(clev) + fcover(ip)*cratio(ip)
+            cdcw_lay(clev) = cdcw_lay(clev) + fcover(ip)*cdcw(ip)
             lsai_lay(clev) = lsai_lay(clev) + fcover(ip)*lsai(ip)
             cosz_lay(clev) = cosz_lay(clev) + fcover(ip)*cosz(ip)
             cosd_lay(clev) = cosd_lay(clev) + fcover(ip)*cosd(ip)
@@ -564,8 +551,7 @@ CONTAINS
             csiz_lay(lev) = max(csiz_lay(lev)/fc0(lev),D0)
             chgt_lay(lev) = max(chgt_lay(lev)/fc0(lev),D0)
             hbot_lay(lev) = chgt_lay(lev) - csiz_lay(lev)
-            ! cdcw_lay(lev) = max(cdcw_lay(lev)/fc0(lev),D0)
-            cratio_lay(lev) = max(cratio_lay(lev)/fc0(lev),D0)
+            cdcw_lay(lev) = max(cdcw_lay(lev)/fc0(lev),D0)
             lsai_lay(lev) = max(lsai_lay(lev)/fc0(lev),D0)
             cosz_lay(lev) = max(cosz_lay(lev)/fc0(lev),D0)
             cosd_lay(lev) = max(cosd_lay(lev)/fc0(lev),D0)
