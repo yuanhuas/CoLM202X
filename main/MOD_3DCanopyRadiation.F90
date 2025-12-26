@@ -159,6 +159,10 @@ CONTAINS
       csiz(:) = (htop_p(ps:pe) - hbot_p(ps:pe)) / 2
       chgt(:) = (htop_p(ps:pe) + hbot_p(ps:pe)) / 2
       cratio(:) = cratio_p(ps:pe)
+      print*, 'htop_p = ', htop_p
+      print*, 'hbot_p = ', hbot_p
+      print*, 'csiz = ', csiz
+      print*, 'chgt = ', chgt
       print*, 'cratio = ', cratio
       lsai(:) = lai_p(ps:pe) + sai_p(ps:pe)
       fcover(ps:pe) = pftfrac(ps:pe) / sum(pftfrac(ps:pe))
@@ -501,6 +505,8 @@ CONTAINS
       zenith = 60._r8/180._r8*pi
       ! cosd = cosd * sqrt(1 / (cdcw**2*sin(zenith)**2 + cos(zenith)**2))
       cosd = cosd * sqrt(1 / (cratio**2*sin(zenith)**2 + cos(zenith)**2))
+      print*, 'zenith = ', zenith
+      print*, 'after applying cratio = ', cratio
       print*, 'cosz = ', cosz
       print*, 'cosd = ', cosd
 
@@ -565,6 +571,11 @@ CONTAINS
             chgt_lay(lev) = max(chgt_lay(lev)/fc0(lev),D0)
             hbot_lay(lev) = chgt_lay(lev) - csiz_lay(lev)
             ! cdcw_lay(lev) = max(cdcw_lay(lev)/fc0(lev),D0)
+            print*, 'level = ', lev
+            print*, 'fc0 = ', fc0(lev)
+            print*, 'chgt_lay = ', chgt_lay(lev)
+            print*, 'csiz_lay = ', csiz_lay(lev)
+            print*, 'hbot_lay = ', hbot_lay(lev)
             cratio_lay(lev) = max(cratio_lay(lev)/fc0(lev),D0)
             lsai_lay(lev) = max(lsai_lay(lev)/fc0(lev),D0)
             cosz_lay(lev) = max(cosz_lay(lev)/fc0(lev),D0)
@@ -674,8 +685,13 @@ CONTAINS
       zenith = acos(cosz_lay(3))
       shad_oa(3,2) = fc0(3)*OverlapArea(csiz_lay(3),chgt_lay(3)-hbot_lay(2), zenith)
       shad_oa(3,1) = fc0(3)*OverlapArea(csiz_lay(3),chgt_lay(3)-hbot_lay(1), zenith)
+      print*, 'zenith = acos(cosz_lay(3)) = ', zenith
+      print*, 'shad_oa(3,2) = ', shad_oa(3,2)
+      print*, 'shad_oa(3,1) = ', shad_oa(3,1)
       zenith = acos(cosz_lay(2))
       shad_oa(2,1) = fc0(2)*OverlapArea(csiz_lay(2),chgt_lay(2)-hbot_lay(1), zenith)
+      print*, 'zenith = acos(cosz_lay(2)) = ', zenith
+      print*, 'shad_oa(2,1) = ', shad_oa(2,1)
 
 !=============================================================
 ! unscattered direct sunlight available at  each layer

@@ -32,6 +32,9 @@ MODULE MOD_SingleSrfdata
    real(r8) :: SITE_htop
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
    real(r8), allocatable :: SITE_htop_pfts (:)
+   real(r8), allocatable :: SITE_hbot_pfts (:)
+   real(r8), allocatable :: SITE_cdepth_pfts (:)
+   real(r8), allocatable :: SITE_cratio_pfts (:)
 #endif
 
    real(r8), allocatable :: SITE_LAI_monthly (:,:)
@@ -209,7 +212,7 @@ CONTAINS
    integer  :: iyear, idate(3), simulation_lai_year_start, simulation_lai_year_end
    integer  :: start_year, end_year, ntime, itime
 
-   character(len=256) :: filename, dir_5x5, fmt_str
+   character(len=256) :: filename, dir_5x5, fmt_str, fname
    character(len=4)   :: cyear, c
 
    type(grid_type) :: gridpatch,  gridcrop, gridpft,  gridhtop, gridlai, gridlake,  &
@@ -217,6 +220,7 @@ CONTAINS
 
    integer,  allocatable :: croptyp(:), pfttyp (:)
    real(r8), allocatable :: pctcrop(:), pctpfts(:), pftLAI(:), pftSAI(:), tea_f(:), tea_b(:)
+   real(r8), allocatable :: cdepth(:), cratio(:), hbot(:)
 
    integer, parameter :: N_PFT_modis = 16
    logical            :: readflag
@@ -460,18 +464,63 @@ CONTAINS
          CALL read_point_var_2d_real8 (gridhtop, filename, 'forest_height', &
             SITE_lon_location, SITE_lat_location, SITE_htop)
 #else
+! ! Simard 2011方案
+!          CALL gridhtop%define_by_name ('colm_500m')
 
+!          dir_5x5 = trim(DEF_dir_rawdata) // '/plant_15s'
+!          write(cyear,'(i4.4)') DEF_LC_YEAR
+!          CALL read_point_5x5_var_2d_real8 (gridhtop, dir_5x5, 'MOD'//trim(cyear), 'HTOP', &
+!             SITE_lon_location, SITE_lat_location, SITE_htop)
+! 改成从colm500m.nml读取
          CALL gridhtop%define_by_name ('colm_500m')
-
-         dir_5x5 = trim(DEF_dir_rawdata) // '/plant_15s'
-         write(cyear,'(i4.4)') DEF_LC_YEAR
-         CALL read_point_5x5_var_2d_real8 (gridhtop, dir_5x5, 'MOD'//trim(cyear), 'HTOP', &
+         dir_5x5 = trim(DEF_dir_rawdata) // trim(DEF_rawdata%htop%dir)
+         fname = trim(DEF_rawdata%htop%fname)
+         ! print*, 'Reading htop from dir: ', trim(DEF_rawdata%htop%dir)
+         ! print*, 'Reading htop from vname: ', trim(DEF_rawdata%htop%vname)
+         ! print*, 'Reading htop from fname: ', trim(DEF_rawdata%htop%fname)
+         CALL read_point_5x5_var_2d_real8 (gridhtop, dir_5x5, fname, trim(DEF_rawdata%htop%vname), &
             SITE_lon_location, SITE_lat_location, SITE_htop)
+         print*, 'SITE_htop: ', SITE_htop
 
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
          IF (numpft > 0) THEN
             allocate (SITE_htop_pfts (numpft))
-            SITE_htop_pfts(:) = SITE_htop
+            SITE_htop_pfts(:) = SITE_htop ! 将读取的单一树高赋值给全部PFT
+            print*, 'SITE_htop_pfts: ', SITE_htop_pfts
+
+            allocate (SITE_hbot_pfts (numpft))
+            allocate (SITE_cdepth_pfts (numpft))
+            allocate (SITE_cratio_pfts (numpft))
+
+            CALL gridpft%define_by_name ('colm_500m')
+            ! 新增读取crown depth
+            dir_5x5= trim(DEF_dir_rawdata) // trim(DEF_rawdata%cdepth%dir)
+            fname = trim(DEF_rawdata%cdepth%fname)
+            CALL read_point_5x5_var_3d_real8 (gridpft, dir_5x5, fname, trim(DEF_rawdata%cdepth%vname), &
+               SITE_lon_location, SITE_lat_location, N_PFT_modis, cdepth, lb=1, ub=8)
+            ! print*, 'Reading cdepth from dir: ', trim(DEF_rawdata%cdepth%dir)
+            ! print*, 'Reading cdepth from vname: ', trim(DEF_rawdata%cdepth%vname)
+
+            ! 新增读取crown aspect ratio
+            dir_5x5= trim(DEF_dir_rawdata) // trim(DEF_rawdata%cratio%dir)
+            fname = trim(DEF_rawdata%cratio%fname)
+            CALL read_point_5x5_var_3d_real8 (gridpft, dir_5x5, fname, trim(DEF_rawdata%cratio%vname), &
+               SITE_lon_location, SITE_lat_location, N_PFT_modis, cratio, lb=1, ub=8)
+            ! print*, 'Reading cratio from dir: ', trim(DEF_rawdata%cratio%dir)
+            ! print*, 'Reading cratio from vname: ', trim(DEF_rawdata%cratio%vname)
+            print*, 'pctpfts: ', pctpfts
+            ! print*, 'cdepth: ', cdepth
+            ! print*, 'cratio: ', cratio
+
+            where (cratio <= 0.) cratio = 1.
+            SITE_cratio_pfts = pack(cratio, pctpfts > 0.)
+            print*, 'SITE_cratio_pfts: ', SITE_cratio_pfts
+
+            SITE_cdepth_pfts = pack(cdepth, pctpfts > 0.)
+            SITE_hbot_pfts = SITE_htop_pfts - SITE_cdepth_pfts
+            ! print*, 'SITE_hbot_pfts: ', SITE_hbot_pfts
+            where (SITE_cdepth_pfts <= 0.) SITE_hbot_pfts = 0.
+            print*, 'SITE_hbot_pfts: ', SITE_hbot_pfts
          ENDIF
 #endif
 #endif
@@ -483,6 +532,13 @@ CONTAINS
             arraysize = size(SITE_htop_pfts)
             write(fmt_str, '("(A,", I0, "F8.2,3A)")') arraysize
             write(*,fmt_str) 'Forest height : ', SITE_htop_pfts, ' (from ',trim(datasource(u_site_htop)),')'
+            arraysize = size(SITE_hbot_pfts)
+            write(fmt_str, '("(A,", I0, "F8.2,3A)")') arraysize
+            write(*,fmt_str) 'Canopy bottom height : ', SITE_hbot_pfts, ' (from ',trim(DEF_dir_rawdata) // trim(DEF_rawdata%cdepth%dir),')'
+
+            arraysize = size(SITE_cratio_pfts)
+            write(fmt_str, '("(A,", I0, "F8.2,3A)")') arraysize
+            write(*,fmt_str) 'Crown aspect ratio : ', SITE_cratio_pfts, ' (from ',trim(DEF_dir_rawdata) // trim(DEF_rawdata%cratio%dir),')'
          ELSE
             write(*,'(A,F8.2,3A)') 'Forest height : ', SITE_htop, ' (from ',trim(datasource(u_site_htop)),')'
          ENDIF
@@ -1566,13 +1622,13 @@ ENDIF
             dir_5x5 = trim(DEF_dir_rawdata) // '/urban/'
             write(c5year, '(i4.4)') int(DEF_LC_YEAR/5)*5
 
-IF (DEF_Urban_geom_data == 1) THEN
-            CALL read_point_5x5_var_2d_real8 (gridhroof, dir_5x5, 'URBSRF'//trim(c5year), 'HT_ROOF_GHSL', &
-               SITE_lon_location, SITE_lat_location, SITE_hroof)
-ELSE
-            CALL read_point_5x5_var_2d_real8 (gridhroof, dir_5x5, 'URBSRF'//trim(c5year), 'HT_ROOF_Li', &
-               SITE_lon_location, SITE_lat_location, SITE_hroof)
-ENDIF
+! IF (DEF_Urban_geom_data == 1) THEN
+!             CALL read_point_5x5_var_2d_real8 (gridhroof, dir_5x5, 'URBSRF'//trim(c5year), 'HT_ROOF_GHSL', &
+!                SITE_lon_location, SITE_lat_location, SITE_hroof)
+! ELSE
+!             CALL read_point_5x5_var_2d_real8 (gridhroof, dir_5x5, 'URBSRF'//trim(c5year), 'HT_ROOF_Li', &
+!                SITE_lon_location, SITE_lat_location, SITE_hroof)
+! ENDIF
          ENDIF
 
          u_site_froof = readflag .and. ncio_var_exist(fsrfdata,'roof_area_fraction',readflag)
@@ -1582,13 +1638,13 @@ ENDIF
             CALL gridfroof%define_by_name ('colm_500m')
             dir_5x5 = trim(DEF_dir_rawdata) // '/urban/'
             write(c5year, '(i4.4)') int(DEF_LC_YEAR/5)*5
-IF (DEF_Urban_geom_data == 1) THEN
-            CALL read_point_5x5_var_2d_real8 (gridfroof, dir_5x5, 'URBSRF'//trim(c5year), 'PCT_ROOF_GHSL', &
-               SITE_lon_location, SITE_lat_location, SITE_froof)
-ELSE
-            CALL read_point_5x5_var_2d_real8 (gridfroof, dir_5x5, 'URBSRF'//trim(c5year), 'PCT_ROOF_Li', &
-               SITE_lon_location, SITE_lat_location, SITE_froof)
-ENDIF
+! IF (DEF_Urban_geom_data == 1) THEN
+!             CALL read_point_5x5_var_2d_real8 (gridfroof, dir_5x5, 'URBSRF'//trim(c5year), 'PCT_ROOF_GHSL', &
+!                SITE_lon_location, SITE_lat_location, SITE_froof)
+! ELSE
+!             CALL read_point_5x5_var_2d_real8 (gridfroof, dir_5x5, 'URBSRF'//trim(c5year), 'PCT_ROOF_Li', &
+!                SITE_lon_location, SITE_lat_location, SITE_froof)
+! ENDIF
          ENDIF
 
          u_site_fgper  = readflag .and. ncio_var_exist(fsrfdata,'impervious_area_fraction',readflag)
@@ -2834,6 +2890,16 @@ ENDIF
          CALL ncio_put_attr     (fsrfdata, 'canopy_height_pfts', 'source', trim(datasource(u_site_htop)))
          CALL ncio_put_attr     (fsrfdata, 'canopy_height_pfts', 'long_name', 'canopy height')
          CALL ncio_put_attr     (fsrfdata, 'canopy_height_pfts', 'units', 'm')
+
+         CALL ncio_write_serial (fsrfdata, 'canopy_bottom_height_pfts', SITE_hbot_pfts, 'pft')
+         CALL ncio_put_attr     (fsrfdata, 'canopy_bottom_height_pfts', 'source', trim(datasource(u_site_htop)))
+         CALL ncio_put_attr     (fsrfdata, 'canopy_bottom_height_pfts', 'long_name', 'canopy bottom height')
+         CALL ncio_put_attr     (fsrfdata, 'canopy_bottom_height_pfts', 'units', 'm')
+
+         CALL ncio_write_serial (fsrfdata, 'crown_aspect_ratio_pfts', SITE_cratio_pfts, 'pft')
+         CALL ncio_put_attr     (fsrfdata, 'crown_aspect_ratio_pfts', 'source', trim(datasource(u_site_htop)))
+         CALL ncio_put_attr     (fsrfdata, 'crown_aspect_ratio_pfts', 'long_name', 'crown aspect ratio')
+         CALL ncio_put_attr     (fsrfdata, 'crown_aspect_ratio_pfts', 'units', 'null')
       ENDIF
 #endif
 
@@ -3397,6 +3463,9 @@ ENDIF
 
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
       IF (allocated(SITE_htop_pfts)) deallocate(SITE_htop_pfts)
+      IF (allocated(SITE_hbot_pfts)) deallocate(SITE_hbot_pfts)
+      IF (allocated(SITE_cratio_pfts)) deallocate(SITE_cratio_pfts)
+      IF (allocated(SITE_cdepth_pfts)) deallocate(SITE_cdepth_pfts)
 #endif
 
       IF (allocated(SITE_LAI_monthly)) deallocate(SITE_LAI_monthly)

@@ -32,6 +32,7 @@ CONTAINS
    USE MOD_NetCDFVector
 #ifdef SinglePoint
    USE MOD_SingleSrfdata
+   USE MOD_NetCDFSerial
 #endif
 
    IMPLICIT NONE
@@ -41,7 +42,7 @@ CONTAINS
 
    ! Local Variables
    character(len=256) :: c
-   character(len=256) :: landdir, lndname, cyear
+   character(len=256) :: landdir, lndname, cyear, fsrfdata
    integer :: i,j,t,p,ps,pe,m,n,npatch
 
    real(r8), allocatable :: htoplc  (:)
@@ -102,7 +103,19 @@ CONTAINS
 ! 单点模拟时，htoppft来自MOD_SingleSrfdata.F90中定义读取的SITE_htop_pfts变量
       IF (numpft > 0) THEN
          allocate(htoppft(numpft))
-         htoppft = pack(SITE_htop_pfts, SITE_pctpfts > 0.)! only keep those with pct>0
+         ! htoppft = pack(SITE_htop_pfts, SITE_pctpfts > 0.)! only keep those with pct>0
+         allocate(hbotpft(numpft))
+         allocate(cratio_pft(numpft))
+         ! htoppft = SITE_htop_pfts
+         ! hbotpft = SITE_hbot_pfts
+         ! cratio_pft = SITE_cratio_pfts
+         fsrfdata = trim(DEF_dir_landdata) // '/srfdata.nc'
+         CAll ncio_read_serial (fsrfdata, 'canopy_height_pfts', htoppft)
+         CAll ncio_read_serial (fsrfdata, 'canopy_bottom_height_pfts', hbotpft)
+         CAll ncio_read_serial (fsrfdata, 'crown_aspect_ratio_pfts', cratio_pft)
+         print*, 'htoppft: ', htoppft
+         print*, 'hbotpft: ', hbotpft
+         print*, 'cratio_pft: ', cratio_pft
       ENDIF
 #else
       lndname = trim(landdir)//'/htop_pfts.nc'
