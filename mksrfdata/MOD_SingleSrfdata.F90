@@ -3108,7 +3108,6 @@ ENDIF
       fsrfdata = trim(DEF_dir_landdata) // '/srfdata.nc'
 
       SITE_fgper     = 1 - (SITE_fgimp-SITE_froof)/(1-SITE_froof-SITE_flake_urb)
-      SITE_froof     = SITE_froof /(1-SITE_flake_urb)
       SITE_fveg_urb  = SITE_fveg_urb  * 100
       SITE_flake_urb = SITE_flake_urb * 100
 
