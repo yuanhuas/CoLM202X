@@ -81,7 +81,10 @@ CONTAINS
       freflx             ! flux from freight [W/m2]
 
 !-------------------------- Local Variables ----------------------------
-   real(r8):: ldate(3)   ! local time (year, julian day, seconds)
+   integer :: &
+      ldate(3)         ,&! local time (year, julian day, seconds)
+      sdate(3)           ! calendar of begin style (year, julian day, seconds)
+
    integer :: &
       iweek            ,&! day of week
       ihour            ,&! hour of day
@@ -109,18 +112,21 @@ CONTAINS
       EF = 3975
 
       IF (DEF_simulation_time%greenwich) THEN
+         sdate    = idate
+         sdate(3) = idate(3) - deltim
+         londeg   = patchlonr*180/PI
+
          ! convert GMT time to local time
-         londeg = patchlonr*180/PI
-         CALL gmt2local(idate, londeg, ldate)
+         CALL gmt2local(sdate, londeg, ldate)
       ENDIF
 
       vehc_prof(:,1) = wdh_prof
       vehc_prof(:,2) = weh_prof
 
-      CALL julian2monthday(int(ldate(1)), int(ldate(2)), month, day)
-      CALL timeweek(int(ldate(1)), month, day, iweek)
+      CALL julian2monthday(ldate(1), ldate(2), month, day)
+      CALL timeweek(ldate(1), month, day, iweek)
 
-      ihour = ceiling(ldate(3)*1./3600)
+      ihour = int(ldate(3)/3600) + 1
 
       IF (day==366)  day=365
       IF (fix_holiday(day)==0 .or. week_holiday(iweek)==0) THEN

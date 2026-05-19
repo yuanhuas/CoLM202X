@@ -54,7 +54,7 @@
   DEF_rawdata%urban_lsai%fname  = 'URBLSAI500m'
 
   DEF_rawdata%urban_pop%dir     = '/urban_human/population_density_LandScan/'
-  DEF_rawdata%urban_pop%gname   = 'colm_500m'
+  DEF_rawdata%urban_pop%gname   = 'colm_1km'
   DEF_rawdata%urban_pop%fname   = 'POP1km.LandScan'
 
   DEF_rawdata%urban_lucy%dir    = '/urban_human/'

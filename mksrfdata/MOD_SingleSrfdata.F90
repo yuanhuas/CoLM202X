@@ -1561,7 +1561,7 @@ ENDIF
 
          ! (4) urban geometry
          readflag     = USE_SITE_urban_geometry
-         u_site_hroof = ncio_var_exist(fsrfdata,'building_mean_height',readflag)
+         u_site_hroof = readflag .and. ncio_var_exist(fsrfdata,'building_mean_height',readflag)
          IF ( u_site_hroof ) THEN
             CALL ncio_read_serial (fsrfdata, 'building_mean_height', SITE_hroof  )
          ELSE
@@ -1623,6 +1623,13 @@ ELSE
          IF ( u_site_hlr ) THEN
             CALL ncio_read_serial (fsrfdata, 'wall_to_plan_area_ratio', SITE_lambdaw  )
             SITE_hlr     = SITE_lambdaw/4/SITE_froof
+         ELSE
+            dir_5x5 = trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_hl%dir)
+            fname = trim(DEF_rawdata%urban_hl%fname)
+            CALL grid_roof%define_by_name (trim(DEF_rawdata%urban_roof%gname))
+
+            CALL read_point_5x5_var_2d_real8 (grid_roof, dir_5x5, fname, 'HL_BLD', &
+               SITE_lon_location, SITE_lat_location, SITE_hlr)
          ENDIF
 ENDIF
          ! (5) urban ecology
@@ -1652,7 +1659,11 @@ ENDIF
             CALL read_point_5x5_var_2d_real8 (grid_flake, dir_5x5, fname, 'PCT_Water', &
                SITE_lon_location, SITE_lat_location, SITE_flake_urb)
 
-            SITE_flake_urb = SITE_flake_urb/100
+            IF (SITE_flake_urb >= 0) THEN
+               SITE_flake_urb = SITE_flake_urb/100
+            ELSE
+               SITE_flake_urb = 0.
+            ENDIF
          ENDIF
 
          u_site_fveg = readflag .and. ncio_var_exist(fsrfdata,'tree_area_fraction',readflag)
@@ -1735,7 +1746,20 @@ ENDIF
          u_site_albr = readflag .and. ncio_var_exist(fsrfdata,'ALB_ROOF',readflag)
          IF ( u_site_albr ) THEN
             CALL ncio_read_serial (fsrfdata, 'ALB_ROOF', SITE_alb_roof  )
-         ENDIF
+         ELSE
+            dir_5x5 = trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_alb%dir)
+            fname   = trim(DEF_rawdata%urban_alb%fname)
+
+            allocate ( SITE_alb_roof (2,2) )
+
+            CALL read_point_5x5_var_2d_real8 (grid_roof, dir_5x5, fname, 'ALB_ROOF', &
+               SITE_lon_location, SITE_lat_location, SITE_alb_roof(1,1))
+
+            CALL read_point_5x5_var_2d_real8 (grid_roof, dir_5x5, fname, 'ALB_ROOF', &
+               SITE_lon_location, SITE_lat_location, SITE_alb_roof(1,2))
+
+            SITE_alb_roof(2,:) = SITE_alb_roof(1,:)
+          ENDIF
 
          u_site_albw = readflag .and. ncio_var_exist(fsrfdata,'ALB_WALL',readflag)
          IF ( u_site_albw ) THEN
@@ -1930,10 +1954,10 @@ IF (DEF_URBAN_type_scheme == 1) THEN
             SITE_tk_gimp(:) = tkgimp_ncar(utyp, rid, :)
          ENDIF
 
-         IF (.not. u_site_albr   ) THEN
-            allocate( SITE_alb_roof (2, 2) )
-            SITE_alb_roof(:,:) = albroof_ncar(utyp, rid, :, :)
-         ENDIF
+         ! IF (.not. u_site_albr   ) THEN
+         !    allocate( SITE_alb_roof (2, 2) )
+         !    SITE_alb_roof(:,:) = albroof_ncar(utyp, rid, :, :)
+         ! ENDIF
 
          IF (.not. u_site_albw   ) THEN
             allocate( SITE_alb_wall (2, 2) )
@@ -1950,7 +1974,7 @@ IF (DEF_URBAN_type_scheme == 1) THEN
             SITE_alb_gper(:,:) = albgper_ncar(utyp, rid, :, :)
          ENDIF
 
-         IF (.not. u_site_hlr  ) SITE_hlr   = hwrbld_ncar(utyp, rid)
+         ! IF (.not. u_site_hlr  ) SITE_hlr   = hwrbld_ncar(utyp, rid)
          IF (.not. u_site_fgper) SITE_fgimp = 1-fgper_ncar(utyp, rid)
 ELSE
          utyp = SITE_urbtyp
@@ -1995,10 +2019,10 @@ ELSE
             SITE_tk_gimp(:) = tkgimp_lcz(utyp)
          ENDIF
 
-         IF (.not. u_site_albr   ) THEN
-            allocate( SITE_alb_roof (2, 2) )
-            SITE_alb_roof(:,:) = albroof_lcz(utyp)
-         ENDIF
+         ! IF (.not. u_site_albr   ) THEN
+         !    allocate( SITE_alb_roof (2, 2) )
+         !    SITE_alb_roof(:,:) = albroof_lcz(utyp)
+         ! ENDIF
 
          IF (.not. u_site_albw   ) THEN
             allocate( SITE_alb_wall (2, 2) )
@@ -2015,9 +2039,9 @@ ELSE
             SITE_alb_gper(:,:) = albgper_lcz(utyp)
          ENDIF
 
-         IF (.not. u_site_hlr  ) SITE_hlr   = hwrbld_lcz(utyp)
+         ! IF (.not. u_site_hlr  ) SITE_hlr   = hwrbld_lcz(utyp)
 
-         IF (.not. u_site_fgper) SITE_fgimp = 1-fgper_lcz(utyp)/(1-SITE_froof)
+         IF (.not. u_site_fgper) SITE_fgimp = 1-fgper_lcz(utyp)/(1-wtroof_lcz(utyp))
 ENDIF
 
 IF (DEF_USE_CANYON_HWR) THEN
@@ -2032,6 +2056,7 @@ ENDIF
          ELSE
             CALL grid_lake%define_by_name ('colm_500m')
             filename = trim(DEF_dir_rawdata)//'/lake_depth.nc'
+
             CALL read_point_var_2d_real8 (grid_lake, filename, 'lake_depth', &
                SITE_lon_location, SITE_lat_location, lakedepth)
             SITE_lakedepth = lakedepth * 0.1
@@ -3107,8 +3132,12 @@ ENDIF
 
       fsrfdata = trim(DEF_dir_landdata) // '/srfdata.nc'
 
-      SITE_fgper     = 1 - (SITE_fgimp-SITE_froof)/(1-SITE_froof-SITE_flake_urb)
-      SITE_froof     = SITE_froof /(1-SITE_flake_urb)
+      IF (u_site_fgper) THEN
+         SITE_fgper = 1 - (SITE_fgimp-SITE_froof)/(1-SITE_froof-SITE_flake_urb)
+      ELSE
+         SITE_fgper = 1 - SITE_fgimp
+      ENDIF
+
       SITE_fveg_urb  = SITE_fveg_urb  * 100
       SITE_flake_urb = SITE_flake_urb * 100
 

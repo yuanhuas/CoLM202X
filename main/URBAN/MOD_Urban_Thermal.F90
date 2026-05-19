@@ -1116,11 +1116,11 @@ CONTAINS
       fseng = fsenroof*fcover(0) + fsenwsun*fcover(1) + fsenwsha*fcover(2) + &
               fsengimp*fcover(3) + fsengper*fcover(4)
 
-      fsen_roof = fsenroof*fcover(0)
-      fsen_wsun = fsenwsun*fcover(1)
-      fsen_wsha = fsenwsha*fcover(2)
-      fsen_gimp = fsengimp*fcover(3)
-      fsen_gper = fsengper*fcover(4)
+      fsen_roof = fsenroof*fcover(0)*(1-flake)
+      fsen_wsun = fsenwsun*fcover(1)*(1-flake)
+      fsen_wsha = fsenwsha*fcover(2)*(1-flake)
+      fsen_gimp = fsengimp*fcover(3)*(1-flake)
+      fsen_gper = fsengper*fcover(4)*(1-flake)
 
       fevpg = fevproof*fcover(0) + fevpgimp*fcover(3) + fevpgper*fcover(4)
 
@@ -1142,7 +1142,7 @@ CONTAINS
          fevpa  = fevpl + fevpg
          lfevpa = lfevpa + hvap*fevpl
 
-         fsen_urbl   = fsenl
+         fsen_urbl   = fsenl*(1-flake)
          lfevp_urbl  = hvap*fevpl
          etr_deficit = etr_deficit*fveg
       ELSE
