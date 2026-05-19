@@ -2,7 +2,7 @@
 
 !-----------------------------------------------------------------------
 !
-!            --- CoLM 3D Building Community Urban Model ---
+!            --- CoLM Urban Building Community Model ---
 !
 !                Sun
 !                 \\\
@@ -32,8 +32,8 @@
 !  The CoLM urban model utilizes comprehensive high-resolution data on
 !  urban cover, geometric structure, vegetation, water bodies, etc.
 !  Furthermore, it has developed a relatively complete simulation of
-!  anthropogenic heat processes, including building energy consumption,
-!  traffic heat, and metabolic heat.
+!  anthropogenic processes, including building energy consumption,
+!  traffic heat, metabolic heat, and urban irrigation.
 !
 !  Created by Hua Yuan, 09/2021
 !
@@ -1100,7 +1100,7 @@
          mss_bcpho(lbsn:0)  ,mss_bcphi(lbsn:0)  ,mss_ocpho(lbsn:0)  ,mss_ocphi(lbsn:0)  ,&
          mss_dst1 (lbsn:0)  ,mss_dst2 (lbsn:0)  ,mss_dst3 (lbsn:0)  ,mss_dst4 (lbsn:0)  ,&
 ! END SNICAR model variables
-!  irrigaiton 
+!  irrigaiton
          qflx_irrig_drip    ,qflx_irrig_flood   ,qflx_irrig_paddy                       ,&
 !  end irrigation
          ! output
