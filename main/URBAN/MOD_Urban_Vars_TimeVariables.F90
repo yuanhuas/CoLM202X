@@ -54,7 +54,7 @@ MODULE MOD_Urban_Vars_TimeVariables
    real(r8), allocatable :: t_wallsha    (:,:) !temperature of shaded wall [K]
    real(r8), allocatable :: t_gimpsno    (:,:) !temperature of impervious [K]
    real(r8), allocatable :: t_gpersno    (:,:) !temperature of pervious [K]
-   real(r8), allocatable :: t_lakesno    (:,:) !temperature of pervious [K]
+   real(r8), allocatable :: t_lakesno    (:,:) !temperature of urban lake [K]
 
    real(r8), allocatable :: wliq_roofsno (:,:) !liquid water in layers [kg/m2]
    real(r8), allocatable :: wliq_gimpsno (:,:) !liquid water in layers [kg/m2]
@@ -292,7 +292,7 @@ CONTAINS
       CALL ncio_read_vector (file_restart, 'Fhah'       , landurban, Fhah       )
       CALL ncio_read_vector (file_restart, 'vehc'       , landurban, vehc       )
       CALL ncio_read_vector (file_restart, 'meta'       , landurban, meta       )
-      CALL ncio_read_vector (file_restart, 't_room '    , landurban, t_room     )
+      CALL ncio_read_vector (file_restart, 't_room'     , landurban, t_room     )
       CALL ncio_read_vector (file_restart, 't_roof'     , landurban, t_roof     )
       CALL ncio_read_vector (file_restart, 't_wall'     , landurban, t_wall     )
       CALL ncio_read_vector (file_restart, 'tafu'       , landurban, tafu       )
