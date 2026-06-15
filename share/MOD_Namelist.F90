@@ -139,8 +139,13 @@ MODULE MOD_Namelist
    logical :: USE_srfdata_from_3D_gridded_data = .false.
 
    ! ----- rawdata definition -----
-
-   character(len=256) :: DEF_rawdata_namelist  = 'path/to/rawdata/namelist'
+   ! Path of rawdata namelist, e.g. CoLM2024 500m is ./rawdata/colm500m.nml
+   ! ---
+   ! NOTE: Another rawdata namelist example file colm30m.nml is also available in
+   ! the same directory. Both sample files CONTAIN a wide range of data options
+   ! with a maximum resolution of 30 meters, which can be modified and set
+   ! according to your requirements.
+   character(len=256) :: DEF_rawdata_namelist  = './rawdata/colm500m.nml'
 
    type :: datainfo
       character(len=256) :: dir   = 'null' ! dir related to rawdata dir
