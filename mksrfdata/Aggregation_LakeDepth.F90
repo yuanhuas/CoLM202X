@@ -81,6 +81,7 @@ SUBROUTINE Aggregation_LakeDepth ( &
 ! ................................................
 ! global lake coverage and lake depth
 ! ................................................
+      !TODO:
       lndname = trim(dir_rawdata)//'/lake_depth.nc'
 
       IF (p_is_io) THEN
