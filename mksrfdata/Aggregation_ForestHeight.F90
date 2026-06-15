@@ -93,7 +93,7 @@ SUBROUTINE Aggregation_ForestHeight ( &
 
 #ifdef LULC_USGS
       !TODO: add dir, file name and var name
-      ! to check if they can be combinded.
+      ! to check if they can be combined.
       lndname = trim(dir_rawdata)//'/Forest_Height.nc'
 
       IF (p_is_io) THEN

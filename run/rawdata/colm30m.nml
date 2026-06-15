@@ -211,7 +211,7 @@
 
   ! ----- Urban tree height top -----
   !TODO: USE nature vegetation options?
-  DEF_rawdata_nml%urban_htop%idx = 1
+  DEF_rawdata_nml%urban_htop%idx = 3
 
   ! ----- Urban fractional tree cover -----
   ! Options:
