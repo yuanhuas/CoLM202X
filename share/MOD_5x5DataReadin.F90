@@ -398,9 +398,10 @@ CONTAINS
    integer :: iblkme, iblk, jblk, isouth, inorth, iwest, ieast, ibox, jbox, ibox0
    integer :: i0, i1, j0, j1, il0, il1, jl0, jl1
    character(len=256) :: file_5x5
-   integer :: ncid, varid
+   integer :: ncid, varid, ierr
    real(r8), allocatable :: dcache(:,:)
    logical :: fexists
+   real(r8):: scale_factor
 
       nxglb = grid%nlon
       nyglb = grid%nlat
@@ -444,9 +445,17 @@ CONTAINS
                   CALL nccheck( nf90_inq_varid(ncid, trim(dataname), varid) )
                   CALL nccheck( nf90_get_var(ncid, varid, dcache, &
                      (/i0,j0,time/), (/i1-i0+1,j1-j0+1,1/)) )
+
+                  ierr = nf90_inquire_attribute(ncid, varid, "scale_factor")
+                  IF (ierr == NF90_NOERR) THEN
+                     CALL nccheck( nf90_get_att(ncid, varid, "scale_factor", scale_factor) )
+                  ELSE IF (ierr == NF90_ENOTATT) THEN
+                     scale_factor = 1.0
+                  END IF
+
                   CALL nccheck( nf90_close(ncid) )
 
-                  rdata%blk(iblk,jblk)%val(il0:il1,jl0:jl1) = dcache
+                  rdata%blk(iblk,jblk)%val(il0:il1,jl0:jl1) = dcache * scale_factor
 
                   deallocate (dcache)
                ENDIF
@@ -485,10 +494,11 @@ CONTAINS
    integer :: iblkme, iblk, jblk, isouth, inorth, iwest, ieast, ibox, jbox, ibox0
    integer :: i0, i1, j0, j1, il0, il1, jl0, jl1
    character(len=256) :: file_5x5
-   integer :: ncid, varid
+   integer :: ncid, varid, ierr
    real(r8), allocatable :: dcache(:,:,:)
    logical :: fexists
    integer :: ipft
+   real(r8):: scale_factor
 
       nxglb = grid%nlon
       nyglb = grid%nlat
@@ -532,10 +542,18 @@ CONTAINS
                   CALL nccheck( nf90_inq_varid(ncid, trim(dataname), varid) )
                   CALL nccheck( nf90_get_var(ncid, varid, dcache, &
                      (/i0,j0,1,time/), (/i1-i0+1,j1-j0+1,N_PFT_modis,1/)) )
+
+                  ierr = nf90_inquire_attribute(ncid, varid, "scale_factor")
+                  IF (ierr == NF90_NOERR) THEN
+                     CALL nccheck( nf90_get_att(ncid, varid, "scale_factor", scale_factor) )
+                  ELSE IF (ierr == NF90_ENOTATT) THEN
+                     scale_factor = 1.0
+                  END IF
+
                   CALL nccheck( nf90_close(ncid) )
 
                   DO ipft = 0, N_PFT_modis-1
-                     rdata%blk(iblk,jblk)%val(ipft,il0:il1,jl0:jl1) = dcache(:,:,ipft)
+                     rdata%blk(iblk,jblk)%val(ipft,il0:il1,jl0:jl1) = dcache(:,:,ipft) * scale_factor
                   ENDDO
 
                   deallocate (dcache)
