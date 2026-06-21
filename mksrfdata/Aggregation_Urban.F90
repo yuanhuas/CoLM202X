@@ -1190,7 +1190,7 @@ ENDIF
 
          ENDDO
 
-         IF (numelm>0) THEN
+         IF (numelm>0 .and. numurban>0) THEN
             DO ielm = 1, numelm
                numpth = count(landurban%eindex==landelm%eindex(ielm))
 
@@ -1200,10 +1200,8 @@ ENDIF
                locpth = pack([(ipth, ipth=1, numurban)], &
                         landurban%eindex==landelm%eindex(ielm))
 
-               print*, minval(locpth), maxval(locpth)
-               urb_s = elm_patch%substt(ielm)
-               urb_e = elm_patch%subEND(ielm)
-               print*, urb_s, urb_e
+               urb_s = minval(locpth)
+               urb_e = maxval(locpth)
 
                DO iurban = urb_s, urb_e
                   sarea_urb(urb_s:urb_e) = sarea_urb(urb_s:urb_e) + area_urb(iurban)
