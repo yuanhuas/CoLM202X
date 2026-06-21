@@ -1128,9 +1128,9 @@ CONTAINS
                htvp_gimp*fevpgimp*fcover(3) + &
                htvp_gper*fevpgper*fcover(4)
 
-      lfevp_roof = htvp_roof*fevproof*fcover(0)
-      lfevp_gimp = htvp_gimp*fevpgimp*fcover(3)
-      lfevp_gper = htvp_gper*fevpgper*fcover(4)
+      lfevp_roof = htvp_roof*fevproof*fcover(0)*(1-flake)
+      lfevp_gimp = htvp_gimp*fevpgimp*fcover(3)*(1-flake)
+      lfevp_gper = htvp_gper*fevpgper*fcover(4)*(1-flake)
 
       IF ( doveg ) THEN
          assim  = assim * fveg
@@ -1143,7 +1143,7 @@ CONTAINS
          lfevpa = lfevpa + hvap*fevpl
 
          fsen_urbl   = fsenl*(1-flake)
-         lfevp_urbl  = hvap*fevpl
+         lfevp_urbl  = hvap*fevpl*(1-flake)
          etr_deficit = etr_deficit*fveg
       ELSE
          fsena  = fseng
@@ -1315,7 +1315,7 @@ CONTAINS
       ! ground heat flux
       fgrnd = sabg + lnet - dlwbef - dlout*fg*(1-flake) &
             - 4.*eroof*stefnc*troof_bef**3*dT(0)*froof*(1-flake)&
-            - fseng - (lfevp_roof + lfevp_gimp + lfevp_gper)*(1-flake) &
+            - fseng - (lfevp_roof + lfevp_gimp + lfevp_gper) &
             - lfevpa_lake*flake
 
       ! energy balance check

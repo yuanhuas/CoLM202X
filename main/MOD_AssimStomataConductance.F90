@@ -481,7 +481,7 @@ CONTAINS
             trda,     &! temperature coefficient in gs-a model             (1.3)
             trdm,     &! temperature coefficient in gs-a model             (328.16)
             psrf       ! surface atmospheric pressure (pa)
-            
+
    integer, intent(in) :: &
             c3c4       ! 1 for c3, 0 for c4
 
