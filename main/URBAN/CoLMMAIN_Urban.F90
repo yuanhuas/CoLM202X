@@ -1100,7 +1100,7 @@
          mss_bcpho(lbsn:0)  ,mss_bcphi(lbsn:0)  ,mss_ocpho(lbsn:0)  ,mss_ocphi(lbsn:0)  ,&
          mss_dst1 (lbsn:0)  ,mss_dst2 (lbsn:0)  ,mss_dst3 (lbsn:0)  ,mss_dst4 (lbsn:0)  ,&
 ! END SNICAR model variables
-!  irrigaiton
+!  irrigaiton 
          qflx_irrig_drip    ,qflx_irrig_flood   ,qflx_irrig_paddy                       ,&
 !  end irrigation
          ! output
