@@ -786,6 +786,8 @@ ENDIF
 
          landname = TRIM(dir_rawdata)//'/urban_human/lucy/LUCY_regionid.nc'
          CALL allocate_block_data (grid_lucy, LUCY_reg)
+         CALL flush_block_data    (LUCY_reg , 0       )
+
          CALL ncio_read_block (landname, 'LUCY_REGION_ID', grid_lucy, LUCY_reg)
 
 #ifdef USEMPI
@@ -1188,24 +1190,26 @@ ENDIF
 
          ENDDO
 
-         DO ielm = 1, numelm
-            numpth = count(landurban%eindex==landelm%eindex(ielm))
+         IF (numelm>0 .and. numurban>0) THEN
+            DO ielm = 1, numelm
+               numpth = count(landurban%eindex==landelm%eindex(ielm))
 
-            IF (allocated(locpth)) deallocate(locpth)
-            allocate(locpth(numpth))
+               IF (allocated(locpth)) deallocate(locpth)
+               allocate(locpth(numpth))
 
-            locpth = pack([(ipth, ipth=1, numurban)], &
-                     landurban%eindex==landelm%eindex(ielm))
+               locpth = pack([(ipth, ipth=1, numurban)], &
+                        landurban%eindex==landelm%eindex(ielm))
 
-            urb_s = minval(locpth)
-            urb_e = maxval(locpth)
+               urb_s = minval(locpth)
+               urb_e = maxval(locpth)
 
-            DO iurban = urb_s, urb_e
-               sarea_urb(urb_s:urb_e) = sarea_urb(urb_s:urb_e) + area_urb(iurban)
+               DO iurban = urb_s, urb_e
+                  sarea_urb(urb_s:urb_e) = sarea_urb(urb_s:urb_e) + area_urb(iurban)
+               ENDDO
             ENDDO
-         ENDDO
 
-         urb_pct(:) = area_urb(:)/sarea_urb(:)
+            urb_pct(:) = area_urb(:)/sarea_urb(:)
+         ENDIF
 
 #ifdef USEMPI
          CALL aggregation_worker_done_multigrid ()

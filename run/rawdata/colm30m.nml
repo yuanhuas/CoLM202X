@@ -210,8 +210,33 @@
   DEF_rawdata_nml%urban_fgper%opt(1)%fname = 'Fgper1km_Liao'
 
   ! ----- Urban tree height top -----
-  !TODO: USE nature vegetation options?
-  DEF_rawdata_nml%urban_htop%idx = 3
+  !TODO: USE nature vegetation options? Yes, and recommend ETH
+  ! Options:
+  !   1: ETH 500m
+  !   2: ETH 30m
+  !   3: Tolan 500m
+  !   4: Tolan 30m
+  DEF_rawdata_nml%urban_htop%idx = 2
+
+  DEF_rawdata_nml%urban_htop%opt(1)%dir   = '/vegetation_morphology/tree_height_ETH/'
+  DEF_rawdata_nml%urban_htop%opt(1)%gname = 'colm_500m'
+  DEF_rawdata_nml%urban_htop%opt(1)%fname = 'Htop500m.ETH'
+  DEF_rawdata_nml%urban_htop%opt(1)%vname = 'HTOP'
+
+  DEF_rawdata_nml%urban_htop%opt(2)%dir   = '/vegetation_morphology/tree_height_ETH/'
+  DEF_rawdata_nml%urban_htop%opt(2)%gname = 'colm_30m'
+  DEF_rawdata_nml%urban_htop%opt(2)%fname = 'Htop30m.ETH'
+  DEF_rawdata_nml%urban_htop%opt(2)%vname = 'HTOP'
+
+  DEF_rawdata_nml%urban_htop%opt(3)%dir   = '/vegetation_morphology/tree_height_Tolan/'
+  DEF_rawdata_nml%urban_htop%opt(3)%gname = 'colm_500m'
+  DEF_rawdata_nml%urban_htop%opt(3)%fname = 'Htop500m.Tolan'
+  DEF_rawdata_nml%urban_htop%opt(3)%vname = 'HTOP_90'
+
+  DEF_rawdata_nml%urban_htop%opt(4)%dir   = '/vegetation_morphology/tree_height_Tolan/'
+  DEF_rawdata_nml%urban_htop%opt(4)%gname = 'colm_30m'
+  DEF_rawdata_nml%urban_htop%opt(4)%fname = 'Htop30m.Tolan'
+  DEF_rawdata_nml%urban_htop%opt(4)%vname = 'HTOP'
 
   ! ----- Urban fractional tree cover -----
   ! Options:

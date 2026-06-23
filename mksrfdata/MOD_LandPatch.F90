@@ -97,6 +97,7 @@ CONTAINS
          ! add parameter input for time year
          dir_5x5= trim(DEF_dir_rawdata) // trim(DEF_rawdata%landcover%dir)
          fname  = trim(DEF_rawdata%landcover%fname)//'.'//trim(cyear)
+
          CALL read_5x5_data (dir_5x5, fname, grid_patch, 'LC', patchdata)
 #else
          !TODO: need usgs land cover type data
