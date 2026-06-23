@@ -179,6 +179,7 @@ CONTAINS
          satcap_snow = 48.*satcap                  ! Simple one without snow density input
 
          ppc = (prc_rain + prc_snow)*deltim
+         !TODO: add a temporal var to set qflx_irrig_sprinkler value, and unify the codes
          IF ( present(qflx_irrig_sprinkler) ) THEN
             p0  = (prc_rain + prc_snow + prl_rain + prl_snow + qflx_irrig_sprinkler)*deltim
             ppl = (prl_rain + prl_snow + qflx_irrig_sprinkler)*deltim
