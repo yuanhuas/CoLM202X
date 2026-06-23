@@ -250,14 +250,14 @@ CONTAINS
             ! drainage
             IF ( present(qflx_irrig_sprinkler) ) THEN
                tex_rain = (prc_rain+prl_rain+qflx_irrig_sprinkler)*deltim * fpi * (ap/bp*(1.-exp(-bp*xs))+cp*xs) &
-                     - max(0., (satcap-ldew)) * xs
+                        - max(0., (satcap-ldew)) * xs
                tex_rain = max( tex_rain, 0. )
                ! Ensure physical constraint: tex_rain + tti_rain <= total rain input
                tex_rain = min( tex_rain, (prc_rain+prl_rain+qflx_irrig_sprinkler)*deltim - tti_rain )
                tex_snow = 0.
             ELSE
                tex_rain = (prc_rain+prl_rain)*deltim * fpi * (ap/bp*(1.-exp(-bp*xs))+cp*xs) &
-                     - max(0., (satcap-ldew)) * xs
+                        - max(0., (satcap-ldew)) * xs
                tex_rain = max( tex_rain, 0. )
                ! Ensure physical constraint: tex_rain + tti_rain <= total rain input
                tex_rain = min( tex_rain, (prc_rain+prl_rain)*deltim - tti_rain )
