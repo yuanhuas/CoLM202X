@@ -229,6 +229,7 @@ CONTAINS
             ENDIF
             froof(u) = min(0.9, froof(u)/(1.-flake(u)))
 
+            ! to constrain the building side length >= 10 m
             IF (hroof(u)/hlr(u) < 10) hlr(u) = hroof(u)/10
 
             IF (DEF_URBAN_TREE) THEN

@@ -199,7 +199,7 @@ MODULE MOD_Const_LC
           0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08,&
           0.08, 0.08, 0.08, 0.05, 0.05, 0.05, 0.05, 0.05/)
 
-   !C3C4 switch 1: C3, 0: C4
+   !C3C4 flag 1: C3, 0: C4
    integer, parameter, dimension(N_land_classification) :: c3c4_usgs &
       = (/1, 1, 1, 1, 1, 1, 1, 1,&
           1, 1, 1, 1, 1, 1, 1, 1,&
