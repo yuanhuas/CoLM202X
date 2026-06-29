@@ -866,6 +866,7 @@
 !----------------------------------------------------------------------
 
       ! with vegetation canopy
+      !TODO: Confirm whether tair uses forc_t or tref.
       CALL LEAF_interception_wrap (deltim,dewmx,forc_us,forc_vs,chil,sigf,lai,sai,forc_t,&
                       tleaf,prc_rain,prc_snow,prl_rain,prl_snow,bifall,&
                       ldew,ldew_rain,ldew_snow,z0m,forc_hgt_u,pg_rain,&
