@@ -141,7 +141,7 @@
   DEF_rawdata_nml%urban_type%idx = 2
 
   DEF_rawdata_nml%urban_type%opt(1)%dir   = '/urban_type/ncar/'
-  DEF_rawdata_nml%urban_type%opt(1)%gname = 'colm_1km'
+  DEF_rawdata_nml%urban_type%opt(1)%gname = 'colm_500m'
   DEF_rawdata_nml%urban_type%opt(1)%fname = 'URBTYPE1km_NCAR.Jackson'
 
   DEF_rawdata_nml%urban_type%opt(2)%dir   = '/urban_type/lcz/'
