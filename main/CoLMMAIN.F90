@@ -699,23 +699,26 @@ SUBROUTINE CoLMMAIN ( &
 
 #if (defined LULC_USGS || defined LULC_IGBP)
             CALL LEAF_interception_wrap (deltim,dewmx,forc_us,forc_vs,chil,sigf,lai,sai,forc_t,&
-                      tleaf,prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,bifall,&
+                      tleaf,prc_rain,prc_snow,prl_rain,prl_snow,bifall,&
                       ldew,ldew_rain,ldew_snow,z0m,forc_hgt_u,pg_rain,&
-                      pg_snow,qintr,qintr_rain,qintr_snow)
+                      pg_snow,qintr,qintr_rain,qintr_snow,&
+                      qflx_irrig_sprinkler=qflx_irrig_sprinkler)
 #endif
 
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
             CALL LEAF_interception_pftwrap (ipatch,deltim,dewmx,forc_us,forc_vs,forc_t,&
-                      prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,bifall,&
+                      prc_rain,prc_snow,prl_rain,prl_snow,bifall,&
                       ldew,ldew_rain,ldew_snow,z0m,forc_hgt_u,pg_rain,&
-                      pg_snow,qintr,qintr_rain,qintr_snow)
+                      pg_snow,qintr,qintr_rain,qintr_snow,&
+                      qflx_irrig_sprinkler=qflx_irrig_sprinkler)
 #endif
 
          ELSE
             CALL LEAF_interception_wrap (deltim,dewmx,forc_us,forc_vs,chil,sigf,lai,sai,forc_t,&
-                      tleaf,prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,bifall,&
+                      tleaf,prc_rain,prc_snow,prl_rain,prl_snow,bifall,&
                       ldew,ldew_rain,ldew_snow,z0m,forc_hgt_u,pg_rain,&
-                      pg_snow,qintr,qintr_rain,qintr_snow)
+                      pg_snow,qintr,qintr_rain,qintr_snow,&
+                      qflx_irrig_sprinkler=qflx_irrig_sprinkler)
          ENDIF
 
          qdrip = pg_rain + pg_snow
