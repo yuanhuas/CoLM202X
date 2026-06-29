@@ -81,9 +81,8 @@ MODULE MOD_LeafInterception
 CONTAINS
 
    SUBROUTINE LEAF_interception_CoLM2014 (deltim,dewmx,forc_us,forc_vs,chil,sigf,lai,sai,tair,tleaf,&
-                                          prc_rain,prc_snow,prl_rain,prl_snow,bifall,&
-                                          ldew,ldew_rain,ldew_snow,z0m,hu,pg_rain,pg_snow,qintr,qintr_rain,qintr_snow,&
-                                          qflx_irrig_sprinkler)
+                                          prc_rain,prc_snow,prl_rain,prl_snow,bifall,qflx_irrig_sprinkler,&
+                                          ldew,ldew_rain,ldew_snow,z0m,hu,pg_rain,pg_snow,qintr,qintr_rain,qintr_snow)
 !DESCRIPTION
 !===========
    ! Calculation of  interception and drainage of precipitation
@@ -147,6 +146,7 @@ CONTAINS
    real(r8), intent(in) :: prl_rain     !large-scale rainfall [mm/s]
    real(r8), intent(in) :: prl_snow     !large-scale snowfall [mm/s]
    real(r8), intent(in) :: bifall       !bulk density of newly fallen dry snow [kg/m3]
+   real(r8), intent(in) :: qflx_irrig_sprinkler ! irrigation and sprinkler water flux [mm/s]
    real(r8), intent(in) :: sigf         !fraction of veg cover, excluding snow-covered veg [-]
    real(r8), intent(in) :: lai          !leaf area index [-]
    real(r8), intent(in) :: sai          !stem area index [-]
@@ -159,14 +159,11 @@ CONTAINS
    real(r8), intent(in)    :: z0m       !roughness length
    real(r8), intent(in)    :: hu        !forcing height of U
 
-
    real(r8), intent(out) :: pg_rain     !rainfall onto ground including canopy runoff [kg/(m2 s)]
    real(r8), intent(out) :: pg_snow     !snowfall onto ground including canopy runoff [kg/(m2 s)]
    real(r8), intent(out) :: qintr       !interception [kg/(m2 s)]
    real(r8), intent(out) :: qintr_rain  !rainfall interception (mm h2o/s)
    real(r8), intent(out) :: qintr_snow  !snowfall interception (mm h2o/s)
-
-   real(r8), intent(in), optional :: qflx_irrig_sprinkler ! irrigation and sprinkler water flux [mm/s]
 
 !-----------------------------------------------------------------------
 
@@ -178,16 +175,10 @@ CONTAINS
          satcap_snow = 6.6*(0.27+46./bifall)*vegt  ! Niu et al., 2004
          satcap_snow = 48.*satcap                  ! Simple one without snow density input
 
+         p0  = (prc_rain + prc_snow + prl_rain + prl_snow + qflx_irrig_sprinkler)*deltim
          ppc = (prc_rain + prc_snow)*deltim
          !TODO: add a temporal var to set qflx_irrig_sprinkler value, and unify the codes
-         IF ( present(qflx_irrig_sprinkler) ) THEN
-            p0  = (prc_rain + prc_snow + prl_rain + prl_snow + qflx_irrig_sprinkler)*deltim
-            ppl = (prl_rain + prl_snow + qflx_irrig_sprinkler)*deltim
-         ELSE
-            p0  = (prc_rain + prc_snow + prl_rain + prl_snow)*deltim
-            ppl = (prl_rain + prl_snow)*deltim
-         ENDIF
-
+         ppl = (prl_rain + prl_snow + qflx_irrig_sprinkler)*deltim
 
          w = ldew+p0
          IF (tleaf > tfrz) THEN
@@ -230,11 +221,7 @@ CONTAINS
             ! assume alpha_rain = alpha_snow
             alpha_rain = 0.25
             fpi = alpha_rain * ( 1.-exp(-exrain*lsai) )
-            IF ( present(qflx_irrig_sprinkler) ) THEN
-               tti_rain = (prc_rain+prl_rain+qflx_irrig_sprinkler)*deltim * ( 1.-fpi )
-            ELSE
-               tti_rain = (prc_rain+prl_rain)*deltim * ( 1.-fpi )
-            ENDIF
+            tti_rain = (prc_rain+prl_rain+qflx_irrig_sprinkler)*deltim * ( 1.-fpi )
             tti_snow = (prc_snow+prl_snow)*deltim * ( 1.-fpi )
 
             xs = 1.
@@ -249,21 +236,12 @@ CONTAINS
 
             ! assume no fall down of the intercepted snowfall in a time step
             ! drainage
-            IF ( present(qflx_irrig_sprinkler) ) THEN
-               tex_rain = (prc_rain+prl_rain+qflx_irrig_sprinkler)*deltim * fpi * (ap/bp*(1.-exp(-bp*xs))+cp*xs) &
-                        - max(0., (satcap-ldew)) * xs
-               tex_rain = max( tex_rain, 0. )
-               ! Ensure physical constraint: tex_rain + tti_rain <= total rain input
-               tex_rain = min( tex_rain, (prc_rain+prl_rain+qflx_irrig_sprinkler)*deltim - tti_rain )
-               tex_snow = 0.
-            ELSE
-               tex_rain = (prc_rain+prl_rain)*deltim * fpi * (ap/bp*(1.-exp(-bp*xs))+cp*xs) &
-                        - max(0., (satcap-ldew)) * xs
-               tex_rain = max( tex_rain, 0. )
-               ! Ensure physical constraint: tex_rain + tti_rain <= total rain input
-               tex_rain = min( tex_rain, (prc_rain+prl_rain)*deltim - tti_rain )
-               tex_snow = 0.
-            ENDIF
+            tex_rain = (prc_rain+prl_rain+qflx_irrig_sprinkler)*deltim * fpi * (ap/bp*(1.-exp(-bp*xs))+cp*xs) &
+                     - max(0., (satcap-ldew)) * xs
+            tex_rain = max( tex_rain, 0. )
+            ! Ensure physical constraint: tex_rain + tti_rain <= total rain input
+            tex_rain = min( tex_rain, (prc_rain+prl_rain+qflx_irrig_sprinkler)*deltim - tti_rain )
+            tex_snow = 0.
 
             ! 04/11/2024, yuan:
             !TODO-done: account for snow on vegetation,
@@ -281,19 +259,11 @@ CONTAINS
                   ENDIF
                ENDIF
 
-               IF ( present(qflx_irrig_sprinkler) ) THEn
-                  tex_rain = (prc_rain+prl_rain+qflx_irrig_sprinkler)*deltim * fpi * (ap/bp*(1.-exp(-bp*xs))+cp*xs) &
-                           - max(0., (satcap_rain-ldew_rain)) * xs
-                  tex_rain = max( tex_rain, 0. )
-                  ! Ensure physical constraint: tex_rain + tti_rain <= total rain input
-                  tex_rain = min( tex_rain, (prc_rain+prl_rain+qflx_irrig_sprinkler)*deltim - tti_rain )
-               ELSE
-                  tex_rain = (prc_rain+prl_rain)*deltim * fpi * (ap/bp*(1.-exp(-bp*xs))+cp*xs) &
-                           - max(0., (satcap_rain-ldew_rain)) * xs
-                  tex_rain = max( tex_rain, 0. )
-                  ! Ensure physical constraint: tex_rain + tti_rain <= total rain input
-                  tex_rain = min( tex_rain, (prc_rain+prl_rain)*deltim - tti_rain )
-               ENDIF
+               tex_rain = (prc_rain+prl_rain+qflx_irrig_sprinkler)*deltim * fpi * (ap/bp*(1.-exp(-bp*xs))+cp*xs) &
+                        - max(0., (satcap_rain-ldew_rain)) * xs
+               tex_rain = max( tex_rain, 0. )
+               ! Ensure physical constraint: tex_rain + tti_rain <= total rain input
+               tex_rain = min( tex_rain, (prc_rain+prl_rain+qflx_irrig_sprinkler)*deltim - tti_rain )
 
                ! re-calculate the snow loading rate
 
@@ -341,12 +311,7 @@ CONTAINS
 
          !TODO-done: IF DEF_VEG_SNOW, update ldew_rain, ldew_snow
          IF ( DEF_VEG_SNOW ) THEN
-            IF ( present(qflx_irrig_sprinkler) ) THEN
-               ldew_rain = ldew_rain + (prc_rain+prl_rain+qflx_irrig_sprinkler)*deltim - thru_rain
-            ELSE
-               ldew_rain = ldew_rain + (prc_rain+prl_rain)*deltim - thru_rain
-            ENDIF
-
+            ldew_rain = ldew_rain + (prc_rain+prl_rain+qflx_irrig_sprinkler)*deltim - thru_rain
             ldew_snow = ldew_snow + (prc_snow+prl_snow)*deltim - thru_snow
             ldew = ldew_rain + ldew_snow
          ENDIF
@@ -355,11 +320,7 @@ CONTAINS
          pg_snow = (xsc_snow + thru_snow) / deltim
          qintr   = pinf / deltim
 
-         IF ( present(qflx_irrig_sprinkler) ) THEN
-            qintr_rain = prc_rain + prl_rain + qflx_irrig_sprinkler - thru_rain / deltim
-         ELSE
-            qintr_rain = prc_rain + prl_rain - thru_rain / deltim
-         ENDIF
+         qintr_rain = prc_rain + prl_rain + qflx_irrig_sprinkler - thru_rain / deltim
          qintr_snow = prc_snow + prl_snow - thru_snow / deltim
 
 #if (defined CoLMDEBUG)
@@ -382,27 +343,15 @@ CONTAINS
          !NOTE: this bug should exist in other interception schemes @Zhongwang.
          IF (ldew > 0.) THEN
             IF (tleaf > tfrz) THEN
-               IF ( present(qflx_irrig_sprinkler) ) THEN
-                  pg_rain = prc_rain + prl_rain + qflx_irrig_sprinkler + ldew/deltim
-               ELSE
-                  pg_rain = prc_rain + prl_rain + ldew/deltim
-               ENDIF
+               pg_rain = prc_rain + prl_rain + qflx_irrig_sprinkler + ldew/deltim
                pg_snow = prc_snow + prl_snow
 
             ELSE
-               IF ( present(qflx_irrig_sprinkler) ) THEN
-                  pg_rain = prc_rain + prl_rain + qflx_irrig_sprinkler
-               ELSE
-                  pg_rain = prc_rain + prl_rain
-               ENDIF
+               pg_rain = prc_rain + prl_rain + qflx_irrig_sprinkler
                pg_snow = prc_snow + prl_snow + ldew/deltim
             ENDIF
          ELSE
-            IF ( present(qflx_irrig_sprinkler) ) THEN
-               pg_rain = prc_rain + prl_rain + qflx_irrig_sprinkler
-            ELSE
-               pg_rain = prc_rain + prl_rain
-            ENDIF
+            pg_rain = prc_rain + prl_rain + qflx_irrig_sprinkler
             pg_snow = prc_snow + prl_snow
          ENDIF
 
@@ -1809,9 +1758,10 @@ CONTAINS
    END SUBROUTINE LEAF_interception_JULES
 
    SUBROUTINE LEAF_interception_wrap(deltim,dewmx,forc_us,forc_vs,chil,sigf,lai,sai,tair,tleaf, &
-                               prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,bifall, &
+                                                    prc_rain,prc_snow,prl_rain,prl_snow,bifall, &
                                                        ldew,ldew_rain,ldew_snow,z0m,hu,pg_rain, &
-                                                            pg_snow,qintr,qintr_rain,qintr_snow )
+                                                            pg_snow,qintr,qintr_rain,qintr_snow,&
+                                                               qflx_irrig_sprinkler, urban_call )
 !DESCRIPTION
 !===========
    !wrapper for calculation of canopy interception using USGS or IGBP land cover classification
@@ -1840,7 +1790,6 @@ CONTAINS
    real(r8), intent(in)    :: prc_snow   !convective snowfall [mm/s]
    real(r8), intent(in)    :: prl_rain   !large-scale rainfall [mm/s]
    real(r8), intent(in)    :: prl_snow   !large-scale snowfall [mm/s]
-   real(r8), intent(in)    :: qflx_irrig_sprinkler !irrigation and sprinkler water [mm/s]
    real(r8), intent(in)    :: bifall     !bulk density of newly fallen dry snow [kg/m3]
    real(r8), intent(in)    :: sigf       !fraction of veg cover, excluding snow-covered veg [-]
    real(r8), intent(in)    :: lai        !leaf area index [-]
@@ -1854,55 +1803,68 @@ CONTAINS
    real(r8), intent(in)    :: z0m        !roughness length
    real(r8), intent(in)    :: hu         !forcing height of U
 
-
    real(r8), intent(out)   :: pg_rain    !rainfall onto ground including canopy runoff [kg/(m2 s)]
    real(r8), intent(out)   :: pg_snow    !snowfall onto ground including canopy runoff [kg/(m2 s)]
    real(r8), intent(out)   :: qintr      !interception [kg/(m2 s)]
    real(r8), intent(out)   :: qintr_rain !rainfall interception (mm h2o/s)
    real(r8), intent(out)   :: qintr_snow !snowfall interception (mm h2o/s)
 
-      IF (DEF_Interception_scheme==1) THEN
+   real(r8), intent(in), optional :: qflx_irrig_sprinkler
+   logical , intent(in), optional :: urban_call
+
+   real(r8) :: qflx_irrig_sprinkler_tmp
+
+      IF ( present(qflx_irrig_sprinkler) ) THEN
+         qflx_irrig_sprinkler_tmp = qflx_irrig_sprinkler
+      ELSE
+         qflx_irrig_sprinkler_tmp = 0
+      ENDIF
+
+      IF (DEF_Interception_scheme==1 .or. present(urban_call)) THEN
          CALL LEAF_interception_CoLM2014 (deltim,dewmx,forc_us,forc_vs,chil,sigf,lai,sai,tair,tleaf,&
-                                             prc_rain,prc_snow,prl_rain,prl_snow,bifall,&
+                                             prc_rain,prc_snow,prl_rain,prl_snow,bifall,qflx_irrig_sprinkler_tmp,&
                                              ldew,ldew_rain,ldew_snow,z0m,hu,pg_rain,&
-                                             pg_snow,qintr,qintr_rain,qintr_snow,&
-                                             qflx_irrig_sprinkler=qflx_irrig_sprinkler)
+                                             pg_snow,qintr,qintr_rain,qintr_snow)
+
       ELSEIF (DEF_Interception_scheme==2) THEN
          CALL LEAF_interception_CLM4 (deltim,dewmx,forc_us,forc_vs,chil,sigf,lai,sai,tair,tleaf,&
-                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,&
+                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler_tmp,&
                                              ldew,ldew_rain,ldew_snow,z0m,hu,pg_rain,&
                                              pg_snow,qintr,qintr_rain,qintr_snow)
+
       ELSEIF (DEF_Interception_scheme==3) THEN
          CALL LEAF_interception_CLM5(deltim,dewmx,forc_us,forc_vs,chil,sigf,lai,sai,tair,tleaf,&
-                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,&
+                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler_tmp,&
                                              ldew,ldew_rain,ldew_snow,z0m,hu,pg_rain,&
                                              pg_snow,qintr,qintr_rain,qintr_snow)
+
       ELSEIF (DEF_Interception_scheme==4) THEN
          CALL LEAF_interception_NoahMP (deltim,dewmx,forc_us,forc_vs,chil,sigf,lai,sai,tair,tleaf,&
-                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,&
+                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler_tmp,&
                                              ldew,ldew_rain,ldew_snow,z0m,hu,pg_rain,&
                                              pg_snow,qintr,qintr_rain,qintr_snow)
+
       ELSEIF  (DEF_Interception_scheme==5) THEN
          CALL LEAF_interception_matsiro (deltim,dewmx,forc_us,forc_vs,chil,sigf,lai,sai,tair,tleaf,&
-                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,&
+                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler_tmp,&
                                              ldew,ldew_rain,ldew_snow,z0m,hu,pg_rain,&
                                              pg_snow,qintr,qintr_rain,qintr_snow)
 
       ELSEIF  (DEF_Interception_scheme==6) THEN
          CALL LEAF_interception_vic (deltim,dewmx,forc_us,forc_vs,chil,sigf,lai,sai,tair,tleaf,&
-                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,&
+                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler_tmp,&
                                              ldew,ldew_rain,ldew_snow,z0m,hu,pg_rain,&
                                              pg_snow,qintr,qintr_rain,qintr_snow)
 
       ELSEIF  (DEF_Interception_scheme==7) THEN
          CALL LEAF_interception_JULES (deltim,dewmx,forc_us,forc_vs,chil,sigf,lai,sai,tair,tleaf,&
-                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,&
+                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler_tmp,&
                                              ldew,ldew_rain,ldew_snow,z0m,hu,pg_rain,&
                                              pg_snow,qintr,qintr_rain,qintr_snow)
 
       ELSEIF  (DEF_Interception_scheme==8) THEN
          CALL LEAF_interception_colm202x (deltim,dewmx,forc_us,forc_vs,chil,sigf,lai,sai,tair,tleaf,&
-                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,&
+                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler_tmp,&
                                              ldew,ldew_rain,ldew_snow,z0m,hu,pg_rain,&
                                              pg_snow,qintr,qintr_rain,qintr_snow)
       ENDIF
@@ -1911,8 +1873,9 @@ CONTAINS
 
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
    SUBROUTINE LEAF_interception_pftwrap (ipatch,deltim,dewmx,forc_us,forc_vs,forc_t,&
-                               prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,bifall,&
-                               ldew,ldew_rain,ldew_snow,z0m,hu,pg_rain,pg_snow,qintr,qintr_rain,qintr_snow)
+                               prc_rain,prc_snow,prl_rain,prl_snow,bifall,&
+                               ldew,ldew_rain,ldew_snow,z0m,hu,pg_rain,pg_snow,qintr,qintr_rain,qintr_snow,&
+                               qflx_irrig_sprinkler_tmp)
 
 ! -----------------------------------------------------------------
 ! !DESCRIPTION:
@@ -1948,7 +1911,6 @@ CONTAINS
    real(r8), intent(in)    :: prc_snow   !convective snowfall [mm/s]
    real(r8), intent(in)    :: prl_rain   !large-scale rainfall [mm/s]
    real(r8), intent(in)    :: prl_snow   !large-scale snowfall [mm/s]
-   real(r8), intent(in)    :: qflx_irrig_sprinkler !irrigation and sprinkler water [mm/s]
    real(r8), intent(in)    :: bifall     ! bulk density of newly fallen dry snow [kg/m3]
 
    real(r8), intent(inout) :: ldew       !depth of water on foliage [mm]
@@ -1958,14 +1920,22 @@ CONTAINS
    real(r8), intent(out)   :: qintr_rain !rainfall interception (mm h2o/s)
    real(r8), intent(out)   :: qintr_snow !snowfall interception (mm h2o/s)
 
+   real(r8), intent(in), optional :: qflx_irrig_sprinkler !irrigation and sprinkler water [mm/s]
+
    integer i, p, ps, pe
 #ifdef CROP
    integer  :: irrig_flag  ! 1 if sprinker, 2 if others
 #endif
-   real(r8) pg_rain_tmp, pg_snow_tmp
+   real(r8) pg_rain_tmp, pg_snow_tmp, qflx_irrig_sprinkler_tmp
 
       pg_rain_tmp = 0.
       pg_snow_tmp = 0.
+
+      IF ( present(qflx_irrig_sprinkler) ) THEN
+         qflx_irrig_sprinkler_tmp = qflx_irrig_sprinkler
+      ELSE
+         qflx_irrig_sprinkler_tmp = 0
+      ENDIF
 
       ps = patch_pft_s(ipatch)
       pe = patch_pft_e(ipatch)
@@ -1974,9 +1944,8 @@ CONTAINS
          DO i = ps, pe
             p = pftclass(i)
             CALL LEAF_interception_CoLM2014 (deltim,dewmx,forc_us,forc_vs,chil_p(p),sigf_p(i),lai_p(i),sai_p(i),forc_t,tleaf_p(i),&
-                                                prc_rain,prc_snow,prl_rain,prl_snow,bifall,&
-                                                ldew_p(i),ldew_rain_p(i),ldew_snow_p(i),z0m_p(i),hu,pg_rain,pg_snow,qintr_p(i),qintr_rain_p(i),qintr_snow_p(i),&
-                                                qflx_irrig_sprinkler=qflx_irrig_sprinkler)
+                                                prc_rain,prc_snow,prl_rain,prl_snow,bifall,qflx_irrig_sprinkler_tmp,&
+                                                ldew_p(i),ldew_rain_p(i),ldew_snow_p(i),z0m_p(i),hu,pg_rain,pg_snow,qintr_p(i),qintr_rain_p(i),qintr_snow_p(i))
             pg_rain_tmp = pg_rain_tmp + pg_rain*pftfrac(i)
             pg_snow_tmp = pg_snow_tmp + pg_snow*pftfrac(i)
          ENDDO
@@ -1984,7 +1953,7 @@ CONTAINS
          DO i = ps, pe
             p = pftclass(i)
             CALL LEAF_interception_clm4 (deltim,dewmx,forc_us,forc_vs,chil_p(p),sigf_p(i),lai_p(i),sai_p(i),forc_t,tleaf_p(i),&
-                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,&
+                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler_tmp,&
                                              ldew_p(i),ldew_p(i),ldew_p(i),z0m_p(i),hu,pg_rain,pg_snow,qintr_p(i),qintr_rain_p(i),qintr_snow_p(i))
             pg_rain_tmp = pg_rain_tmp + pg_rain*pftfrac(i)
             pg_snow_tmp = pg_snow_tmp + pg_snow*pftfrac(i)
@@ -1993,7 +1962,7 @@ CONTAINS
          DO i = ps, pe
             p = pftclass(i)
             CALL LEAF_interception_clm5 (deltim,dewmx,forc_us,forc_vs,chil_p(p),sigf_p(i),lai_p(i),sai_p(i),forc_t,tleaf_p(i),&
-                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,&
+                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler_tmp,&
                                              ldew_p(i),ldew_p(i),ldew_p(i),z0m_p(i),hu,pg_rain,pg_snow,qintr_p(i),qintr_rain_p(i),qintr_snow_p(i))
             pg_rain_tmp = pg_rain_tmp + pg_rain*pftfrac(i)
             pg_snow_tmp = pg_snow_tmp + pg_snow*pftfrac(i)
@@ -2002,7 +1971,7 @@ CONTAINS
          DO i = ps, pe
             p = pftclass(i)
             CALL LEAF_interception_clm5 (deltim,dewmx,forc_us,forc_vs,chil_p(p),sigf_p(i),lai_p(i),sai_p(i),forc_t,tleaf_p(i),&
-                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,&
+                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler_tmp,&
                                              ldew_p(i),ldew_p(i),ldew_p(i),z0m_p(i),hu,pg_rain,pg_snow,qintr_p(i),qintr_rain_p(i),qintr_snow_p(i))
             pg_rain_tmp = pg_rain_tmp + pg_rain*pftfrac(i)
             pg_snow_tmp = pg_snow_tmp + pg_snow*pftfrac(i)
@@ -2011,7 +1980,7 @@ CONTAINS
          DO i = ps, pe
             p = pftclass(i)
             CALL LEAF_interception_MATSIRO (deltim,dewmx,forc_us,forc_vs,chil_p(p),sigf_p(i),lai_p(i),sai_p(i),forc_t,tleaf_p(i),&
-                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,&
+                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler_tmp,&
                                              ldew_p(i),ldew_p(i),ldew_p(i),z0m_p(i),hu,pg_rain,pg_snow,qintr_p(i),qintr_rain_p(i),qintr_snow_p(i))
             pg_rain_tmp = pg_rain_tmp + pg_rain*pftfrac(i)
             pg_snow_tmp = pg_snow_tmp + pg_snow*pftfrac(i)
@@ -2020,7 +1989,7 @@ CONTAINS
          DO i = ps, pe
             p = pftclass(i)
             CALL LEAF_interception_VIC (deltim,dewmx,forc_us,forc_vs,chil_p(p),sigf_p(i),lai_p(i),sai_p(i),forc_t,tleaf_p(i),&
-                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,&
+                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler_tmp,&
                                              ldew_p(i),ldew_p(i),ldew_p(i),z0m_p(i),hu,pg_rain,pg_snow,qintr_p(i),qintr_rain_p(i),qintr_snow_p(i))
             pg_rain_tmp = pg_rain_tmp + pg_rain*pftfrac(i)
             pg_snow_tmp = pg_snow_tmp + pg_snow*pftfrac(i)
@@ -2029,7 +1998,7 @@ CONTAINS
          DO i = ps, pe
             p = pftclass(i)
             CALL LEAF_interception_JULES (deltim,dewmx,forc_us,forc_vs,chil_p(p),sigf_p(i),lai_p(i),sai_p(i),forc_t,tleaf_p(i),&
-                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,&
+                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler_tmp,&
                                              ldew_p(i),ldew_p(i),ldew_p(i),z0m_p(i),hu,pg_rain,pg_snow,qintr_p(i),qintr_rain_p(i),qintr_snow_p(i))
             pg_rain_tmp = pg_rain_tmp + pg_rain*pftfrac(i)
             pg_snow_tmp = pg_snow_tmp + pg_snow*pftfrac(i)
@@ -2038,7 +2007,7 @@ CONTAINS
          DO i = ps, pe
             p = pftclass(i)
             CALL LEAF_interception_CoLM202x (deltim,dewmx,forc_us,forc_vs,chil_p(p),sigf_p(i),lai_p(i),sai_p(i),forc_t,tleaf_p(i),&
-                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,&
+                                             prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler_tmp,&
                                              ldew_p(i),ldew_p(i),ldew_p(i),z0m_p(i),hu,pg_rain,pg_snow,qintr_p(i),qintr_rain_p(i),qintr_snow_p(i))
             pg_rain_tmp = pg_rain_tmp + pg_rain*pftfrac(i)
             pg_snow_tmp = pg_snow_tmp + pg_snow*pftfrac(i)
