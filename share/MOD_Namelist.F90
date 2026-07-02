@@ -145,7 +145,7 @@ MODULE MOD_Namelist
    ! the same directory. Both sample files CONTAIN a wide range of data options
    ! with a maximum resolution of 30 meters, which can be modified and set
    ! according to your requirements.
-   character(len=256) :: DEF_rawdata_namelist  = './rawdata/colm500m.nml'
+   character(len=256) :: DEF_rawdata_namelist  = './rawdata/colm2024.nml'
 
    type :: datainfo
       character(len=256) :: dir   = 'null' ! dir related to rawdata dir
@@ -1266,6 +1266,9 @@ CONTAINS
             CALL CoLM_Stop (' ***** ERROR: Problem reading namelist: '// trim(DEF_rawdata_namelist))
          ENDIF
          close(10)
+
+         ! to get the file name of rawdata namelist file full path
+         DEF_rawdata_namelist = get_basename(trim(DEF_rawdata_namelist))
 
          CALL resolve_rawdata()
 
@@ -2606,5 +2609,28 @@ ENDIF
 #endif
 
    END SUBROUTINE sync_hist_vars_one
+
+   ! get file name only from full file path
+   FUNCTION get_basename(path) result(fn)
+
+      IMPLICIT NONE
+      character(len=*), intent(in) :: path
+      character(len=len(path)) :: fn
+      character(len=len(path)) :: s
+      integer :: pos_slash, pos_back, pos_last, n
+
+      s = trim(path)
+      n = len_trim(s)
+      fn = ''
+      IF (n == 0) RETURN
+      pos_slash = index(s, "/", back=.true.)
+      pos_back  = index(s, "\", back=.true.)
+      pos_last  = max(pos_slash, pos_back)
+      IF (pos_last == 0) THEN
+         fn = s
+      ELSEIF (pos_last < n) THEN
+         fn = s(pos_last+1 : n)
+      ENDIF
+   END FUNCTION get_basename
 
 END MODULE MOD_Namelist
