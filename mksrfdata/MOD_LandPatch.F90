@@ -107,7 +107,8 @@ CONTAINS
          ENDIF
 #else
          !TODO: need usgs land cover type data
-         fname = trim(DEF_dir_rawdata) //'/landtypes/landtype-usgs-update.nc'
+         fname = trim(DEF_dir_rawdata)//trim(DEF_rawdata%landcover%dir)//&
+                 '/landtype-usgs-update.nc'
          CALL ncio_read_block (fname, 'landtype', grid_patch, patchdata)
 #endif
 
