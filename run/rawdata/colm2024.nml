@@ -111,8 +111,19 @@
   !--------------------------------------------------------------------------!
   ! 3. Soil data
   !--------------------------------------------------------------------------!
-  !TODO: options can be extended below
-  DEF_rawdata_nml%soil%opt(1)%dir = '/soil/'
+  !TODO: options can be extended below, default is option index 1
+
+  ! ----- Soil properties -----
+  DEF_rawdata_nml%soil_property%opt(1)%dir = '/soil_properties/'
+
+  ! ----- Soil thermal and hydraulic parameters -----
+  DEF_rawdata_nml%soil_th%opt(1)%dir = '/soil_thermal_hydraulic/'
+
+  ! ----- Soil albedo -----
+  DEF_rawdata_nml%soil_albedo%opt(1)%dir = '/soil_albedo/'
+
+  ! ----- Soil depth to bedrock -----
+  DEF_rawdata_nml%soil_bedrock%opt(1)%dir = '/soil_bedrock/'
 
   !--------------------------------------------------------------------------!
   ! 4. Topographic data

@@ -282,7 +282,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          IF (p_is_io) THEN
 
             CALL allocate_block_data (gland, vf_quartz_mineral_s_grid)
-            lndname = trim(dir_rawdata)//'/soil/vf_quartz_mineral_s.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/vf_quartz_mineral_s.nc'
             CALL ncio_read_block (lndname, 'vf_quartz_mineral_s_l'//trim(c), gland, vf_quartz_mineral_s_grid)
 #ifdef USEMPI
             CALL aggregation_data_daemon (gland, data_r8_2d_in1 = vf_quartz_mineral_s_grid)
@@ -352,15 +352,15 @@ SUBROUTINE Aggregation_SoilParameters ( &
          IF (p_is_io) THEN
 
             CALL allocate_block_data (gland, vf_gravels_s_grid)
-            lndname = trim(dir_rawdata)//'/soil/vf_gravels_s.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/vf_gravels_s.nc'
             CALL ncio_read_block (lndname, 'vf_gravels_s_l'//trim(c), gland, vf_gravels_s_grid)
 
             CALL allocate_block_data (gland, vf_sand_s_grid)
-            lndname = trim(dir_rawdata)//'/soil/vf_sand_s.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/vf_sand_s.nc'
             CALL ncio_read_block (lndname, 'vf_sand_s_l'//trim(c), gland, vf_sand_s_grid)
 
             CALL allocate_block_data (gland, vf_om_s_grid)
-            lndname = trim(dir_rawdata)//'/soil/vf_om_s.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/vf_om_s.nc'
             CALL ncio_read_block (lndname, 'vf_om_s_l'//trim(c), gland, vf_om_s_grid)
 
 #ifdef USEMPI
@@ -544,7 +544,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          IF (p_is_io) THEN
 
             CALL allocate_block_data (gland, wf_gravels_s_grid)
-            lndname = trim(dir_rawdata)//'/soil/wf_gravels_s.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/wf_gravels_s.nc'
             CALL ncio_read_block (lndname, 'wf_gravels_s_l'//trim(c), gland, wf_gravels_s_grid)
 #ifdef USEMPI
             CALL aggregation_data_daemon (gland, data_r8_2d_in1 = wf_gravels_s_grid)
@@ -611,7 +611,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          IF (p_is_io) THEN
 
             CALL allocate_block_data (gland, wf_sand_s_grid)
-            lndname = trim(dir_rawdata)//'/soil/wf_sand_s.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/wf_sand_s.nc'
             CALL ncio_read_block (lndname, 'wf_sand_s_l'//trim(c), gland, wf_sand_s_grid)
 #ifdef USEMPI
             CALL aggregation_data_daemon (gland, data_r8_2d_in1 = wf_sand_s_grid)
@@ -687,27 +687,27 @@ SUBROUTINE Aggregation_SoilParameters ( &
          IF (p_is_io) THEN
 
             CALL allocate_block_data (gland, L_vgm_grid)
-            lndname = trim(dir_rawdata)//'/soil/VGM_L.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/VGM_L.nc'
             CALL ncio_read_block (lndname, 'VGM_L_l'//trim(c), gland, L_vgm_grid)
 
             CALL allocate_block_data (gland, theta_r_grid)
-            lndname = trim(dir_rawdata)//'/soil/VGM_theta_r.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/VGM_theta_r.nc'
             CALL ncio_read_block (lndname, 'VGM_theta_r_l'//trim(c), gland, theta_r_grid)
 
             CALL allocate_block_data (gland, alpha_vgm_grid)
-            lndname = trim(dir_rawdata)//'/soil/VGM_alpha.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/VGM_alpha.nc'
             CALL ncio_read_block (lndname, 'VGM_alpha_l'//trim(c), gland, alpha_vgm_grid)
 
             CALL allocate_block_data (gland, n_vgm_grid)
-            lndname = trim(dir_rawdata)//'/soil/VGM_n.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/VGM_n.nc'
             CALL ncio_read_block (lndname, 'VGM_n_l'//trim(c), gland, n_vgm_grid)
 
             CALL allocate_block_data (gland, theta_s_grid)
-            lndname = trim(dir_rawdata)//'/soil/theta_s.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/theta_s.nc'
             CALL ncio_read_block (lndname, 'theta_s_l'//trim(c), gland, theta_s_grid)
 
             CALL allocate_block_data (gland, k_s_grid)
-            lndname = trim(dir_rawdata)//'/soil/k_s.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/k_s.nc'
             CALL ncio_read_block (lndname, 'k_s_l'//trim(c), gland, k_s_grid)
 
 #ifdef USEMPI
@@ -963,19 +963,19 @@ SUBROUTINE Aggregation_SoilParameters ( &
          IF (p_is_io) THEN
 
             CALL allocate_block_data (gland, theta_s_grid)
-            lndname = trim(dir_rawdata)//'/soil/theta_s.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/theta_s.nc'
             CALL ncio_read_block (lndname, 'theta_s_l'//trim(c), gland, theta_s_grid)
 
             CALL allocate_block_data (gland, k_s_grid)
-            lndname = trim(dir_rawdata)//'/soil/k_s.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/k_s.nc'
             CALL ncio_read_block (lndname, 'k_s_l'//trim(c), gland, k_s_grid)
 
             CALL allocate_block_data (gland, psi_s_grid)
-            lndname = trim(dir_rawdata)//'/soil/psi_s.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/psi_s.nc'
             CALL ncio_read_block (lndname, 'psi_s_l'//trim(c), gland, psi_s_grid)
 
             CALL allocate_block_data (gland, lambda_grid)
-            lndname = trim(dir_rawdata)//'/soil/lambda.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/lambda.nc'
             CALL ncio_read_block (lndname, 'lambda_l'//trim(c), gland, lambda_grid)
 
 #ifdef USEMPI
@@ -1167,7 +1167,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          ! (15) heat capacity of soil solids [J/(m3 K)]
          IF (p_is_io) THEN
             CALL allocate_block_data (gland, csol_grid)
-            lndname = trim(dir_rawdata)//'/soil/csol.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/csol.nc'
             CALL ncio_read_block (lndname, 'csol_l'//trim(c), gland, csol_grid)
 #ifdef USEMPI
             CALL aggregation_data_daemon (gland, data_r8_2d_in1 = csol_grid)
@@ -1233,7 +1233,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          ! (16) thermal conductivity of unfrozen saturated soil [W/m-K]
          IF (p_is_io) THEN
             CALL allocate_block_data (gland, tksatu_grid)
-            lndname = trim(dir_rawdata)//'/soil/tksatu.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/tksatu.nc'
             CALL ncio_read_block (lndname, 'tksatu_l'//trim(c), gland, tksatu_grid)
 #ifdef USEMPI
             CALL aggregation_data_daemon (gland, data_r8_2d_in1 = tksatu_grid)
@@ -1299,7 +1299,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          ! (17) thermal conductivity of frozen saturated soil [W/m-K]
          IF (p_is_io) THEN
             CALL allocate_block_data (gland, tksatf_grid)
-            lndname = trim(dir_rawdata)//'/soil/tksatf.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/tksatf.nc'
             CALL ncio_read_block (lndname, 'tksatf_l'//trim(c), gland, tksatf_grid)
 #ifdef USEMPI
             CALL aggregation_data_daemon (gland, data_r8_2d_in1 = tksatf_grid)
@@ -1365,7 +1365,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          ! (18) thermal conductivity for dry soil [W/(m-K)]
          IF (p_is_io) THEN
             CALL allocate_block_data (gland, tkdry_grid)
-            lndname = trim(dir_rawdata)//'/soil/tkdry.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/tkdry.nc'
             CALL ncio_read_block (lndname, 'tkdry_l'//trim(c), gland, tkdry_grid)
 #ifdef USEMPI
             CALL aggregation_data_daemon (gland, data_r8_2d_in1 = tkdry_grid)
@@ -1431,7 +1431,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          ! (19) thermal conductivity of soil solids [W/m-K]
          IF (p_is_io) THEN
             CALL allocate_block_data (gland, k_solids_grid)
-            lndname = trim(dir_rawdata)//'/soil/k_solids.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/k_solids.nc'
             CALL ncio_read_block (lndname, 'k_solids_l'//trim(c), gland, k_solids_grid)
 #ifdef USEMPI
             CALL aggregation_data_daemon (gland, data_r8_2d_in1 = k_solids_grid)
@@ -1498,7 +1498,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          IF (p_is_io) THEN
 
             CALL allocate_block_data (gland, OM_density_s_grid)
-            lndname = trim(dir_rawdata)//'/soil/OM_density_s.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/OM_density_s.nc'
             CALL ncio_read_block (lndname, 'OM_density_s_l'//trim(c), gland, OM_density_s_grid)
 #ifdef USEMPI
             CALL aggregation_data_daemon (gland, data_r8_2d_in1 = OM_density_s_grid)
@@ -1565,7 +1565,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          IF (p_is_io) THEN
 
             CALL allocate_block_data (gland, BD_all_s_grid)
-            lndname = trim(dir_rawdata)//'/soil/BD_all_s.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/BD_all_s.nc'
             CALL ncio_read_block (lndname, 'BD_all_s_l'//trim(c), gland, BD_all_s_grid)
 #ifdef USEMPI
             CALL aggregation_data_daemon (gland, data_r8_2d_in1 = BD_all_s_grid)
@@ -1633,7 +1633,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          IF (p_is_io) THEN
 
             CALL allocate_block_data (gland, vf_clay_s_grid)
-            lndname = trim(dir_rawdata)//'/soil/vf_clay_s.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/vf_clay_s.nc'
             CALL ncio_read_block (lndname, 'vf_clay_s_l'//trim(c), gland, vf_clay_s_grid)
 #ifdef USEMPI
             CALL aggregation_data_daemon (gland, data_r8_2d_in1 = vf_clay_s_grid)
@@ -1701,7 +1701,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          IF (p_is_io) THEN
 
             CALL allocate_block_data (gland, wf_om_s_grid)
-            lndname = trim(dir_rawdata)//'/soil/wf_om_s.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/wf_om_s.nc'
             CALL ncio_read_block (lndname, 'wf_om_s_l'//trim(c), gland, wf_om_s_grid)
 #ifdef USEMPI
             CALL aggregation_data_daemon (gland, data_r8_2d_in1 = wf_om_s_grid)
@@ -1769,7 +1769,7 @@ SUBROUTINE Aggregation_SoilParameters ( &
          IF (p_is_io) THEN
 
             CALL allocate_block_data (gland, wf_clay_s_grid)
-            lndname = trim(dir_rawdata)//'/soil/wf_clay_s.nc'
+            lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/wf_clay_s.nc'
             CALL ncio_read_block (lndname, 'wf_clay_s_l'//trim(c), gland, wf_clay_s_grid)
 #ifdef USEMPI
             CALL aggregation_data_daemon (gland, data_r8_2d_in1 = wf_clay_s_grid)

@@ -74,7 +74,7 @@ SUBROUTINE Aggregation_Topography ( &
       CALL mpi_barrier (p_comm_glb, p_err)
 #endif
 
-      lndname = trim(dir_rawdata)//'/topography.nc'
+      lndname = trim(dir_rawdata)//trim(DEF_rawdata%topo%dir)//'/topography.nc'
 
 ! ---------------------------------------------------------------------------------
 !   aggregate the elevation from the resolution of raw data to modelling resolution

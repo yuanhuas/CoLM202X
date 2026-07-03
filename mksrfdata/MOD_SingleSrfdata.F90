@@ -338,7 +338,7 @@ CONTAINS
             allocate (croptyp (N_CFT))
             croptyp = (/(i, i = 1, N_CFT)/)
 
-            filename = trim(DEF_dir_rawdata) // '/global_CFT_surface_data.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%crop%dir)//'/global_CFT_surface_data.nc'
             CALL gridcrop%define_from_file (filename, 'lat', 'lon')
             CALL read_point_var_3d_first_real8 (gridcrop, filename, 'PCT_CFT', &
                SITE_lon_location, SITE_lat_location, N_CFT, pctcrop)
@@ -765,7 +765,7 @@ CONTAINS
          allocate (SITE_soil_vf_quartz_mineral (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/vf_quartz_mineral_s.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/vf_quartz_mineral_s.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'vf_quartz_mineral_s_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_vf_quartz_mineral(nsl))
          ENDDO
@@ -779,7 +779,7 @@ CONTAINS
          allocate (SITE_soil_vf_gravels (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/vf_gravels_s.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/vf_gravels_s.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'vf_gravels_s_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_vf_gravels(nsl))
          ENDDO
@@ -793,7 +793,7 @@ CONTAINS
          allocate (SITE_soil_vf_sand (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/vf_sand_s.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/vf_sand_s.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'vf_sand_s_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_vf_sand(nsl))
          ENDDO
@@ -807,7 +807,7 @@ CONTAINS
          allocate (SITE_soil_vf_clay (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/vf_clay_s.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/vf_clay_s.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'vf_clay_s_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_vf_clay(nsl))
          ENDDO
@@ -821,7 +821,7 @@ CONTAINS
          allocate (SITE_soil_vf_om (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/vf_om_s.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/vf_om_s.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'vf_om_s_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_vf_om(nsl))
          ENDDO
@@ -835,7 +835,7 @@ CONTAINS
          allocate (SITE_soil_wf_gravels (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/wf_gravels_s.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/wf_gravels_s.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'wf_gravels_s_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_wf_gravels(nsl))
          ENDDO
@@ -849,7 +849,7 @@ CONTAINS
          allocate (SITE_soil_wf_sand (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/wf_sand_s.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/wf_sand_s.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'wf_sand_s_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_wf_sand(nsl))
          ENDDO
@@ -863,7 +863,7 @@ CONTAINS
          allocate (SITE_soil_wf_clay (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/wf_clay_s.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/wf_clay_s.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'wf_clay_s_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_wf_clay(nsl))
          ENDDO
@@ -877,7 +877,7 @@ CONTAINS
          allocate (SITE_soil_wf_om (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/wf_om_s.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/wf_om_s.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'wf_om_s_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_wf_om(nsl))
          ENDDO
@@ -891,7 +891,7 @@ CONTAINS
          allocate (SITE_soil_OM_density (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/OM_density_s.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/OM_density_s.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'OM_density_s_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_OM_density(nsl))
          ENDDO
@@ -905,7 +905,7 @@ CONTAINS
          allocate (SITE_soil_BD_all (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/BD_all_s.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/BD_all_s.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'BD_all_s_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_BD_all(nsl))
          ENDDO
@@ -919,7 +919,7 @@ CONTAINS
          allocate (SITE_soil_theta_s (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/theta_s.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/theta_s.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'theta_s_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_theta_s(nsl))
          ENDDO
@@ -933,7 +933,7 @@ CONTAINS
          allocate (SITE_soil_k_s (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/k_s.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/k_s.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'k_s_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_k_s(nsl))
          ENDDO
@@ -947,7 +947,7 @@ CONTAINS
          allocate (SITE_soil_csol (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/csol.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/csol.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'csol_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_csol(nsl))
          ENDDO
@@ -961,7 +961,7 @@ CONTAINS
          allocate (SITE_soil_tksatu (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/tksatu.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/tksatu.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'tksatu_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_tksatu(nsl))
          ENDDO
@@ -975,7 +975,7 @@ CONTAINS
          allocate (SITE_soil_tksatf (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/tksatf.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/tksatf.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'tksatf_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_tksatf(nsl))
          ENDDO
@@ -989,7 +989,7 @@ CONTAINS
          allocate (SITE_soil_tkdry (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/tkdry.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/tkdry.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'tkdry_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_tkdry(nsl))
          ENDDO
@@ -1003,7 +1003,7 @@ CONTAINS
          allocate (SITE_soil_k_solids (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/k_solids.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/k_solids.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'k_solids_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_k_solids(nsl))
          ENDDO
@@ -1017,7 +1017,7 @@ CONTAINS
          allocate (SITE_soil_psi_s (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/psi_s.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/psi_s.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'psi_s_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_psi_s(nsl))
          ENDDO
@@ -1031,7 +1031,7 @@ CONTAINS
          allocate (SITE_soil_lambda (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/lambda.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/lambda.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'lambda_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_lambda(nsl))
          ENDDO
@@ -1046,7 +1046,7 @@ CONTAINS
          allocate (SITE_soil_theta_r (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/VGM_theta_r.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/VGM_theta_r.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'VGM_theta_r_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_theta_r(nsl))
          ENDDO
@@ -1060,7 +1060,7 @@ CONTAINS
          allocate (SITE_soil_alpha_vgm (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/VGM_alpha.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/VGM_alpha.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'VGM_alpha_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_alpha_vgm(nsl))
          ENDDO
@@ -1074,7 +1074,7 @@ CONTAINS
          allocate (SITE_soil_L_vgm (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/VGM_L.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/VGM_L.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'VGM_L_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_L_vgm(nsl))
          ENDDO
@@ -1088,7 +1088,7 @@ CONTAINS
          allocate (SITE_soil_n_vgm (8))
          DO nsl = 1, 8
             write(c,'(i1)') nsl
-            filename = trim(DEF_dir_rawdata)//'/soil/VGM_n.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/VGM_n.nc'
             CALL read_point_var_2d_real8 (gridsoil, filename, 'VGM_n_l'//trim(c), &
                SITE_lon_location, SITE_lat_location, SITE_soil_n_vgm(nsl))
          ENDDO
@@ -1119,7 +1119,7 @@ CONTAINS
          IF (u_site_soil_texture) THEN
             CALL ncio_read_serial (fsrfdata, 'soil_texture', SITE_soil_texture)
          ELSE
-            filename = trim(DEF_dir_rawdata)//'/soil/soiltexture_0cm-60cm_mean.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/soiltexture_0cm-60cm_mean.nc'
             CALL read_point_var_2d_int32 (gridsoil, filename, 'soiltexture', &
                SITE_lon_location, SITE_lat_location, SITE_soil_texture)
          ENDIF
@@ -1190,7 +1190,7 @@ CONTAINS
          CALL ncio_read_serial (fsrfdata, 'elevation', SITE_elevation)
       ELSE
          CALL gridtopo%define_by_name ('colm_500m')
-         filename = trim(DEF_dir_rawdata)//'/topography.nc'
+         filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%topo%dir)//'/topography.nc'
          CALL read_point_var_2d_real8 (gridtopo, filename, 'elevation', &
             SITE_lon_location, SITE_lat_location, SITE_elevation)
       ENDIF
@@ -1201,7 +1201,7 @@ CONTAINS
          CALL ncio_read_serial (fsrfdata, 'elvstd', SITE_elvstd)
       ELSE
          CALL gridtopo%define_by_name ('colm_500m')
-         filename = trim(DEF_dir_rawdata)//'/topography.nc'
+         filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%topo%dir)//'/topography.nc'
          CALL read_point_var_2d_real8 (gridtopo, filename, 'elvstd', &
             SITE_lon_location, SITE_lat_location, SITE_elvstd)
       ENDIF
@@ -1212,7 +1212,7 @@ CONTAINS
          CALL ncio_read_serial (fsrfdata, 'sloperatio', SITE_sloperatio)
       ELSE
          CALL gridtopo%define_by_name ('colm_500m')
-         filename = trim(DEF_dir_rawdata)//'/topography.nc'
+         filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%topo%dir)//'/topography.nc'
          CALL read_point_var_2d_real8 (gridtopo, filename, 'slope', &
             SITE_lon_location, SITE_lat_location, SITE_sloperatio)
       ENDIF
@@ -2121,7 +2121,7 @@ ENDIF
             allocate (SITE_soil_vf_quartz_mineral (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/vf_quartz_mineral_s.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/vf_quartz_mineral_s.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'vf_quartz_mineral_s_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_vf_quartz_mineral(nsl))
             ENDDO
@@ -2134,7 +2134,7 @@ ENDIF
             allocate (SITE_soil_vf_gravels (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/vf_gravels_s.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/vf_gravels_s.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'vf_gravels_s_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_vf_gravels(nsl))
             ENDDO
@@ -2147,7 +2147,7 @@ ENDIF
             allocate (SITE_soil_vf_sand (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/vf_sand_s.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/vf_sand_s.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'vf_sand_s_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_vf_sand(nsl))
             ENDDO
@@ -2160,7 +2160,7 @@ ENDIF
             allocate (SITE_soil_vf_clay (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/vf_clay_s.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/vf_clay_s.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'vf_clay_s_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_vf_clay(nsl))
             ENDDO
@@ -2173,7 +2173,7 @@ ENDIF
             allocate (SITE_soil_vf_om (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/vf_om_s.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/vf_om_s.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'vf_om_s_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_vf_om(nsl))
             ENDDO
@@ -2186,7 +2186,7 @@ ENDIF
             allocate (SITE_soil_wf_gravels (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/wf_gravels_s.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/wf_gravels_s.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'wf_gravels_s_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_wf_gravels(nsl))
             ENDDO
@@ -2199,7 +2199,7 @@ ENDIF
             allocate (SITE_soil_wf_sand (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/wf_sand_s.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/wf_sand_s.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'wf_sand_s_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_wf_sand(nsl))
             ENDDO
@@ -2212,7 +2212,7 @@ ENDIF
             allocate (SITE_soil_wf_clay (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/wf_clay_s.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/wf_clay_s.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'wf_clay_s_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_wf_clay(nsl))
             ENDDO
@@ -2225,7 +2225,7 @@ ENDIF
             allocate (SITE_soil_wf_om (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/wf_om_s.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/wf_om_s.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'wf_om_s_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_wf_om(nsl))
             ENDDO
@@ -2238,7 +2238,7 @@ ENDIF
             allocate (SITE_soil_OM_density (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/OM_density_s.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/OM_density_s.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'OM_density_s_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_OM_density(nsl))
             ENDDO
@@ -2251,7 +2251,7 @@ ENDIF
             allocate (SITE_soil_BD_all (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/BD_all_s.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/BD_all_s.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'BD_all_s_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_BD_all(nsl))
             ENDDO
@@ -2264,7 +2264,7 @@ ENDIF
             allocate (SITE_soil_theta_s (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/theta_s.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/theta_s.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'theta_s_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_theta_s(nsl))
             ENDDO
@@ -2277,7 +2277,7 @@ ENDIF
             allocate (SITE_soil_k_s (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/k_s.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/k_s.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'k_s_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_k_s(nsl))
             ENDDO
@@ -2290,7 +2290,7 @@ ENDIF
             allocate (SITE_soil_csol (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/csol.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/csol.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'csol_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_csol(nsl))
             ENDDO
@@ -2303,7 +2303,7 @@ ENDIF
             allocate (SITE_soil_tksatu (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/tksatu.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/tksatu.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'tksatu_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_tksatu(nsl))
             ENDDO
@@ -2316,7 +2316,7 @@ ENDIF
             allocate (SITE_soil_tksatf (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/tksatf.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/tksatf.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'tksatf_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_tksatf(nsl))
             ENDDO
@@ -2329,7 +2329,7 @@ ENDIF
             allocate (SITE_soil_tkdry (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/tkdry.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/tkdry.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'tkdry_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_tkdry(nsl))
             ENDDO
@@ -2342,7 +2342,7 @@ ENDIF
             allocate (SITE_soil_k_solids (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/k_solids.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/k_solids.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'k_solids_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_k_solids(nsl))
             ENDDO
@@ -2355,7 +2355,7 @@ ENDIF
             allocate (SITE_soil_psi_s (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/psi_s.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/psi_s.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'psi_s_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_psi_s(nsl))
             ENDDO
@@ -2368,7 +2368,7 @@ ENDIF
             allocate (SITE_soil_lambda (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/lambda.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/lambda.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'lambda_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_lambda(nsl))
             ENDDO
@@ -2382,7 +2382,7 @@ ENDIF
             allocate (SITE_soil_theta_r (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/VGM_theta_r.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/VGM_theta_r.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'VGM_theta_r_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_theta_r(nsl))
             ENDDO
@@ -2395,7 +2395,7 @@ ENDIF
             allocate (SITE_soil_alpha_vgm (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/VGM_alpha.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/VGM_alpha.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'VGM_alpha_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_alpha_vgm(nsl))
             ENDDO
@@ -2408,7 +2408,7 @@ ENDIF
             allocate (SITE_soil_L_vgm (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/VGM_L.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/VGM_L.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'VGM_L_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_L_vgm(nsl))
             ENDDO
@@ -2421,7 +2421,7 @@ ENDIF
             allocate (SITE_soil_n_vgm (8))
             DO nsl = 1, 8
                write(c,'(i1)') nsl
-               filename = trim(DEF_dir_rawdata)//'/soil/VGM_n.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_th%dir)//'/VGM_n.nc'
                CALL read_point_var_2d_real8 (grid_soil, filename, 'VGM_n_l'//trim(c), &
                   SITE_lon_location, SITE_lat_location, SITE_soil_n_vgm(nsl))
             ENDDO
@@ -2450,7 +2450,7 @@ ENDIF
             IF (u_site_soil_texture) THEN
                CALL ncio_read_serial (fsrfdata, 'soil_texture', SITE_soil_texture)
             ELSE
-               filename = trim(DEF_dir_rawdata)//'/soil/soiltexture_0cm-60cm_mean.nc'
+               filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//'/soiltexture_0cm-60cm_mean.nc'
                CALL read_point_var_2d_int32 (grid_soil, filename, 'soiltexture', &
                   SITE_lon_location, SITE_lat_location, SITE_soil_texture)
             ENDIF
@@ -2513,7 +2513,7 @@ ENDIF
             CALL ncio_read_serial (fsrfdata, 'elevation', SITE_elevation)
          ELSE
             CALL grid_topo%define_by_name ('colm_500m')
-            filename = trim(DEF_dir_rawdata)//'/elevation.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%topo%dir)//'/elevation.nc'
             CALL read_point_var_2d_real8 (grid_topo, filename, 'elevation', &
                SITE_lon_location, SITE_lat_location, SITE_elevation)
          ENDIF
@@ -2524,7 +2524,7 @@ ENDIF
             CALL ncio_read_serial (fsrfdata, 'elvstd', SITE_elvstd)
          ELSE
             CALL grid_topo%define_by_name ('colm_500m')
-            filename = trim(DEF_dir_rawdata)//'/topography.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%topo%dir)//'/topography.nc'
             CALL read_point_var_2d_real8 (grid_topo, filename, 'elvstd', &
                SITE_lon_location, SITE_lat_location, SITE_elvstd)
          ENDIF
@@ -2535,7 +2535,7 @@ ENDIF
             CALL ncio_read_serial (fsrfdata, 'sloperatio', SITE_sloperatio)
          ELSE
             CALL grid_topo%define_by_name ('colm_500m')
-            filename = trim(DEF_dir_rawdata)//'/topography.nc'
+            filename = trim(DEF_dir_rawdata)//trim(DEF_rawdata%topo%dir)//'/topography.nc'
             CALL read_point_var_2d_real8 (grid_topo, filename, 'slope', &
                SITE_lon_location, SITE_lat_location, SITE_sloperatio)
          ENDIF
