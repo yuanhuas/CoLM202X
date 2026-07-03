@@ -66,7 +66,7 @@ CONTAINS
    integer, intent(in) :: lc_year
 
    ! Local Variables
-   character(len=256) :: dir_5x5, fname, cyear
+   character(len=256) :: dir, fname, cyear
    type (block_data_real8_3d) :: pctpft
    real(r8), allocatable :: pctpft_patch(:,:), pctpft_one(:,:)
    real(r8), allocatable :: area_one  (:)
@@ -90,11 +90,14 @@ CONTAINS
          CALL allocate_block_data (grid_pft, pctpft, N_PFT_modis, lb1 = 0)
          CALL flush_block_data (pctpft, 1.0)
 
-         dir_5x5 = trim(DEF_dir_rawdata) // trim(DEF_rawdata%pft%dir)
+         dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%pft%dir)
+
          ! add parameter input for time year
          write(cyear,'(i4.4)') lc_year
-         fname  = trim(DEF_rawdata%pft%fname) // '.' // trim(cyear)
-         CALL read_5x5_data_pft (dir_5x5, fname, grid_pft, 'PCT_PFT', pctpft)
+
+         fname = trim(DEF_rawdata%pft%fname) //'.'// trim(cyear)
+
+         CALL read_5x5_data_pft (dir, fname, grid_pft, 'PCT_PFT', pctpft)
 
 #ifdef USEMPI
          CALL aggregation_data_daemon (grid_pft, data_r8_3d_in1 = pctpft, n1_r8_3d_in1 = N_PFT_modis)

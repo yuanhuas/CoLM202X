@@ -45,7 +45,7 @@
 
   DEF_rawdata_nml%pft%opt(1)%dir   = '/vegetation_pft/c2022/'
   DEF_rawdata_nml%pft%opt(1)%gname = 'colm_500m'
-  DEF_rawdata_nml%pft%opt(1)%fname = 'PFT500m'
+  DEF_rawdata_nml%pft%opt(1)%fname = 'MOD'
 
   DEF_rawdata_nml%pft%opt(2)%dir   = '/vegetation_pft/c2025/'
   DEF_rawdata_nml%pft%opt(2)%gname = 'colm_500m'
@@ -64,7 +64,7 @@
 
   DEF_rawdata_nml%lai_sai%opt(1)%dir   = '/vegetation_lai_sai/c2022/'
   DEF_rawdata_nml%lai_sai%opt(1)%gname = 'colm_500m'
-  DEF_rawdata_nml%lai_sai%opt(1)%fname = 'LSAI500m'
+  DEF_rawdata_nml%lai_sai%opt(1)%fname = 'MOD'
 
   DEF_rawdata_nml%lai_sai%opt(2)%dir   = '/vegetation_lai_sai/c2025/'
   DEF_rawdata_nml%lai_sai%opt(2)%gname = 'colm_500m'
@@ -85,8 +85,8 @@
 
   DEF_rawdata_nml%htop%opt(1)%dir   = '/vegetation_morphology/tree_height_Simard/'
   DEF_rawdata_nml%htop%opt(1)%gname = 'colm_1km'
-  DEF_rawdata_nml%htop%opt(1)%fname = 'Htop1km.Simard'
-  DEF_rawdata_nml%htop%opt(1)%vname = 'HTOP'
+  DEF_rawdata_nml%htop%opt(1)%fname = 'Forest_Height'
+  DEF_rawdata_nml%htop%opt(1)%vname = 'forest_height'
 
   DEF_rawdata_nml%htop%opt(2)%dir   = '/vegetation_morphology/tree_height_ETH/'
   DEF_rawdata_nml%htop%opt(2)%gname = 'colm_500m'
