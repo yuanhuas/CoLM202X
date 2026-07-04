@@ -97,7 +97,8 @@ CONTAINS
       ENDIF
 
       IF (p_is_io) THEN
-         file_patch = trim(DEF_dir_rawdata) // '/global_CFT_surface_data.nc'
+         file_patch = trim(DEF_dir_rawdata)//trim(DEF_rawdata%crop%dir)//&
+                      '/global_CFT_surface_data.nc'
          CALL allocate_block_data (grid_crop, cropdata, N_CFT)
          CALL ncio_read_block (file_patch, 'PCT_CFT', grid_crop, N_CFT, cropdata)
       ENDIF

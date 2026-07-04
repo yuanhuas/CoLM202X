@@ -145,7 +145,7 @@ MODULE MOD_Namelist
    ! the same directory. Both sample files CONTAIN a wide range of data options
    ! with a maximum resolution of 30 meters, which can be modified and set
    ! according to your requirements.
-   character(len=256) :: DEF_rawdata_namelist  = './rawdata/colm500m.nml'
+   character(len=256) :: DEF_rawdata_namelist  = './rawdata/colm2024.nml'
 
    type :: datainfo
       character(len=256) :: dir   = 'null' ! dir related to rawdata dir
@@ -159,7 +159,10 @@ MODULE MOD_Namelist
       type(datainfo) :: pft
       type(datainfo) :: htop
       type(datainfo) :: lai_sai
-      type(datainfo) :: soil
+      type(datainfo) :: soil_property
+      type(datainfo) :: soil_th
+      type(datainfo) :: soil_albedo
+      type(datainfo) :: soil_bedrock
       type(datainfo) :: topo
       type(datainfo) :: hydro
       type(datainfo) :: water
@@ -184,7 +187,7 @@ MODULE MOD_Namelist
    ! idx : active data option index (1-10)
    ! opt : array of datainfo, up to 10 alternative datasets
    type :: rawdata_nml_entry
-      integer :: idx = 1
+      integer :: idx = 1        !default is option index 1
       type(datainfo) :: opt(10)
    end type rawdata_nml_entry
 
@@ -193,7 +196,10 @@ MODULE MOD_Namelist
       type(rawdata_nml_entry) :: pft
       type(rawdata_nml_entry) :: htop
       type(rawdata_nml_entry) :: lai_sai
-      type(rawdata_nml_entry) :: soil
+      type(rawdata_nml_entry) :: soil_property
+      type(rawdata_nml_entry) :: soil_th
+      type(rawdata_nml_entry) :: soil_albedo
+      type(rawdata_nml_entry) :: soil_bedrock
       type(rawdata_nml_entry) :: topo
       type(rawdata_nml_entry) :: hydro
       type(rawdata_nml_entry) :: water
@@ -1267,6 +1273,9 @@ CONTAINS
          ENDIF
          close(10)
 
+         ! to get the file name of rawdata namelist file full path
+         DEF_rawdata_namelist = get_basename(trim(DEF_rawdata_namelist))
+
          CALL resolve_rawdata()
 
          IF ( trim(DEF_rawdata%landcover%fname) == "LC30m.GLC" ) THEN
@@ -1715,9 +1724,21 @@ ENDIF
       CALL mpi_bcast (DEF_rawdata%lai_sai%gname              ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_rawdata%lai_sai%fname              ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
 
-      CALL mpi_bcast (DEF_rawdata%soil%dir                   ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
-      CALL mpi_bcast (DEF_rawdata%soil%gname                 ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
-      CALL mpi_bcast (DEF_rawdata%soil%fname                 ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%soil_property%dir          ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%soil_property%gname        ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%soil_property%fname        ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%soil_th%dir                ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%soil_th%gname              ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%soil_th%fname              ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%soil_albedo%dir            ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%soil_albedo%gname          ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%soil_albedo%fname          ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+
+      CALL mpi_bcast (DEF_rawdata%soil_bedrock%dir           ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%soil_bedrock%gname         ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_rawdata%soil_bedrock%fname         ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
 
       CALL mpi_bcast (DEF_rawdata%topo%dir                   ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
       CALL mpi_bcast (DEF_rawdata%topo%gname                 ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
@@ -2071,27 +2092,30 @@ ENDIF
 
    IMPLICIT NONE
 
-      DEF_rawdata%landcover   = DEF_rawdata_nml%landcover%opt   ( DEF_rawdata_nml%landcover%idx   )
-      DEF_rawdata%pft         = DEF_rawdata_nml%pft%opt         ( DEF_rawdata_nml%pft%idx         )
-      DEF_rawdata%htop        = DEF_rawdata_nml%htop%opt        ( DEF_rawdata_nml%htop%idx        )
-      DEF_rawdata%lai_sai     = DEF_rawdata_nml%lai_sai%opt     ( DEF_rawdata_nml%lai_sai%idx     )
-      DEF_rawdata%soil        = DEF_rawdata_nml%soil%opt        ( DEF_rawdata_nml%soil%idx        )
-      DEF_rawdata%topo        = DEF_rawdata_nml%topo%opt        ( DEF_rawdata_nml%topo%idx        )
-      DEF_rawdata%hydro       = DEF_rawdata_nml%hydro%opt       ( DEF_rawdata_nml%hydro%idx       )
-      DEF_rawdata%water       = DEF_rawdata_nml%water%opt       ( DEF_rawdata_nml%water%idx       )
-      DEF_rawdata%urban_type  = DEF_rawdata_nml%urban_type%opt  ( DEF_rawdata_nml%urban_type%idx  )
-      DEF_rawdata%urban_htop  = DEF_rawdata_nml%urban_htop%opt  ( DEF_rawdata_nml%urban_htop%idx  )
-      DEF_rawdata%urban_fveg  = DEF_rawdata_nml%urban_fveg%opt  ( DEF_rawdata_nml%urban_fveg%idx  )
-      DEF_rawdata%urban_flake = DEF_rawdata_nml%urban_flake%opt ( DEF_rawdata_nml%urban_flake%idx )
-      DEF_rawdata%urban_lsai  = DEF_rawdata_nml%urban_lsai%opt  ( DEF_rawdata_nml%urban_lsai%idx  )
-      DEF_rawdata%urban_lucy  = DEF_rawdata_nml%urban_lucy%opt  ( DEF_rawdata_nml%urban_lucy%idx  )
-      DEF_rawdata%urban_pop   = DEF_rawdata_nml%urban_pop%opt   ( DEF_rawdata_nml%urban_pop%idx   )
-      DEF_rawdata%urban_roof  = DEF_rawdata_nml%urban_roof%opt  ( DEF_rawdata_nml%urban_roof%idx  )
-      DEF_rawdata%urban_hl    = DEF_rawdata_nml%urban_hl%opt    ( DEF_rawdata_nml%urban_hl%idx    )
-      DEF_rawdata%urban_fgper = DEF_rawdata_nml%urban_fgper%opt ( DEF_rawdata_nml%urban_fgper%idx )
-      DEF_rawdata%urban_alb   = DEF_rawdata_nml%urban_alb%opt   ( DEF_rawdata_nml%urban_alb%idx   )
-      DEF_rawdata%crop        = DEF_rawdata_nml%crop%opt        ( DEF_rawdata_nml%crop%idx        )
-      DEF_rawdata%bgc         = DEF_rawdata_nml%bgc%opt         ( DEF_rawdata_nml%bgc%idx         )
+      DEF_rawdata%landcover     = DEF_rawdata_nml%landcover%opt     ( DEF_rawdata_nml%landcover%idx     )
+      DEF_rawdata%pft           = DEF_rawdata_nml%pft%opt           ( DEF_rawdata_nml%pft%idx           )
+      DEF_rawdata%htop          = DEF_rawdata_nml%htop%opt          ( DEF_rawdata_nml%htop%idx          )
+      DEF_rawdata%lai_sai       = DEF_rawdata_nml%lai_sai%opt       ( DEF_rawdata_nml%lai_sai%idx       )
+      DEF_rawdata%soil_property = DEF_rawdata_nml%soil_property%opt ( DEF_rawdata_nml%soil_property%idx )
+      DEF_rawdata%soil_th       = DEF_rawdata_nml%soil_th%opt       ( DEF_rawdata_nml%soil_th%idx       )
+      DEF_rawdata%soil_albedo   = DEF_rawdata_nml%soil_albedo%opt   ( DEF_rawdata_nml%soil_albedo%idx   )
+      DEF_rawdata%soil_bedrock  = DEF_rawdata_nml%soil_bedrock%opt  ( DEF_rawdata_nml%soil_bedrock%idx  )
+      DEF_rawdata%topo          = DEF_rawdata_nml%topo%opt          ( DEF_rawdata_nml%topo%idx          )
+      DEF_rawdata%hydro         = DEF_rawdata_nml%hydro%opt         ( DEF_rawdata_nml%hydro%idx         )
+      DEF_rawdata%water         = DEF_rawdata_nml%water%opt         ( DEF_rawdata_nml%water%idx         )
+      DEF_rawdata%urban_type    = DEF_rawdata_nml%urban_type%opt    ( DEF_rawdata_nml%urban_type%idx    )
+      DEF_rawdata%urban_htop    = DEF_rawdata_nml%urban_htop%opt    ( DEF_rawdata_nml%urban_htop%idx    )
+      DEF_rawdata%urban_fveg    = DEF_rawdata_nml%urban_fveg%opt    ( DEF_rawdata_nml%urban_fveg%idx    )
+      DEF_rawdata%urban_flake   = DEF_rawdata_nml%urban_flake%opt   ( DEF_rawdata_nml%urban_flake%idx   )
+      DEF_rawdata%urban_lsai    = DEF_rawdata_nml%urban_lsai%opt    ( DEF_rawdata_nml%urban_lsai%idx    )
+      DEF_rawdata%urban_lucy    = DEF_rawdata_nml%urban_lucy%opt    ( DEF_rawdata_nml%urban_lucy%idx    )
+      DEF_rawdata%urban_pop     = DEF_rawdata_nml%urban_pop%opt     ( DEF_rawdata_nml%urban_pop%idx     )
+      DEF_rawdata%urban_roof    = DEF_rawdata_nml%urban_roof%opt    ( DEF_rawdata_nml%urban_roof%idx    )
+      DEF_rawdata%urban_hl      = DEF_rawdata_nml%urban_hl%opt      ( DEF_rawdata_nml%urban_hl%idx      )
+      DEF_rawdata%urban_fgper   = DEF_rawdata_nml%urban_fgper%opt   ( DEF_rawdata_nml%urban_fgper%idx   )
+      DEF_rawdata%urban_alb     = DEF_rawdata_nml%urban_alb%opt     ( DEF_rawdata_nml%urban_alb%idx     )
+      DEF_rawdata%crop          = DEF_rawdata_nml%crop%opt          ( DEF_rawdata_nml%crop%idx          )
+      DEF_rawdata%bgc           = DEF_rawdata_nml%bgc%opt           ( DEF_rawdata_nml%bgc%idx           )
 
    END SUBROUTINE resolve_rawdata
 
@@ -2606,5 +2630,28 @@ ENDIF
 #endif
 
    END SUBROUTINE sync_hist_vars_one
+
+   ! get file name only from full file path
+   FUNCTION get_basename(path) result(fn)
+
+      IMPLICIT NONE
+      character(len=*), intent(in) :: path
+      character(len=len(path)) :: fn
+      character(len=len(path)) :: s
+      integer :: pos_slash, pos_back, pos_last, n
+
+      s = trim(path)
+      n = len_trim(s)
+      fn = ''
+      IF (n == 0) RETURN
+      pos_slash = index(s, "/", back=.true.)
+      pos_back  = index(s, "\", back=.true.)
+      pos_last  = max(pos_slash, pos_back)
+      IF (pos_last == 0) THEN
+         fn = s
+      ELSEIF (pos_last < n) THEN
+         fn = s(pos_last+1 : n)
+      ENDIF
+   END FUNCTION get_basename
 
 END MODULE MOD_Namelist
