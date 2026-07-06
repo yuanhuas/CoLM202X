@@ -903,7 +903,7 @@ ENDIF
 
          IF (DEF_rawdata_namelist == "colm2024.nml") THEN
             write(c5year, '(i4.4)') int(lc_year/5)*5
-            fname = trim(DEF_rawdata%urban_pop%fname)//trim(cyear)
+            fname = trim(DEF_rawdata%urban_pop%fname)//trim(c5year)
 
             ! population data is year by year,
             ! so pop_i is calculated to determine the dimension of POP data reads
