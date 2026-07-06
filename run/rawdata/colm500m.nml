@@ -272,6 +272,7 @@
   DEF_rawdata_nml%urban_htop%opt(5)%dir   = '/urban_morphology/c2022/'
   DEF_rawdata_nml%urban_htop%opt(5)%gname = 'colm_500m'
   DEF_rawdata_nml%urban_htop%opt(5)%fname = 'URBSRF'
+  DEF_rawdata_nml%urban_htop%opt(5)%vname = 'HTOP'
 
   ! ----- Urban fractional tree cover -----
   ! Options:

@@ -164,7 +164,7 @@ SUBROUTINE Aggregation_ForestHeight ( &
          dir   = trim(dir_rawdata) // trim(DEF_rawdata%htop%dir)
          fname = trim(DEF_rawdata%htop%fname) //'.'// trim(cyear)
 
-         CALL read_5x5_data (dir, fname, gland, 'HTOP', htop)
+         CALL read_5x5_data (dir, fname, gland, trim(DEF_rawdata%htop%vname), htop)
 
 #ifdef USEMPI
          CALL aggregation_data_daemon (gland, data_r8_2d_in1 = htop)
@@ -231,7 +231,7 @@ SUBROUTINE Aggregation_ForestHeight ( &
 
          dir   = trim(DEF_dir_rawdata) // trim(DEF_rawdata%htop%dir)
          fname = trim(DEF_rawdata%htop%fname) //'.'// trim(cyear)
-         CALL read_5x5_data (dir, fname, gland, 'HTOP', htop)
+         CALL read_5x5_data (dir, fname, gland, trim(DEF_rawdata%htop%vname), htop)
 
          dir   = trim(DEF_dir_rawdata) // trim(DEF_rawdata%pft%dir)
          fname = trim(DEF_rawdata%pft%fname) //'.'// trim(cyear)
