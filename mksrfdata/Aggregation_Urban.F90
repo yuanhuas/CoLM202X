@@ -156,7 +156,8 @@ SUBROUTINE Aggregation_Urban (grid_roof, grid_fgper, grid_pctt, grid_lsai, grid_
    integer , allocatable, dimension(:)     :: locpth
 
    ! landfile variables
-   character(len=256) landsrfdir, landdir, landname, fname
+   character(len=256) dir, fname
+   character(len=256) landdir, landname
    character(len=4  ) cyear, c5year, cmonth, clay
 
    ! local vars
@@ -185,7 +186,7 @@ SUBROUTINE Aggregation_Urban (grid_roof, grid_fgper, grid_pctt, grid_lsai, grid_
 #endif
 
       write(cyear,'(i4.4)') lc_year
-      landsrfdir = trim(dir_model_landdata) // '/urban/' // trim(cyear)
+      landdir = trim(dir_model_landdata) // '/urban/' // trim(cyear)
 
       first_call_LAI_urban = .true.
       first_call_SAI_urban = .true.
@@ -195,7 +196,7 @@ SUBROUTINE Aggregation_Urban (grid_roof, grid_fgper, grid_pctt, grid_lsai, grid_
 #endif
       IF (p_is_master) THEN
          write(*,'(/, A)') 'Making urban data ('//trim(cyear)//') ...'
-         CALL system('mkdir -p ' // trim(adjustl(landsrfdir)))
+         CALL system('mkdir -p ' // trim(adjustl(landdir)))
       ENDIF
 #ifdef USEMPI
       CALL mpi_barrier (p_comm_glb, p_err)
@@ -230,27 +231,47 @@ ENDIF
          CALL flush_block_data (fgper , -999.)
 
 IF (DEF_URBAN_type_scheme == 1) THEN
-         landdir= trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_type%dir)
-         fname  = trim(DEF_rawdata%urban_type%fname)
-         CALL read_5x5_data (landdir, fname, grid_urban, "REGION_ID", reg_typid)
+         dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_type%dir)
+         fname = trim(DEF_rawdata%urban_type%fname)
+         CALL read_5x5_data (dir, fname, grid_urban, "REGION_ID", reg_typid)
 ENDIF
 
-         landdir= trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_roof%dir)
-IF (index(DEF_rawdata%urban_roof%fname, 'GHSL')>0) THEN
-         fname  = trim(DEF_rawdata%urban_roof%fname)//'.'//trim(c5year)
-ELSE
-         fname  = trim(DEF_rawdata%urban_roof%fname)
-ENDIF
-         CALL read_5x5_data (landdir, fname, grid_roof, "PCT_ROOF", wtroof)
-         CALL read_5x5_data (landdir, fname, grid_roof, "HT_ROOF" , htroof)
+         dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_roof%dir)
 
-         landdir= trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_hl%dir)
-         fname  = trim(DEF_rawdata%urban_hl%fname)
-         CALL read_5x5_data (landdir, fname, grid_roof, "HL_BLD"  , hlr   )
+         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+            fname = trim(DEF_rawdata%urban_roof%fname)//trim(c5year)
 
-         landdir= trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_fgper%dir)
-         fname  = trim(DEF_rawdata%urban_fgper%fname)
-         CALL read_5x5_data (landdir, fname, grid_fgper, "WTROAD_PERV", fgper)
+            IF (index(DEF_rawdata%urban_roof%fname, 'GHSL')>0) THEN
+               CALL read_5x5_data (dir, fname, grid_roof, "PCT_ROOF_GHSL", wtroof)
+               CALL read_5x5_data (dir, fname, grid_roof, "HT_ROOF_GHSL" , htroof)
+
+               CALL read_5x5_data (dir, fname, grid_roof, "HL_GHSL"      , hlr   )
+
+            ELSE
+               CALL read_5x5_data (dir, fname, grid_roof, "PCT_ROOF_Li", wtroof)
+               CALL read_5x5_data (dir, fname, grid_roof, "HT_ROOF_Li" , htroof)
+               CALL read_5x5_data (dir, fname, grid_roof, "HL_Li"      , hlr   )
+            ENDIF
+
+         ELSE
+
+            IF (index(DEF_rawdata%urban_roof%fname, 'GHSL')>0) THEN
+               fname = trim(DEF_rawdata%urban_roof%fname)//'.'//trim(c5year)
+            ELSE
+               fname = trim(DEF_rawdata%urban_roof%fname)
+            ENDIF
+
+            CALL read_5x5_data (dir, fname, grid_roof, "PCT_ROOF", wtroof)
+            CALL read_5x5_data (dir, fname, grid_roof, "HT_ROOF" , htroof)
+
+            dir= trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_hl%dir)
+            fname = trim(DEF_rawdata%urban_hl%fname)
+            CALL read_5x5_data (dir, fname, grid_roof, "HL_BLD"  , hlr   )
+
+            dir= trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_fgper%dir)
+            fname = trim(DEF_rawdata%urban_fgper%fname)
+            CALL read_5x5_data (dir, fname, grid_fgper, "WTROAD_PERV", fgper)
+         ENDIF
 
 #ifdef USEMPI
 IF (DEF_URBAN_type_scheme == 1) THEN
@@ -433,17 +454,27 @@ ENDIF
       ! tree height raw data is same from year to year
       IF (p_is_io) THEN
 
-         landdir= trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_fveg%dir)
-         fname  = trim(DEF_rawdata%urban_fveg%fname) // '.' // trim(c5year)
+         dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_fveg%dir)
+
+         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+            fname = trim(DEF_rawdata%urban_fveg%fname)//trim(c5year)
+         ELSE
+            fname = trim(DEF_rawdata%urban_fveg%fname)//'.'//trim(c5year)
+         ENDIF
 
          CALL allocate_block_data (grid_pctt, fvegu)
-         CALL read_5x5_data (landdir, fname, grid_pctt, "PCT_Tree", fvegu)
+         CALL read_5x5_data (dir, fname, grid_pctt, "PCT_Tree", fvegu)
 
-         landdir= trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_htop%dir)
-         fname  = trim(DEF_rawdata%urban_htop%fname)
+         dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_htop%dir)
+
+         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+            fname = trim(DEF_rawdata%urban_fveg%fname)//trim(c5year)
+         ELSE
+            fname = trim(DEF_rawdata%urban_htop%fname)
+         ENDIF
 
          CALL allocate_block_data (grid_pctt, htopu)
-         CALL read_5x5_data (landdir, fname, grid_pctt, trim(DEF_rawdata%urban_htop%vname), htopu)
+         CALL read_5x5_data (dir, fname, grid_pctt, trim(DEF_rawdata%urban_htop%vname), htopu)
 
 #ifdef USEMPI
          CALL aggregation_data_daemon (grid_pctt, &
@@ -551,12 +582,17 @@ ENDIF
             write(cyear,'(i4.4)') iy
          ENDIF
 
-         landsrfdir = trim(dir_model_landdata) // '/urban/' // trim(cyear) // '/LAI'
-         CALL system('mkdir -p ' // trim(adjustl(landsrfdir)))
+         landdir = trim(dir_model_landdata) // '/urban/' // trim(cyear) // '/LAI'
+         CALL system('mkdir -p ' // trim(adjustl(landdir)))
 
          ! allocate and read grided LAI raw data
-         landdir= trim(dir_rawdata) // trim(DEF_rawdata%urban_lsai%dir)
-         fname  = trim(DEF_rawdata%urban_lsai%fname) // '.' // trim(cyear)
+         dir = trim(dir_rawdata) // trim(DEF_rawdata%urban_lsai%dir)
+
+         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+            fname = trim(DEF_rawdata%urban_lsai%fname)//'_'//trim(cyear)
+         ELSE
+            fname = trim(DEF_rawdata%urban_lsai%fname)//'.'//trim(cyear)
+         ENDIF
 
          ! loop for month
          DO imonth = 1, 12
@@ -569,7 +605,7 @@ ENDIF
 
             IF (p_is_io) THEN
 
-               CALL read_5x5_data_time (landdir, fname, grid_lsai, "URBAN_TREE_LAI", imonth, ulai)
+               CALL read_5x5_data_time (dir, fname, grid_lsai, "URBAN_TREE_LAI", imonth, ulai)
 
 #ifdef USEMPI
                CALL aggregation_data_daemon_multigrid (grid_in1 = grid_pctt, data_r8_2d_in1 = fvegu, &
@@ -647,8 +683,13 @@ ENDIF
          ENDIF
 
          ! allocate and read grided SAI raw data
-         landdir= trim(dir_rawdata) // trim(DEF_rawdata%urban_lsai%dir)
-         fname  = trim(DEF_rawdata%urban_lsai%fname) // '.' // trim(cyear)
+         dir = trim(dir_rawdata) // trim(DEF_rawdata%urban_lsai%dir)
+
+         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+            fname = trim(DEF_rawdata%urban_lsai%fname)//'_'//trim(cyear)
+         ELSE
+            fname = trim(DEF_rawdata%urban_lsai%fname)//'.'//trim(cyear)
+         ENDIF
 
          ! loop for month
          DO imonth = 1, 12
@@ -661,7 +702,7 @@ ENDIF
 
             IF (p_is_io) THEN
 
-               CALL read_5x5_data_time (landdir, fname, grid_lsai, "URBAN_TREE_SAI", imonth, usai)
+               CALL read_5x5_data_time (dir, fname, grid_lsai, "URBAN_TREE_SAI", imonth, usai)
 
 #ifdef USEMPI
                CALL aggregation_data_daemon_multigrid (grid_in1 = grid_pctt, data_r8_2d_in1 = fvegu, &
@@ -725,9 +766,15 @@ ENDIF
 
          CALL allocate_block_data (grid_pctw, flakeu)
 
-         landdir= trim(dir_rawdata) // trim(DEF_rawdata%urban_flake%dir)
-         fname  = trim(DEF_rawdata%urban_flake%fname) // '.' // trim(c5year)
-         CALL read_5x5_data (landdir, fname, grid_pctw, "PCT_Water", flakeu)
+         dir = trim(dir_rawdata) // trim(DEF_rawdata%urban_flake%dir)
+
+         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+            fname = trim(DEF_rawdata%urban_flake%fname)//trim(c5year)
+         ELSE
+            fname = trim(DEF_rawdata%urban_flake%fname)//'.'//trim(c5year)
+         ENDIF
+
+         CALL read_5x5_data (dir, fname, grid_pctw, "PCT_Water", flakeu)
 
 #ifdef USEMPI
          CALL aggregation_data_daemon (grid_pctw, flakeu)
@@ -784,7 +831,8 @@ ENDIF
       ! allocate and read the LUCY id
       IF (p_is_io) THEN
 
-         landname = TRIM(dir_rawdata)//'/urban_human/lucy/LUCY_regionid.nc'
+         landname = TRIM(dir_rawdata)//trim(DEF_rawdata%urban_flake%dir)//'LUCY_regionid.nc'
+
          CALL allocate_block_data (grid_lucy, LUCY_reg)
          CALL flush_block_data    (LUCY_reg , 0       )
 
@@ -851,20 +899,26 @@ ENDIF
 
          CALL allocate_block_data (grid_pop, pop)
 
-         landdir = TRIM(dir_rawdata) // trim(DEF_rawdata%urban_pop%dir)
-         fname  = trim(DEF_rawdata%urban_pop%fname) // '.' // trim(cyear)
+         dir = TRIM(dir_rawdata) // trim(DEF_rawdata%urban_pop%dir)
 
-         ! population data is year by year,
-         ! so pop_i is calculated to determine the dimension of POP data reads
-         IF (mod(lc_year,5) == 0) THEN
-            pop_i = 1
+         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+            write(c5year, '(i4.4)') int(lc_year/5)*5
+            fname = trim(DEF_rawdata%urban_pop%fname)//trim(cyear)
+
+            ! population data is year by year,
+            ! so pop_i is calculated to determine the dimension of POP data reads
+            IF (mod(lc_year,5) == 0) THEN
+               pop_i = 1
+            ELSE
+               pop_i = 5 - (ceiling(lc_year*1./5.)*5 - lc_year) + 1
+            ENDIF
+
+            ! read the population data of total 5x5 region
+            CALL read_5x5_data_time (dir, fname, grid_pop, "POP_DEN", pop_i, pop)
          ELSE
-            pop_i = 5 - (ceiling(lc_year*1./5.)*5 - lc_year) + 1
+            fname = trim(DEF_rawdata%urban_pop%fname)//'.'//trim(cyear)
+            CALL read_5x5_data (dir, fname, grid_pop, "POP_density", pop)
          ENDIF
-
-         ! read the population data of total 5x5 region
-         !CALL read_5x5_data_time (landdir, fname, grid_pop, "POP_density", pop_i, pop)
-         CALL read_5x5_data (landdir, fname, grid_pop, "POP_density", pop)
 
 #ifdef USEMPI
          CALL aggregation_data_daemon (grid_pop, data_r8_2d_in1 = pop)
@@ -922,7 +976,11 @@ ENDIF
 
 IF (DEF_URBAN_type_scheme == 1) THEN
       ! look up table of NCAR urban properties (using look-up tables)
-      landname = TRIM(dir_rawdata)//'/urban_physical/NCAR_urban_properties.nc'
+      IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+         landname = TRIM(dir_rawdata)//'/urban/NCAR_urban_properties.nc'
+      ELSE
+         landname = TRIM(dir_rawdata)//'/urban_physical/NCAR_urban_properties.nc'
+      ENDIF
 
       CALL ncio_read_bcast_serial (landname,  "EM_ROOF"       , emroof_ncar )
       CALL ncio_read_bcast_serial (landname,  "EM_WALL"       , emwall_ncar )
@@ -948,9 +1006,9 @@ ENDIF
 
          CALL allocate_block_data (grid_alb, albroof)
 
-         landdir= trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_alb%dir)
-         fname  = trim(DEF_rawdata%urban_alb%fname)
-         CALL read_5x5_data (landdir, fname, grid_alb, "ALB_ROOF", albroof)
+         dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_alb%dir)
+         fname = trim(DEF_rawdata%urban_alb%fname)
+         CALL read_5x5_data (dir, fname, grid_alb, "ALB_ROOF", albroof)
 
 #ifdef USEMPI
 IF (DEF_URBAN_type_scheme == 1) THEN

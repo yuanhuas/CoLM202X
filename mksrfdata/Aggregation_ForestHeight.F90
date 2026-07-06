@@ -161,8 +161,14 @@ SUBROUTINE Aggregation_ForestHeight ( &
 
       IF (p_is_io) THEN
 
-         dir   = trim(dir_rawdata) // trim(DEF_rawdata%pft%dir)
-         fname = trim(DEF_rawdata%pft%fname) //'.'// trim(cyear)
+         dir   = trim(dir_rawdata) // trim(DEF_rawdata%htop%dir)
+
+         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+            fname = trim(DEF_rawdata%htop%fname)//trim(cyear)
+         ELSE
+            fname = trim(DEF_rawdata%htop%fname) //'.'// trim(cyear)
+         ENDIF
+
          CALL read_5x5_data (dir, fname, gland, 'HTOP', htop)
 
 #ifdef USEMPI
@@ -228,13 +234,24 @@ SUBROUTINE Aggregation_ForestHeight ( &
 
       IF (p_is_io) THEN
 
-         dir   = trim(DEF_dir_rawdata) // trim(DEF_rawdata%pft%dir)
-         fname = trim(DEF_rawdata%pft%fname) //'.'// trim(cyear)
-         CALL read_5x5_data (dir, fname, gland, 'HTOP', htop)
+         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+            dir   = trim(DEF_dir_rawdata) // trim(DEF_rawdata%htop%dir)
+            fname = trim(DEF_rawdata%htop%fname)//trim(cyear)
+            CALL read_5x5_data (dir, fname, gland, 'HTOP', htop)
 
-         dir   = trim(DEF_dir_rawdata) // trim(DEF_rawdata%pft%dir)
-         fname = trim(DEF_rawdata%pft%fname) //'.'// trim(cyear)
-         CALL read_5x5_data_pft (dir, fname, grid_pft, 'PCT_PFT', pftPCT)
+            dir   = trim(DEF_dir_rawdata) // trim(DEF_rawdata%htop%dir)
+            fname = trim(DEF_rawdata%pft%fname)//trim(cyear)
+            CALL read_5x5_data_pft (dir, fname, grid_pft, 'PCT_PFT', pftPCT)
+         ELSE
+            dir   = trim(DEF_dir_rawdata) // trim(DEF_rawdata%htop%dir)
+            fname = trim(DEF_rawdata%htop%fname) //'.'// trim(cyear)
+            CALL read_5x5_data (dir, fname, gland, 'HTOP', htop)
+
+            dir   = trim(DEF_dir_rawdata) // trim(DEF_rawdata%pft%dir)
+            fname = trim(DEF_rawdata%pft%fname) //'.'// trim(cyear)
+            CALL read_5x5_data_pft (dir, fname, grid_pft, 'PCT_PFT', pftPCT)
+         ENDIF
+
 
 #ifdef USEMPI
          CALL aggregation_data_daemon_multigrid (grid_in1 = grid_pft, data_r8_3d_in1 = pftPCT, n1_r8_3d_in1 = 16, &

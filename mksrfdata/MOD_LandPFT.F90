@@ -95,7 +95,11 @@ CONTAINS
          ! add parameter input for time year
          write(cyear,'(i4.4)') lc_year
 
-         fname = trim(DEF_rawdata%pft%fname) //'.'// trim(cyear)
+         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+            fname = trim(DEF_rawdata%pft%fname)//trim(cyear)
+         ELSE
+            fname = trim(DEF_rawdata%pft%fname) //'.'// trim(cyear)
+         ENDIF
 
          CALL read_5x5_data_pft (dir, fname, grid_pft, 'PCT_PFT', pctpft)
 

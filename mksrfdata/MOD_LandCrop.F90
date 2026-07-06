@@ -44,7 +44,7 @@ CONTAINS
    integer, intent(in) :: lc_year
 
    ! Local Variables
-   character(len=255) :: cyear, file_patch, dir_5x5, suffix
+   character(len=255) :: cyear, file_patch, dir, fname
    integer :: npatch_glb
    type(block_data_real8_2d) :: pctcrop_xy
    type(block_data_real8_3d) :: pctshared_xy
@@ -65,11 +65,16 @@ CONTAINS
 
       IF (p_is_io) THEN
 
-         dir_5x5 = trim(DEF_dir_rawdata) // '/plant_15s'
-         suffix  = 'MOD'//trim(cyear)
+         dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%pft%dir)
+
+         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+            fname = trim(DEF_rawdata%pft%fname)//trim(cyear)//
+         ELSE
+            fname = trim(DEF_rawdata%pft%fname) //'.'// trim(cyear)
+         ENDIF
 
          CALL allocate_block_data (grid_patch, pctcrop_xy)
-         CALL read_5x5_data (dir_5x5, suffix, grid_patch, 'PCT_CROP', pctcrop_xy)
+         CALL read_5x5_data (dir, fname, grid_patch, 'PCT_CROP', pctcrop_xy)
 
          CALL allocate_block_data (grid_patch, pctshared_xy, 2)
          DO iblkme = 1, gblock%nblkme
