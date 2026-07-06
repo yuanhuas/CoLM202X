@@ -239,7 +239,7 @@ SUBROUTINE Aggregation_ForestHeight ( &
             fname = trim(DEF_rawdata%htop%fname)//trim(cyear)
             CALL read_5x5_data (dir, fname, gland, 'HTOP', htop)
 
-            dir   = trim(DEF_dir_rawdata) // trim(DEF_rawdata%htop%dir)
+            dir   = trim(DEF_dir_rawdata) // trim(DEF_rawdata%pft%dir)
             fname = trim(DEF_rawdata%pft%fname)//trim(cyear)
             CALL read_5x5_data_pft (dir, fname, grid_pft, 'PCT_PFT', pftPCT)
          ELSE
