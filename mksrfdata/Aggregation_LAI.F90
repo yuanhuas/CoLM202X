@@ -210,14 +210,13 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
                         write(cyear_bk,'(i4.4)') (iy / 5) * 5
                         fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear_bk)
                         CALL read_5x5_data_time (dir, fname, gridlai, &
-                                  'MONTHLY_LC_LAI_'//trim(cyear), itime, LAI)
+                                   'MONTHLY_LC_LAI_'//trim(cyear), itime, LAI)
                      ELSE
                         fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear)
                         CALL read_5x5_data_time (dir, fname, gridlai, &
-                                                'MONTHLY_LC_LAI', itime, LAI)
+                                                 'MONTHLY_LC_LAI', itime, LAI)
                      ENDIF
                   ELSE
-                     !TODO: add dir, file name and var name
                      lndname = trim(dir_rawdata)//'/lai_15s_8day/lai_8-day_15s_'//trim(cyear)//'.nc'
                      CALL ncio_read_block_time (lndname, 'lai', gridlai, itime, LAI)
                      CALL block_data_linear_transform (LAI, scl = 0.1)
