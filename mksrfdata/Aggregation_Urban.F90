@@ -468,7 +468,7 @@ ENDIF
          dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_htop%dir)
 
          IF (DEF_rawdata_namelist == "colm2024.nml") THEN
-            fname = trim(DEF_rawdata%urban_fveg%fname)//trim(c5year)
+            fname = trim(DEF_rawdata%urban_htop%fname)//trim(c5year)
          ELSE
             fname = trim(DEF_rawdata%urban_htop%fname)
          ENDIF
