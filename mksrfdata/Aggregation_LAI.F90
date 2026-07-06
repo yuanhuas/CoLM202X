@@ -343,10 +343,6 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
                      ENDIF
                   ENDIF
 
-                  IF (iy < 2000) THEN
-                  ELSE
-                  ENDIF
-
 #ifdef USEMPI
                   CALL aggregation_data_daemon (gridlai, data_r8_2d_in1 = SAI)
 #endif
