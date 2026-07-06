@@ -217,7 +217,6 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
                                                  'MONTHLY_LC_LAI', itime, LAI)
                      ENDIF
                   ELSE
-                     !TODO: add dir, file name and var name
                      lndname = trim(dir_rawdata)//'/lai_15s_8day/lai_8-day_15s_'//trim(cyear)//'.nc'
                      CALL ncio_read_block_time (lndname, 'lai', gridlai, itime, LAI)
                      CALL block_data_linear_transform (LAI, scl = 0.1)
