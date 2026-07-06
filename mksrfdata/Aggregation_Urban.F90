@@ -241,7 +241,7 @@ ENDIF
          IF (DEF_rawdata_namelist == "colm2024.nml") THEN
             fname = trim(DEF_rawdata%urban_roof%fname)//trim(c5year)
 
-            IF (index(DEF_rawdata%urban_roof%fname, 'GHSL')>0) THEN
+            IF (index(DEF_rawdata%urban_roof%vname, 'GHSL')>0) THEN
                CALL read_5x5_data (dir, fname, grid_roof, "PCT_ROOF_GHSL", wtroof)
                CALL read_5x5_data (dir, fname, grid_roof, "HT_ROOF_GHSL" , htroof)
 
