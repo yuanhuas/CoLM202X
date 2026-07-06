@@ -299,6 +299,7 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
          dir = trim(dir_rawdata) // trim(DEF_rawdata%lai_sai%dir)
          DO iy = start_year, end_year
             write(cyear,'(i4.4)') iy
+
             IF (iy < 2000) THEN
                write(cyear_bk,'(i4.4)') (iy / 5) * 5
                fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear_bk)

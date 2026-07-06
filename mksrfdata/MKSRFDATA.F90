@@ -90,7 +90,7 @@ PROGRAM MKSRFDATA
 
    character(len=256) :: nlfile
    character(len=256) :: lndname
-   character(len=256) :: dir_rawdata, dir_5x5
+   character(len=256) :: dir_rawdata, dir
    character(len=256) :: dir_landdata
    real(r8) :: edgen  ! northern edge of grid (degrees)
    real(r8) :: edgee  ! eastern edge of grid (degrees)
@@ -394,12 +394,17 @@ PROGRAM MKSRFDATA
          !TODO: distinguish USGS and IGBP land cover
 #ifndef LULC_USGS
          write(cyear,'(i4.4)') lc_year
-         dir_5x5 = trim(DEF_dir_rawdata) // trim(DEF_rawdata%landcover%dir)
-         lndname = trim(DEF_rawdata%landcover%fname) // '.' // trim(cyear)
-         CALL mesh_filter_5x5 (grid_patch, dir_5x5, lndname, 'LC')
 
-         !lndname = trim(DEF_dir_rawdata)//'/landtypes/landtype-igbp-modis-'//trim(cyear)//'.nc'
-         !CALL mesh_filter (grid_patch, lndname, 'landtype')
+         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+            dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%landcover%dir)
+            lndname = trim(dir)//&
+               trim(DEF_rawdata%landcover%fname)//'-'//trim(cyear)//'.nc'
+            CALL mesh_filter (grid_patch, lndname, 'landtype')
+         ELSE
+            dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%landcover%dir)
+            lndname = trim(DEF_rawdata%landcover%fname) // '.' // trim(cyear)
+            CALL mesh_filter_5x5 (grid_patch, dir, lndname, 'LC')
+         ENDIF
 #else
          lndname = trim(DEF_dir_rawdata)//'/landtypes/landtype-usgs-update.nc'
          CALL mesh_filter (grid_patch, lndname, 'landtype')

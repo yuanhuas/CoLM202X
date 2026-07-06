@@ -1761,7 +1761,7 @@ CONTAINS
                                                     prc_rain,prc_snow,prl_rain,prl_snow,bifall, &
                                                        ldew,ldew_rain,ldew_snow,z0m,hu,pg_rain, &
                                                             pg_snow,qintr,qintr_rain,qintr_snow,&
-                                                               qflx_irrig_sprinkler, urban_call )
+                                                                           qflx_irrig_sprinkler )
 !DESCRIPTION
 !===========
    !wrapper for calculation of canopy interception using USGS or IGBP land cover classification
@@ -1810,7 +1810,6 @@ CONTAINS
    real(r8), intent(out)   :: qintr_snow !snowfall interception (mm h2o/s)
 
    real(r8), intent(in), optional :: qflx_irrig_sprinkler
-   logical , intent(in), optional :: urban_call
 
    real(r8) :: qflx_irrig_sprinkler_
 
@@ -1820,7 +1819,7 @@ CONTAINS
          qflx_irrig_sprinkler_ = 0
       ENDIF
 
-      IF (DEF_Interception_scheme==1 .or. present(urban_call)) THEN
+      IF (DEF_Interception_scheme==1) THEN
          CALL LEAF_interception_CoLM2014 (deltim,dewmx,forc_us,forc_vs,chil,sigf,lai,sai,tair,tleaf,&
                                              prc_rain,prc_snow,prl_rain,prl_snow,bifall,qflx_irrig_sprinkler_,&
                                              ldew,ldew_rain,ldew_snow,z0m,hu,pg_rain,&

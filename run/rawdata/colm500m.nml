@@ -146,9 +146,11 @@
 
   ! ----- Urban subgrid type -----
   ! Options:
-  !   1: NCAR 1km
+  !   1: NCAR 500m (Obtained via nearest-neighbor interpolation of 1 km data.)
   !   2: LCZ 500m
   !   3: LCZ 100m
+  !   4: c2022 500m (include both LCZ and NCAR, and NCAR was interpolated to 
+  !      a 500 m grid using nearest-neighbor interpolation)
   DEF_rawdata_nml%urban_type%idx = 2
 
   DEF_rawdata_nml%urban_type%opt(1)%dir   = '/urban_type/ncar/'
@@ -163,12 +165,18 @@
   DEF_rawdata_nml%urban_type%opt(3)%gname = 'colm_100m'
   DEF_rawdata_nml%urban_type%opt(3)%fname = 'URBTYPE100m_LCZ.Demuzere'
 
+  DEF_rawdata_nml%urban_type%opt(4)%dir   = '/urban_type/c2022/'
+  DEF_rawdata_nml%urban_type%opt(4)%gname = 'colm_500m'
+  DEF_rawdata_nml%urban_type%opt(4)%fname = 'URBTYP'
+
   ! ----- Urban Roof height and fraction-----
   ! Options:
   !   1: Li 1km
   !   2: Liao 1km
   !   3: GHSL 500m
   !   4: GHSL 100m
+  !   5: c2022_Li 500m (include both GHSL and Li, Li was interpolated to
+  !      a 500 m grid using nearest-neighbor interpolation, use vname to switch)
   DEF_rawdata_nml%urban_roof%idx = 3
 
   DEF_rawdata_nml%urban_roof%opt(1)%dir   = '/urban_morphology/roof_height_fraction_Li/'
@@ -187,12 +195,18 @@
   DEF_rawdata_nml%urban_roof%opt(4)%gname = 'colm_100m'
   DEF_rawdata_nml%urban_roof%opt(4)%fname = 'ROOF100m.GHSL'
 
+  DEF_rawdata_nml%urban_roof%opt(5)%dir   = '/urban_morphology/c2022/'
+  DEF_rawdata_nml%urban_roof%opt(5)%gname = 'colm_500m'
+  DEF_rawdata_nml%urban_roof%opt(5)%fname = 'URBSRF'
+  DEF_rawdata_nml%urban_roof%opt(5)%vname = 'GHSL'
+
   ! ----- Urban building height-to-side-length (H/L) -----
   ! Options:
   !   1: Li_GBFP 500m
   !   2: GHSL_GBFP 500m
   !   3: GHSL_GBFP 100m
   !   4: Liao 1km
+  !   5: c2022 500m (include both GHSL and Li, use vname to switch)
   DEF_rawdata_nml%urban_hl%idx = 2
 
   DEF_rawdata_nml%urban_hl%opt(1)%dir   = '/urban_morphology/building_HL_GBFP/'
@@ -211,6 +225,11 @@
   DEF_rawdata_nml%urban_hl%opt(4)%gname = 'colm_1km'
   DEF_rawdata_nml%urban_hl%opt(4)%fname = 'HL1km_Liao'
 
+  DEF_rawdata_nml%urban_hl%opt(5)%dir   = '/urban_morphology/c2022/'
+  DEF_rawdata_nml%urban_hl%opt(5)%gname = 'colm_500m'
+  DEF_rawdata_nml%urban_hl%opt(5)%fname = 'URBSRF'
+  DEF_rawdata_nml%urban_hl%opt(5)%vname = 'GHSL'
+
   ! ----- Urban pervious fraction (fgper) -----
   ! Options:
   !   1: Liao 1km
@@ -227,6 +246,7 @@
   !   2: ETH 30m
   !   3: Tolan 500m
   !   4: Tolan 30m
+  !   5: c2022 500m (The data is ETH, but it is an early version.)
   DEF_rawdata_nml%urban_htop%idx = 1
 
   DEF_rawdata_nml%urban_htop%opt(1)%dir   = '/vegetation_morphology/tree_height_ETH/'
@@ -249,11 +269,16 @@
   DEF_rawdata_nml%urban_htop%opt(4)%fname = 'Htop30m.Tolan'
   DEF_rawdata_nml%urban_htop%opt(4)%vname = 'HTOP'
 
+  DEF_rawdata_nml%urban_htop%opt(5)%dir   = '/urban_morphology/c2022/'
+  DEF_rawdata_nml%urban_htop%opt(5)%gname = 'colm_500m'
+  DEF_rawdata_nml%urban_htop%opt(5)%fname = 'URBSRF'
+  DEF_rawdata_nml%urban_htop%opt(5)%vname = 'HTOP'
 
   ! ----- Urban fractional tree cover -----
   ! Options:
   !   1: GFCC 500m
   !   2: GFCC 30m
+  !   3: c2022 500m (The data is GFCC, but it is an early version.)
   DEF_rawdata_nml%urban_fveg%idx = 1
 
   DEF_rawdata_nml%urban_fveg%opt(1)%dir   = '/urban_ecology/tree_fraction_GFCC/'
@@ -264,11 +289,16 @@
   DEF_rawdata_nml%urban_fveg%opt(2)%gname = 'colm_30m'
   DEF_rawdata_nml%urban_fveg%opt(2)%fname = 'PCTT30m.GFCC'
 
+  DEF_rawdata_nml%urban_fveg%opt(3)%dir   = '/urban_morphology/c2022/'
+  DEF_rawdata_nml%urban_fveg%opt(3)%gname = 'colm_500m'
+  DEF_rawdata_nml%urban_fveg%opt(3)%fname = 'URBSRF'
+
   ! ----- Urban fractional water cover -----
   ! Options:
   !   1: gl30 500m
   !   2: glc 500m
   !   3: glc 100m
+  !   4: c2022 500m (The data is GL30, but it is an early version.)
   DEF_rawdata_nml%urban_flake%idx = 1
 
   DEF_rawdata_nml%urban_flake%opt(1)%dir   = '/urban_ecology/water_fraction_gl30/'
@@ -283,6 +313,10 @@
   DEF_rawdata_nml%urban_flake%opt(3)%gname = 'colm_100m'
   DEF_rawdata_nml%urban_flake%opt(3)%fname = 'PCTW100m.GLC'
 
+  DEF_rawdata_nml%urban_flake%opt(4)%dir   = '/urban_morphology/c2022/'
+  DEF_rawdata_nml%urban_flake%opt(4)%gname = 'colm_500m'
+  DEF_rawdata_nml%urban_flake%opt(4)%fname = 'URBSRF'
+
   ! ----- Urban tree LAI and SAI -----
   ! Options:
   !   1: Dong 500m
@@ -296,6 +330,7 @@
   ! Options:
   !   1: LandScan 1km
   !   2: GlobPOP 1km
+  !   3: c2022 500m (The data is LandScan, but it is an early version.)
   DEF_rawdata_nml%urban_pop%idx = 1
 
   DEF_rawdata_nml%urban_pop%opt(1)%dir   = '/urban_human/population_density_LandScan/'
@@ -306,12 +341,16 @@
   DEF_rawdata_nml%urban_pop%opt(2)%gname = 'colm_1km'
   DEF_rawdata_nml%urban_pop%opt(2)%fname = 'POP1km.GlobPOP'
 
+  DEF_rawdata_nml%urban_pop%opt(2)%dir   = '/urban_morphology/c2022/'
+  DEF_rawdata_nml%urban_pop%opt(2)%gname = 'colm_500m'
+  DEF_rawdata_nml%urban_pop%opt(2)%fname = 'URBSRF'
+
   ! ----- Urban lucy -----
   ! Options:
   !   1: LUCY
   DEF_rawdata_nml%urban_lucy%idx = 1
 
-  DEF_rawdata_nml%urban_lucy%opt(1)%dir   = '/urban_human/'
+  DEF_rawdata_nml%urban_lucy%opt(1)%dir   = '/urban_human/lucy/'
 
   ! ----- Urban roof albedo -----
   ! Options:
