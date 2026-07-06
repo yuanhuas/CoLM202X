@@ -831,7 +831,7 @@ ENDIF
       ! allocate and read the LUCY id
       IF (p_is_io) THEN
 
-         landname = TRIM(dir_rawdata)//trim(DEF_rawdata%urban_flake%dir)//'LUCY_regionid.nc'
+         landname = TRIM(dir_rawdata)//trim(DEF_rawdata%urban_lucy%dir)//'LUCY_regionid.nc'
 
          CALL allocate_block_data (grid_lucy, LUCY_reg)
          CALL flush_block_data    (LUCY_reg , 0       )
