@@ -244,9 +244,7 @@ ENDIF
             IF (index(DEF_rawdata%urban_roof%vname, 'GHSL')>0) THEN
                CALL read_5x5_data (dir, fname, grid_roof, "PCT_ROOF_GHSL", wtroof)
                CALL read_5x5_data (dir, fname, grid_roof, "HT_ROOF_GHSL" , htroof)
-
                CALL read_5x5_data (dir, fname, grid_roof, "HL_GHSL"      , hlr   )
-
             ELSE
                CALL read_5x5_data (dir, fname, grid_roof, "PCT_ROOF_Li", wtroof)
                CALL read_5x5_data (dir, fname, grid_roof, "HT_ROOF_Li" , htroof)
@@ -468,7 +466,7 @@ ENDIF
          dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_htop%dir)
 
          IF (DEF_rawdata_namelist == "colm2024.nml") THEN
-            fname = trim(DEF_rawdata%urban_htop%fname)//trim(c5year)
+            fname = trim(DEF_rawdata%urban_fveg%fname)//trim(c5year)
          ELSE
             fname = trim(DEF_rawdata%urban_htop%fname)
          ENDIF
@@ -588,11 +586,7 @@ ENDIF
          ! allocate and read grided LAI raw data
          dir = trim(dir_rawdata) // trim(DEF_rawdata%urban_lsai%dir)
 
-         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
-            fname = trim(DEF_rawdata%urban_lsai%fname)//'_'//trim(cyear)
-         ELSE
-            fname = trim(DEF_rawdata%urban_lsai%fname)//'.'//trim(cyear)
-         ENDIF
+         fname = trim(DEF_rawdata%urban_lsai%fname)//'.'//trim(cyear)
 
          ! loop for month
          DO imonth = 1, 12
@@ -685,11 +679,7 @@ ENDIF
          ! allocate and read grided SAI raw data
          dir = trim(dir_rawdata) // trim(DEF_rawdata%urban_lsai%dir)
 
-         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
-            fname = trim(DEF_rawdata%urban_lsai%fname)//'_'//trim(cyear)
-         ELSE
-            fname = trim(DEF_rawdata%urban_lsai%fname)//'.'//trim(cyear)
-         ENDIF
+         fname = trim(DEF_rawdata%urban_lsai%fname)//'.'//trim(cyear)
 
          ! loop for month
          DO imonth = 1, 12
@@ -976,11 +966,7 @@ ENDIF
 
 IF (DEF_URBAN_type_scheme == 1) THEN
       ! look up table of NCAR urban properties (using look-up tables)
-      IF (DEF_rawdata_namelist == "colm2024.nml") THEN
-         landname = TRIM(dir_rawdata)//'/urban/NCAR_urban_properties.nc'
-      ELSE
-         landname = TRIM(dir_rawdata)//'/urban_physical/NCAR_urban_properties.nc'
-      ENDIF
+      landname = TRIM(dir_rawdata)//'/urban_physical/NCAR_urban_properties.nc'
 
       CALL ncio_read_bcast_serial (landname,  "EM_ROOF"       , emroof_ncar )
       CALL ncio_read_bcast_serial (landname,  "EM_WALL"       , emwall_ncar )

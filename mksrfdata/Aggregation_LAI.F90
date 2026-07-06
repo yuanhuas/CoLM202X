@@ -205,26 +205,16 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
                IF (p_is_io) THEN
                   IF (DEF_LAI_MONTHLY) THEN
                      dir = trim(dir_rawdata) // trim(DEF_rawdata%lai_sai%dir)
-                     IF (DEF_rawdata_namelist == "colm2024.nml") THEN
-                        IF (iy < 2000) THEN
-                           fname = trim(DEF_rawdata%lai_sai%fname)//'2000'
-                        ELSE
-                           fname = trim(DEF_rawdata%lai_sai%fname)//trim(cyear)
-                        ENDIF
+                     IF (iy < 2000) THEN
+                        ! every 5 years one file
+                        write(cyear_bk,'(i4.4)') (iy / 5) * 5
+                        fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear_bk)
+                        CALL read_5x5_data_time (dir, fname, gridlai, &
+                                  'MONTHLY_LC_LAI_'//trim(cyear), itime, LAI)
+                     ELSE
+                        fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear)
                         CALL read_5x5_data_time (dir, fname, gridlai, &
                                                 'MONTHLY_LC_LAI', itime, LAI)
-                     ELSE
-                        IF (iy < 2000) THEN
-                           ! every 5 years one file
-                           write(cyear_bk,'(i4.4)') (iy / 5) * 5
-                           fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear_bk)
-                           CALL read_5x5_data_time (dir, fname, gridlai, &
-                                    'MONTHLY_LC_LAI_'//trim(cyear), itime, LAI)
-                        ELSE
-                           fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear)
-                           CALL read_5x5_data_time (dir, fname, gridlai, &
-                                                   'MONTHLY_LC_LAI', itime, LAI)
-                        ENDIF
                      ENDIF
                   ELSE
                      !TODO: add dir, file name and var name
@@ -311,6 +301,13 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
          DO iy = start_year, end_year
             write(cyear,'(i4.4)') iy
 
+            IF (iy < 2000) THEN
+               write(cyear_bk,'(i4.4)') (iy / 5) * 5
+               fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear_bk)
+            ELSE
+               fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear)
+            ENDIF
+
             DO itime = 1, 12
                write(c3, '(i2.2)') itime
 
@@ -319,28 +316,12 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
                ENDIF
 
                IF (p_is_io) THEN
-                  IF (DEF_rawdata_namelist == "colm2024.nml") THEN
-                     IF (iy < 2000) THEN
-                        fname = trim(DEF_rawdata%lai_sai%fname)//'2000'
-                     ELSE
-                        fname = trim(DEF_rawdata%lai_sai%fname)//trim(cyear)
-                     ENDIF
-
+                  IF (iy < 2000) THEN
+                     CALL read_5x5_data_time (dir, fname, gridlai, &
+                        'MONTHLY_LC_SAI_'//trim(cyear), itime, SAI)
+                  ELSE
                      CALL read_5x5_data_time (dir, fname, gridlai, &
                         'MONTHLY_LC_SAI', itime, SAI)
-                  ELSE
-                     IF (iy < 2000) THEN
-                        write(cyear_bk,'(i4.4)') (iy / 5) * 5
-                        fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear_bk)
-
-                        CALL read_5x5_data_time (dir, fname, gridlai, &
-                           'MONTHLY_LC_SAI', itime, SAI)
-                     ELSE
-                        fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear)
-
-                        CALL read_5x5_data_time (dir, fname, gridlai, &
-                           'MONTHLY_LC_SAI_'//trim(cyear), itime, SAI)
-                     ENDIF
                   ENDIF
 
 #ifdef USEMPI
@@ -452,18 +433,10 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
          dir = trim(dir_rawdata) // trim(DEF_rawdata%pft%dir)
 
          IF (iy < 2000) THEN
-            IF (DEF_rawdata_namelist == "colm2024.nml") THEN
-               fname = trim(DEF_rawdata%pft%fname)//'2000'
-            ELSE
-               write(cyear_bk,'(i4.4)') (iy / 5) * 5
-               fname = trim(DEF_rawdata%pft%fname)//'.'//trim(cyear_bk)
-            ENDIF
+            write(cyear_bk,'(i4.4)') (iy / 5) * 5
+            fname = trim(DEF_rawdata%pft%fname)//'.'//trim(cyear_bk)
          ELSE
-            IF (DEF_rawdata_namelist == "colm2024.nml") THEN
-               fname = trim(DEF_rawdata%pft%fname)//trim(cyear)
-            ELSE
-               fname = trim(DEF_rawdata%pft%fname)//'.'//trim(cyear)
-            ENDIF
+            fname = trim(DEF_rawdata%pft%fname)//'.'//trim(cyear)
          ENDIF
 
          IF (p_is_io) THEN
@@ -474,32 +447,19 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
             dir = trim(dir_rawdata) // trim(DEF_rawdata%lai_sai%dir)
             IF (iy < 2000) THEN
                write(cyear_bk,'(i4.4)') (iy / 5) * 5
-               IF (DEF_rawdata_namelist == "colm2024.nml") THEN
-                  fname = trim(DEF_rawdata%lai_sai%fname)//'2000'
-               ELSE
-                  fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear_bk)
-               ENDIF
+               fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear_bk)
             ELSE
-               IF (DEF_rawdata_namelist == "colm2024.nml") THEN
-                  fname = trim(DEF_rawdata%lai_sai%fname)//trim(cyear)
-               ELSE
-                  fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear)
-               ENDIF
+               fname = trim(DEF_rawdata%lai_sai%fname)//'.'//trim(cyear)
             ENDIF
 
             DO month = 1, 12
                IF (p_is_io) THEN
-                  IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+                  IF (iy < 2000) THEN
+                     CALL read_5x5_data_pft_time (dir, fname, gridlai, &
+                        'MONTHLY_PFT_LAI_'//trim(cyear), month, pftLSAI)
+                  ELSE
                      CALL read_5x5_data_pft_time (dir, fname, gridlai, &
                         'MONTHLY_PFT_LAI', month, pftLSAI)
-                  ELSE
-                     IF (iy < 2000) THEN
-                        CALL read_5x5_data_pft_time (dir, fname, gridlai, &
-                           'MONTHLY_PFT_LAI_'//trim(cyear), month, pftLSAI)
-                     ELSE
-                        CALL read_5x5_data_pft_time (dir, fname, gridlai, &
-                           'MONTHLY_PFT_LAI', month, pftLSAI)
-                     ENDIF
                   ENDIF
 #ifdef USEMPI
                   CALL aggregation_data_daemon_multigrid (grid_pft, &
@@ -639,17 +599,12 @@ SUBROUTINE Aggregation_LAI (gridlai, dir_rawdata, dir_model_landdata, lc_year)
 
          DO month = 1, 12
             IF (p_is_io) THEN
-               IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+               IF (iy < 2000) THEN
+                  CALL read_5x5_data_pft_time (dir, fname, gridlai, &
+                     'MONTHLY_PFT_SAI_'//trim(cyear), month, pftLSAI)
+               ELSE
                   CALL read_5x5_data_pft_time (dir, fname, gridlai, &
                      'MONTHLY_PFT_SAI', month, pftLSAI)
-                ELSE
-                  IF (iy < 2000) THEN
-                     CALL read_5x5_data_pft_time (dir, fname, gridlai, &
-                        'MONTHLY_PFT_SAI_'//trim(cyear), month, pftLSAI)
-                  ELSE
-                     CALL read_5x5_data_pft_time (dir, fname, gridlai, &
-                        'MONTHLY_PFT_SAI', month, pftLSAI)
-                  ENDIF
                ENDIF
 #ifdef USEMPI
                CALL aggregation_data_daemon_multigrid (grid_pft, &

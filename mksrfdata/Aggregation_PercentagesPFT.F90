@@ -89,11 +89,7 @@ SUBROUTINE Aggregation_PercentagesPFT (gland, dir_rawdata, dir_model_landdata, l
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
 
       dir   = trim(dir_rawdata) // trim(DEF_rawdata%pft%dir)
-      IF (DEF_rawdata_namelist == "colm2024.nml") THEN
-         fname = trim(DEF_rawdata%pft%fname)//trim(cyear)
-      ELSE
-         fname = trim(DEF_rawdata%pft%fname) //'.'// trim(cyear)
-      ENDIF
+      fname = trim(DEF_rawdata%pft%fname) //'.'// trim(cyear)
 
       IF (p_is_io) THEN
          CALL allocate_block_data (gland, pftPCT, N_PFT_modis, lb1 = 0)

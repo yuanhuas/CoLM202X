@@ -66,12 +66,7 @@ CONTAINS
       IF (p_is_io) THEN
 
          dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%pft%dir)
-
-         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
-            fname = trim(DEF_rawdata%pft%fname)//trim(cyear)//
-         ELSE
-            fname = trim(DEF_rawdata%pft%fname) //'.'// trim(cyear)
-         ENDIF
+         fname = trim(DEF_rawdata%pft%fname) //'.'// trim(cyear)
 
          CALL allocate_block_data (grid_patch, pctcrop_xy)
          CALL read_5x5_data (dir, fname, grid_patch, 'PCT_CROP', pctcrop_xy)
