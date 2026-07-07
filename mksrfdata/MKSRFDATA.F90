@@ -391,7 +391,7 @@ PROGRAM MKSRFDATA
 
 #if (defined GRIDBASED || defined UNSTRUCTURED)
       IF (DEF_LANDONLY) THEN
-         !TODO: distinguish USGS and IGBP land cover
+         ! distinguish USGS and IGBP land cover
 #ifndef LULC_USGS
          write(cyear,'(i4.4)') lc_year
 
@@ -402,11 +402,14 @@ PROGRAM MKSRFDATA
             CALL mesh_filter (grid_patch, lndname, 'landtype')
          ELSE
             dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%landcover%dir)
-            lndname = trim(DEF_rawdata%landcover%fname) // '.' // trim(cyear)
+            lndname = trim(DEF_rawdata%landcover%fname) //'.'// trim(cyear)
             CALL mesh_filter_5x5 (grid_patch, dir, lndname, 'LC')
          ENDIF
 #else
-         lndname = trim(DEF_dir_rawdata)//'/landtypes/landtype-usgs-update.nc'
+         !TODO: should change the rawdata namelist option to (1)
+         !      can be modified in the dependency and confilicts part.
+         lndname = trim(DEF_dir_rawdata) // trim(DEF_rawdata%landcover%dir)//&
+                   'landtype-usgs-update.nc'
          CALL mesh_filter (grid_patch, lndname, 'landtype')
 #endif
       ENDIF
