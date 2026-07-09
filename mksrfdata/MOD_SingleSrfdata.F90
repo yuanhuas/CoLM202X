@@ -9,6 +9,10 @@ MODULE MOD_SingleSrfdata
 !    "SinglePoint".
 !
 !  Created by Shupeng Zhang, May 2023
+!  Revisions:
+!  Jiayi Xiang,   12/2025: add reading of canopy bottom height and
+!                 crown aspect ratio from crown structure data 
+!                 for tree PFTs under LULC_IGBP_PC.
 !-----------------------------------------------------------------------
 
    USE MOD_Precision, only: r8
@@ -464,63 +468,41 @@ CONTAINS
          CALL read_point_var_2d_real8 (gridhtop, filename, 'forest_height', &
             SITE_lon_location, SITE_lat_location, SITE_htop)
 #else
-! ! Simard 2011方案
-!          CALL gridhtop%define_by_name ('colm_500m')
-
-!          dir_5x5 = trim(DEF_dir_rawdata) // '/plant_15s'
-!          write(cyear,'(i4.4)') DEF_LC_YEAR
-!          CALL read_point_5x5_var_2d_real8 (gridhtop, dir_5x5, 'MOD'//trim(cyear), 'HTOP', &
-!             SITE_lon_location, SITE_lat_location, SITE_htop)
-! 改成从colm500m.nml读取
+! reading accroding to colm500m.nml
          CALL gridhtop%define_by_name ('colm_500m')
          dir_5x5 = trim(DEF_dir_rawdata) // trim(DEF_rawdata%htop%dir)
          fname = trim(DEF_rawdata%htop%fname)
-         ! print*, 'Reading htop from dir: ', trim(DEF_rawdata%htop%dir)
-         ! print*, 'Reading htop from vname: ', trim(DEF_rawdata%htop%vname)
-         ! print*, 'Reading htop from fname: ', trim(DEF_rawdata%htop%fname)
          CALL read_point_5x5_var_2d_real8 (gridhtop, dir_5x5, fname, trim(DEF_rawdata%htop%vname), &
             SITE_lon_location, SITE_lat_location, SITE_htop)
-         print*, 'SITE_htop: ', SITE_htop
 
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
          IF (numpft > 0) THEN
             allocate (SITE_htop_pfts (numpft))
-            SITE_htop_pfts(:) = SITE_htop ! 将读取的单一树高赋值给全部PFT
-            print*, 'SITE_htop_pfts: ', SITE_htop_pfts
+            SITE_htop_pfts(:) = SITE_htop
 
             allocate (SITE_hbot_pfts (numpft))
             allocate (SITE_cdepth_pfts (numpft))
             allocate (SITE_cratio_pfts (numpft))
 
             CALL gridpft%define_by_name ('colm_500m')
-            ! 新增读取crown depth
+            ! reading crown depth
             dir_5x5= trim(DEF_dir_rawdata) // trim(DEF_rawdata%cdepth%dir)
             fname = trim(DEF_rawdata%cdepth%fname)
             CALL read_point_5x5_var_3d_real8 (gridpft, dir_5x5, fname, trim(DEF_rawdata%cdepth%vname), &
                SITE_lon_location, SITE_lat_location, N_PFT_modis, cdepth, lb=1, ub=8)
-            ! print*, 'Reading cdepth from dir: ', trim(DEF_rawdata%cdepth%dir)
-            ! print*, 'Reading cdepth from vname: ', trim(DEF_rawdata%cdepth%vname)
 
-            ! 新增读取crown aspect ratio
+            ! reading crown aspect ratio
             dir_5x5= trim(DEF_dir_rawdata) // trim(DEF_rawdata%cratio%dir)
             fname = trim(DEF_rawdata%cratio%fname)
             CALL read_point_5x5_var_3d_real8 (gridpft, dir_5x5, fname, trim(DEF_rawdata%cratio%vname), &
                SITE_lon_location, SITE_lat_location, N_PFT_modis, cratio, lb=1, ub=8)
-            ! print*, 'Reading cratio from dir: ', trim(DEF_rawdata%cratio%dir)
-            ! print*, 'Reading cratio from vname: ', trim(DEF_rawdata%cratio%vname)
-            print*, 'pctpfts: ', pctpfts
-            ! print*, 'cdepth: ', cdepth
-            ! print*, 'cratio: ', cratio
 
             where (cratio <= 0.) cratio = 1.
             SITE_cratio_pfts = pack(cratio, pctpfts > 0.)
-            print*, 'SITE_cratio_pfts: ', SITE_cratio_pfts
 
             SITE_cdepth_pfts = pack(cdepth, pctpfts > 0.)
             SITE_hbot_pfts = SITE_htop_pfts - SITE_cdepth_pfts
-            ! print*, 'SITE_hbot_pfts: ', SITE_hbot_pfts
             where (SITE_cdepth_pfts <= 0.) SITE_hbot_pfts = 0.
-            print*, 'SITE_hbot_pfts: ', SITE_hbot_pfts
          ENDIF
 #endif
 #endif

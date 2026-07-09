@@ -15,6 +15,9 @@ CONTAINS
 
 ! ===========================================================
 ! Read in the canopy tree top height
+! Revisions:
+!  12/2025, Jiayi Xiang: add crown bottom height and crown aspect ratio
+!           from crown structure data for tree PFTs under LULC_IGBP_PC.
 ! ===========================================================
 
    USE MOD_Precision
@@ -100,22 +103,14 @@ CONTAINS
 ! ==============PFT/PC scheme===========================
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
 #ifdef SinglePoint
-! 单点模拟时，htoppft来自MOD_SingleSrfdata.F90中定义读取的SITE_htop_pfts变量
       IF (numpft > 0) THEN
          allocate(htoppft(numpft))
-         ! htoppft = pack(SITE_htop_pfts, SITE_pctpfts > 0.)! only keep those with pct>0
          allocate(hbotpft(numpft))
          allocate(cratio_pft(numpft))
-         ! htoppft = SITE_htop_pfts
-         ! hbotpft = SITE_hbot_pfts
-         ! cratio_pft = SITE_cratio_pfts
          fsrfdata = trim(DEF_dir_landdata) // '/srfdata.nc'
          CAll ncio_read_serial (fsrfdata, 'canopy_height_pfts', htoppft)
          CAll ncio_read_serial (fsrfdata, 'canopy_bottom_height_pfts', hbotpft)
          CAll ncio_read_serial (fsrfdata, 'crown_aspect_ratio_pfts', cratio_pft)
-         print*, 'htoppft: ', htoppft
-         print*, 'hbotpft: ', hbotpft
-         print*, 'cratio_pft: ', cratio_pft
       ENDIF
 #else
       lndname = trim(landdir)//'/htop_pfts.nc'
@@ -145,36 +140,22 @@ CONTAINS
                   ! for trees
                   ! 01/06/2020, yuan: adjust htop reading
                   ! 11/15/2021, yuan: adjust htop setting
-                  ! 12/16/2025, xiangjy: adjust hbot reading
+                  ! 12/16/2025, xiangjy: adjust hbot and cratio reading
                   IF ( n>0 .and. n<9 ) THEN ! pft is tree
                      htop_p(p) = max(2., htoppft(p))
-                     
-                     !! ----case0 -----
-                     ! hbot_p(p) = htoppft(p)*hbot0_p(n)/htop0_p(n) ! calcu with ratio
-                     ! hbot_p(p) = max(1., hbot_p(p))
-                     ! cratio_p(p) = 1.
 
-                     !! ----case1 -----
+                     !! Read crown bottom height from crown structure dataset.
                      ! hbot_p(p) = max(1., hbotpft(p))
-                     ! cratio_p(p) = 1.
-
-                     !! ----case2 -----
-                     ! hbot_p(p) = htoppft(p)*hbot0_p(n)/htop0_p(n) ! calcu with ratio
-                     ! hbot_p(p) = max(1., hbot_p(p))
-                     ! cratio_p(p) = max(0., cratio_pft(p))
+                     !! diagnose hbot_p from the default hbot/htop ratio
+                     hbot_p(p) = htoppft(p)*hbot0_p(n)/htop0_p(n)
+                     hbot_p(p) = max(1., hbot_p(p))
                      
-                     !! ----case3 -----
-                     hbot_p(p) = max(1., hbotpft(p))
+                     !! Read crown depth to width from crown structure dataset.
                      cratio_p(p) = max(0., cratio_pft(p))
+                     !! the default spherical crown assumption
+                     ! cratio_p(p) = 1. 
 
                   ENDIF
-                  print*, '=====ipatch = ', npatch, '/', numpatch
-                  print*, 'patch_pft_s(ipatch): ', ps
-                  print*, 'patch_pft_e(ipatch): ', pe
-                  print*, '-----pft index: ', n
-                  print*, 'htop_p(p): ', htop_p(p)
-                  print*, 'hbot_p(p): ', hbot_p(p)
-                  print*, 'cratio_p(p): ', cratio_p(p)
                ENDDO
 
                htop(npatch) = sum(htop_p(ps:pe)*pftfrac(ps:pe)) ! weighted average

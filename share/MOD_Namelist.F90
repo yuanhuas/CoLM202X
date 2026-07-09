@@ -1158,7 +1158,6 @@ CONTAINS
 
       ! ----- open the namelist file -----
       IF (p_is_master) THEN
-         ! print*, DEF_rawdata_namelist
          open(10, status='OLD', file=nlfile, form="FORMATTED")
          read(10, nml=nl_colm, iostat=ierr)
          IF (ierr /= 0) THEN
@@ -1944,7 +1943,6 @@ ENDIF
    IMPLICIT NONE
 
       DEF_rawdata%htop%vname          = 'HTOP'
-      ! DEF_rawdata%htop%vname          = 'HTOP_90'
       DEF_rawdata%cdepth%vname        = 'CROWN_DEPTH'
       DEF_rawdata%cratio%vname        = 'ASPECT_RATIO'
       DEF_rawdata%urban_htop%vname    = 'HTOP'

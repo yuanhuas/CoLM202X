@@ -356,7 +356,7 @@ CONTAINS
                      CALL nccheck( nf90_open(trim(file_5x5), NF90_NOWRITE, ncid) )
                      CALL nccheck( nf90_inq_varid(ncid, trim(dataname), varid) )
                      CALL nccheck( nf90_get_var(ncid, varid, dcache, &
-                        (/i0,j0,lb/), (/i1-i0+1,j1-j0+1,ub/)) )
+                        (/i0,j0,lb/), (/i1-i0+1,j1-j0+1,ub-lb+1/)) )
                      CALL nccheck( nf90_close(ncid) )
 
                      DO ipft = lb, ub

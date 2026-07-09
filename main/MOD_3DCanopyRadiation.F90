@@ -59,7 +59,9 @@ CONTAINS
 !  27, 1168-1192, https://doi.org/10.1175/JCLI-D-13-00155.1.
 !
 ! !REVISIONS:
-!
+!  12/2025, Jiayi Xiang: Apply canopy structure data in ThreeDCanopy_wrap.
+!           add crown aspect ratio (cratio) input and pass it to
+!           ThreeDCanopy for radiation calculation.
 !-----------------------------------------------------------------------
 
    USE MOD_Precision
@@ -159,11 +161,6 @@ CONTAINS
       csiz(:) = (htop_p(ps:pe) - hbot_p(ps:pe)) / 2
       chgt(:) = (htop_p(ps:pe) + hbot_p(ps:pe)) / 2
       cratio(:) = cratio_p(ps:pe)
-      print*, 'htop_p = ', htop_p
-      print*, 'hbot_p = ', hbot_p
-      print*, 'csiz = ', csiz
-      print*, 'chgt = ', chgt
-      print*, 'cratio = ', cratio
       lsai(:) = lai_p(ps:pe) + sai_p(ps:pe)
       fcover(ps:pe) = pftfrac(ps:pe) / sum(pftfrac(ps:pe))
 
@@ -316,7 +313,10 @@ CONTAINS
 !  27, 1168-1192, https://doi.org/10.1175/JCLI-D-13-00155.1.
 !
 ! !REVISIONS:
-!
+!  12/2025, Jiayi Xiang: Apply canopy structure data to the 3D canopy
+!           radiation calculation. refine the reading, passing, and
+!           calculation of crown aspect ratio (cratio), and use it in
+!           crown geometry adjustment for radiation transfer.
 !-----------------------------------------------------------------------
 
    IMPLICIT NONE
@@ -329,10 +329,7 @@ CONTAINS
    real(r8), intent(in)  :: fcover(ps:pe)        !fractional cover of pft within a patch
    real(r8), intent(in)  :: csiz  (ps:pe)        !crown size of vegetation
    real(r8), intent(in)  :: chgt  (ps:pe)        !central height of crown
-   ! NOTE: The 'cdcw' parameter will be activated in the new release, accompanied by
-   !       a new set of canopy structure data. Currently we set cdcw = 1, i.e., sphere
-   ! real(r8)              :: cdcw  (ps:pe)        !crown depth to crown width
-   real(r8), intent(in)  :: cratio  (ps:pe)        !crown depth to crown width
+   real(r8), intent(in)  :: cratio  (ps:pe)      !crown depth to crown width
    real(r8), intent(in)  :: chil  (ps:pe)        !leaf angle distribution parameter
    real(r8), intent(in)  :: lsai  (ps:pe)        !LAI+SAI
    real(r8), intent(in)  :: rho   (ps:pe,numrad) !leaf/stem refl weighted by fraction LAI and SAI
@@ -392,7 +389,6 @@ CONTAINS
    real(r8) :: hbot_lay(nlay)            !average canopy bottom in layer
    real(r8) :: chgt_lay(nlay)            !average canopy height in layer
    real(r8) :: csiz_lay(nlay)            !average canopy size in layer
-   ! real(r8) :: cdcw_lay(nlay)            !crown depth to crown width for layers
    real(r8) :: cratio_lay(nlay)            !crown depth to crown width for layers
    real(r8) :: omg_lay(nlay,numrad)      !average omega for all three layer
    real(r8) :: rho_lay(nlay,numrad)      !average rho for all three layer
@@ -494,21 +490,13 @@ CONTAINS
       phi1 = 0.5 - 0.633 * chil - 0.33 * chil * chil
       phi2 = 0.877 * ( 1. - 2. * phi1 )
 
-      ! cdcw = 1.
       cosz = coszen
-      print*, 'cosz = ', cosz
       zenith = acos(coszen)
-      ! cosz = cosz * sqrt(1 / (cdcw**2*sin(zenith)**2 + cos(zenith)**2))
       cosz = cosz * sqrt(1 / (cratio**2*sin(zenith)**2 + cos(zenith)**2))
 
       cosd = cos(60._r8/180._r8*pi)
       zenith = 60._r8/180._r8*pi
-      ! cosd = cosd * sqrt(1 / (cdcw**2*sin(zenith)**2 + cos(zenith)**2))
       cosd = cosd * sqrt(1 / (cratio**2*sin(zenith)**2 + cos(zenith)**2))
-      print*, 'zenith = ', zenith
-      print*, 'after applying cratio = ', cratio
-      print*, 'cosz = ', cosz
-      print*, 'cosd = ', cosd
 
       ! 11/07/2018: calculate gee FUNCTION consider LAD
       gdir = phi1 + phi2*cosz
@@ -518,7 +506,6 @@ CONTAINS
 
       fc0 = D0
       omg_lay  = D0; rho_lay  = D0; tau_lay  = D0
-      ! chgt_lay = D0; cdcw_lay = D0; hbot_lay = D0
       chgt_lay = D0; cratio_lay = D0; hbot_lay = D0
       csiz_lay = D0; lsai_lay = D0
       cosz_lay = D0; cosd_lay = D0
@@ -538,7 +525,6 @@ CONTAINS
 
             csiz_lay(clev) = csiz_lay(clev) + fcover(ip)*csiz(ip)
             chgt_lay(clev) = chgt_lay(clev) + fcover(ip)*chgt(ip)
-            ! cdcw_lay(clev) = cdcw_lay(clev) + fcover(ip)*cdcw(ip)
             cratio_lay(clev) = cratio_lay(clev) + fcover(ip)*cratio(ip)
             lsai_lay(clev) = lsai_lay(clev) + fcover(ip)*lsai(ip)
             cosz_lay(clev) = cosz_lay(clev) + fcover(ip)*cosz(ip)
@@ -570,12 +556,6 @@ CONTAINS
             csiz_lay(lev) = max(csiz_lay(lev)/fc0(lev),D0)
             chgt_lay(lev) = max(chgt_lay(lev)/fc0(lev),D0)
             hbot_lay(lev) = chgt_lay(lev) - csiz_lay(lev)
-            ! cdcw_lay(lev) = max(cdcw_lay(lev)/fc0(lev),D0)
-            print*, 'level = ', lev
-            print*, 'fc0 = ', fc0(lev)
-            print*, 'chgt_lay = ', chgt_lay(lev)
-            print*, 'csiz_lay = ', csiz_lay(lev)
-            print*, 'hbot_lay = ', hbot_lay(lev)
             cratio_lay(lev) = max(cratio_lay(lev)/fc0(lev),D0)
             lsai_lay(lev) = max(lsai_lay(lev)/fc0(lev),D0)
             cosz_lay(lev) = max(cosz_lay(lev)/fc0(lev),D0)
@@ -685,13 +665,8 @@ CONTAINS
       zenith = acos(cosz_lay(3))
       shad_oa(3,2) = fc0(3)*OverlapArea(csiz_lay(3),chgt_lay(3)-hbot_lay(2), zenith)
       shad_oa(3,1) = fc0(3)*OverlapArea(csiz_lay(3),chgt_lay(3)-hbot_lay(1), zenith)
-      print*, 'zenith = acos(cosz_lay(3)) = ', zenith
-      print*, 'shad_oa(3,2) = ', shad_oa(3,2)
-      print*, 'shad_oa(3,1) = ', shad_oa(3,1)
       zenith = acos(cosz_lay(2))
       shad_oa(2,1) = fc0(2)*OverlapArea(csiz_lay(2),chgt_lay(2)-hbot_lay(1), zenith)
-      print*, 'zenith = acos(cosz_lay(2)) = ', zenith
-      print*, 'shad_oa(2,1) = ', shad_oa(2,1)
 
 !=============================================================
 ! unscattered direct sunlight available at  each layer
