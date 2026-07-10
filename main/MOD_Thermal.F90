@@ -37,7 +37,8 @@ CONTAINS
                        rss           ,gssun_out     ,gssha_out     ,assimsun_out  ,&
                        etrsun_out    ,assimsha_out  ,etrsha_out    ,&
 !photosynthesis and plant hydraulic variables
-                       effcon        ,vmax25        ,c3c4          ,hksati        ,smp     ,hk   ,&
+                       effcon        ,vmax25        ,c3c4          ,hksati        ,&
+                       smp           ,hk            ,&
                        kmax_sun      ,kmax_sha      ,kmax_xyl      ,kmax_root     ,&
                        psi50_sun     ,psi50_sha     ,psi50_xyl     ,psi50_root    ,&
                        ck            ,vegwp         ,gs0sun        ,gs0sha        ,&
@@ -256,7 +257,7 @@ CONTAINS
        zi_soisno(lb-1:nl_soil)    ! interface depth [m]
 
    integer , intent(in) :: &
-       c3c4 ! C3/C4 plant type
+       c3c4                       ! C3/C4 plant type
 
    real(r8), intent(in) :: &
        sabg_snow_lyr(lb:1)        ! snow layer absorption

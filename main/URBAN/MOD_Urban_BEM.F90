@@ -5,7 +5,7 @@ MODULE MOD_Urban_BEM
    USE MOD_Precision
    USE MOD_Vars_Global
    USE MOD_Const_Physical
-   USE MOD_Namelist, only: DEF_LC_YEAR
+   USE MOD_Namelist, only: DEF_simulation_time
    USE MOD_TimeManager
    USE MOD_Urban_Const_LCZ
    USE MOD_Urban_Shortwave, only: MatrixInverse
@@ -94,7 +94,7 @@ CONTAINS
         H,               &! average building height [m]
         troom_max,       &! maximum temperature of inner building
         troom_min,       &! minimum temperature of inner building
-        weekend,         &! Diurnal traffic flow profile of weekend
+        weekend(24),     &! Diurnal traffic flow profile of weekend
         troof_nl_bef,    &! roof temperature at layer nl_roof
         twsun_nl_bef,    &! sunlit wall temperature at layer nl_wall
         twsha_nl_bef,    &! shaded wall temperature at layer nl_wall
@@ -132,7 +132,6 @@ CONTAINS
         f_wsha            ! weight factor for shaded wall
 
    real(r8) :: &
-        ldate(3),        &! local time (year, julian day, seconds)
         A(4,4),          &! Heat transfer matrix
         Ainv(4,4),       &! Inverse of Heat transfer matrix
         B(4),            &! B for Ax=B
@@ -147,6 +146,10 @@ CONTAINS
         troof_inner_bef, &! temperature of inner roof
         twsun_inner_bef, &! temperature of inner sunlit wall
         twsha_inner_bef   ! temperature of inner shaded wall
+
+   integer :: &
+      ldate(3),          &! local time (year, julian day, seconds)
+      sdate(3)            ! calendar of begin style (year, julian day, seconds)
 
    integer :: nl_floor, tloc, s_heating, e_heating
    logical :: cooling, heating
@@ -178,12 +181,15 @@ CONTAINS
 
       ! greenwich to local time
       IF (DEF_simulation_time%greenwich) THEN
-         ! convert GMT time to local time
+         sdate    = idate
+         sdate(3) = idate(3) - deltim
          londeg = patchlonr*180/PI
-         CALL gmt2local(idate, londeg, ldate)
+
+         ! convert GMT time to local time
+         CALL gmt2local(sdate, londeg, ldate)
       ENDIF
 
-      tloc = ceiling(ldate(3)*1./3600)
+      tloc = int(ldate(3)/3600) + 1
 
       ! Ax = B
       ! set values for heat transfer matrix

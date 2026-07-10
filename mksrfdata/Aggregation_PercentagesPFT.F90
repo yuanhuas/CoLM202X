@@ -53,7 +53,7 @@ SUBROUTINE Aggregation_PercentagesPFT (gland, dir_rawdata, dir_model_landdata, l
    character(len=256) :: landdir, lndname
 
    ! for IGBP data
-   character(len=256) :: dir_5x5, fname, cyear
+   character(len=256) :: dir, fname, cyear
    ! for PFT
    type (block_data_real8_3d) :: pftPCT
    real(r8), allocatable :: pct_one(:), area_one(:)
@@ -88,12 +88,12 @@ SUBROUTINE Aggregation_PercentagesPFT (gland, dir_rawdata, dir_model_landdata, l
 
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
 
-      dir_5x5 = trim(dir_rawdata) // trim(DEF_rawdata%pft%dir)
-      fname   = trim(DEF_rawdata%pft%fname)//'.'//trim(cyear)
+      dir   = trim(dir_rawdata) // trim(DEF_rawdata%pft%dir)
+      fname = trim(DEF_rawdata%pft%fname)//'.'//trim(cyear)
 
       IF (p_is_io) THEN
          CALL allocate_block_data (gland, pftPCT, N_PFT_modis, lb1 = 0)
-         CALL read_5x5_data_pft   (dir_5x5, fname, gland, 'PCT_PFT', pftPCT)
+         CALL read_5x5_data_pft   (dir, fname, gland, 'PCT_PFT', pftPCT)
 #ifdef USEMPI
          CALL aggregation_data_daemon (gland, data_r8_3d_in1 = pftPCT, n1_r8_3d_in1 = N_PFT_modis)
 #endif

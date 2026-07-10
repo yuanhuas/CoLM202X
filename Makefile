@@ -166,62 +166,6 @@ OBJS_BASIC =    \
 				 MOD_Catch_RiverLakeNetwork.o   \
 				 MOD_Catch_Reservoir.o          \
 				 MOD_VicParaReadin.o            \
-				 MOD_Catch_BasinNetwork.o        \
-				 MOD_Catch_IO.o                  \
-				 MOD_Catch_Vars_TimeVariables.o  \
-				 MOD_Catch_Vars_1DFluxes.o       \
-				 MOD_BGC_Vars_1DFluxes.o         \
-				 MOD_BGC_Vars_1DPFTFluxes.o      \
-				 MOD_BGC_Vars_PFTimeVariables.o  \
-				 MOD_BGC_Vars_TimeInvariants.o   \
-				 MOD_BGC_Vars_TimeVariables.o    \
-				 MOD_Urban_Vars_1DFluxes.o       \
-				 MOD_Urban_Vars_TimeVariables.o  \
-				 MOD_Urban_Vars_TimeInvariants.o \
-				 MOD_Vars_TimeInvariants.o       \
-				 MOD_Vars_TimeVariables.o        \
-				 MOD_Vars_1DPFTFluxes.o          \
-				 MOD_Vars_1DFluxes.o             \
-				 MOD_Vars_1DForcing.o            \
-				 MOD_DA_Vars_1DFluxes.o          \
-				 MOD_DA_Vars_TimeVariables.o     \
-				 MOD_Hydro_SoilFunction.o        \
-				 MOD_Hydro_SoilWater.o           \
-				 MOD_Eroot.o                     \
-				 MOD_Qsadv.o                     \
-				 MOD_LAIEmpirical.o              \
-				 MOD_LAIReadin.o                 \
-				 MOD_CropReadin.o                \
-				 MOD_NitrifData.o                \
-				 MOD_NdepData.o                  \
-				 MOD_FireData.o                  \
-				 MOD_OrbCoszen.o                 \
-				 MOD_OrbCosazi.o                 \
-				 MOD_3DCanopyRadiation.o         \
-				 MOD_Aerosol.o                   \
-				 MOD_SnowSnicar.o                \
-				 MOD_Albedo.o                    \
-				 MOD_SnowFraction.o              \
-				 MOD_Urban_LAIReadin.o           \
-				 MOD_Urban_Shortwave.o           \
-				 MOD_Urban_Albedo.o              \
-				 MOD_MonthlyinSituCO2MaunaLoa.o  \
-				 MOD_PercentagesPFTReadin.o      \
-				 MOD_LakeDepthReadin.o           \
-				 MOD_DBedrockReadin.o            \
-				 MOD_SoilColorRefl.o             \
-				 MOD_SoilParametersReadin.o      \
-				 MOD_SoilTextureReadin.o         \
-				 MOD_HtopReadin.o                \
-				 MOD_UrbanReadin.o               \
-				 MOD_BGC_CNSummary.o             \
-				 MOD_IniTimeVariable.o           \
-				 MOD_UrbanIniTimeVariable.o      \
-				 MOD_ElementNeighbour.o          \
-				 MOD_Catch_HillslopeNetwork.o    \
-				 MOD_Catch_RiverLakeNetwork.o    \
-				 MOD_Catch_Reservoir.o           \
-				 MOD_VicParaReadin.o             \
 				 MOD_Initialize.o
 
 

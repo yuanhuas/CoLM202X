@@ -199,7 +199,7 @@ MODULE MOD_Const_LC
           0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08,&
           0.08, 0.08, 0.08, 0.05, 0.05, 0.05, 0.05, 0.05/)
 
-   !c3c4 flag
+   !C3C4 flag 1: C3, 0: C4
    integer, parameter, dimension(N_land_classification) :: c3c4_usgs &
       = (/1, 1, 1, 1, 1, 1, 1, 1,&
           1, 1, 1, 1, 1, 1, 1, 1,&
@@ -508,7 +508,7 @@ MODULE MOD_Const_LC
       = (/0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08,&
           0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08,&
           0.08 /)
-   
+
    !c3c4 flag
    integer, parameter, dimension(N_land_classification) :: c3c4_igbp &
       = (/1, 1, 1, 1, 1, 1, 1, 1,&
@@ -690,7 +690,8 @@ MODULE MOD_Const_LC
       d50,        &! depth at 50% roots
       beta         ! coefficient of root profile
 
-   integer, dimension(N_land_classification) :: c3c4 ! c3c4 flag
+   ! c3c4 flag
+   integer, dimension(N_land_classification) :: c3c4
 
 ! Plant Hydraulic Parameters
    real(r8), dimension(N_land_classification) :: &

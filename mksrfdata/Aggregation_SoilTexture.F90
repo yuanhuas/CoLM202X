@@ -67,7 +67,8 @@ SUBROUTINE Aggregation_SoilTexture ( &
       CALL mpi_barrier (p_comm_glb, p_err)
 #endif
 
-      lndname = trim(dir_rawdata)//'/soil/soiltexture_0cm-60cm_mean.nc'
+      lndname = trim(dir_rawdata)//trim(DEF_rawdata%soil_property%dir)//&
+                '/soiltexture_0cm-60cm_mean.nc'
 
       IF (p_is_io) THEN
          CALL allocate_block_data (gland, soiltext)

@@ -55,7 +55,7 @@ CONTAINS
               forc_aer                                                        ,&
               mss_bcpho   ,mss_bcphi   ,mss_ocpho   ,mss_ocphi                ,&
               mss_dst1    ,mss_dst2    ,mss_dst3    ,mss_dst4                 ,&
-              qflx_irrig_drip  ,qflx_irrig_flood ,qflx_irrig_paddy               )
+              qflx_irrig_drip  ,qflx_irrig_flood ,qflx_irrig_paddy             )
 
 !=======================================================================
 !  this is the main SUBROUTINE to execute the calculation of
@@ -176,11 +176,11 @@ CONTAINS
 ! Aerosol Fluxes (Jan. 07, 2023)
 ! END SNICAR model variables
 
-!  irrigation variable 
-   real(r8), intent(in) :: &
-        qflx_irrig_drip  , &! irrigation flux from drip irrigation [mm/s]
-        qflx_irrig_flood , &! irrigation flux from flood irrigation [mm/s]
-        qflx_irrig_paddy    ! irrigation flux from paddy irrigation [mm/s]
+!  irrigation variable
+   real(r8), intent(in), optional :: &
+        qflx_irrig_drip         ,&! irrigation flux from drip irrigation [mm/s]
+        qflx_irrig_flood        ,&! irrigation flux from flood irrigation [mm/s]
+        qflx_irrig_paddy          ! irrigation flux from paddy irrigation [mm/s]
 
 !-------------------------- Local Variables ----------------------------
 
@@ -520,8 +520,8 @@ ENDIF
               forc_aer                                                        ,&
               mss_bcpho   ,mss_bcphi   ,mss_ocpho   ,mss_ocphi                ,&
               mss_dst1    ,mss_dst2    ,mss_dst3    ,mss_dst4                 ,&
-!  irrigation variable 
-              qflx_irrig_drip  ,qflx_irrig_flood ,qflx_irrig_paddy               )  
+!  irrigation variable
+              qflx_irrig_drip  ,qflx_irrig_flood ,qflx_irrig_paddy             )
 
 !===================================================================================
 !  this is the main SUBROUTINE to execute the calculation of soil water processes
@@ -659,7 +659,7 @@ ENDIF
 ! Aerosol Fluxes (Jan. 07, 2023)
 ! END SNICAR model variables
 
-!  irrigation variable 
+!  irrigation variable
    real(r8), intent(in) :: &
         qflx_irrig_drip  , &! irrigation flux from drip irrigation [mm/s]
         qflx_irrig_flood , &! irrigation flux from flood irrigation [mm/s]
@@ -1073,7 +1073,7 @@ ENDIF
          ENDIF
          ! total runoff (mm/s)
          rnof = rsubst + rsur
-      ELSE  
+      ELSE
          IF (.not. is_dry_lake) THEN
             IF (wdsrf > pondmx) THEN
                rsur = rsur + (wdsrf - pondmx) / deltim

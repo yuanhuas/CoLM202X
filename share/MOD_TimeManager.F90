@@ -114,7 +114,7 @@ CONTAINS
 
       addsec = tstamp
       addsec%sec = addsec%sec + sec
-      DO WHILE (addsec%sec > 86400) 
+      DO WHILE (addsec%sec > 86400)
          addsec%sec = addsec%sec - 86400
          IF( isleapyear(addsec%year) ) THEN
             maxday = 366
@@ -608,18 +608,19 @@ CONTAINS
 
    integer , intent(in ) :: idate(3)
    real(r8), intent(in ) :: long
-   real(r8), intent(out) :: ldate(3)
+   integer , intent(out) :: ldate(3)
 
    integer  :: maxday
    real(r8) :: tdiff
 
-      tdiff = long/15.*3600
+      tdiff = nint(long/15.)*3600
 
       ldate(3) = idate(3) + tdiff
 
+      ldate(1) = idate(1)
       IF (ldate(3) < 0) THEN
 
-         ldate(3) = 86400 + ldate(3)
+         ldate(3) = ldate(3) + 86400
          ldate(2) = idate(2) - 1
 
          IF (ldate(2) < 1) THEN
@@ -631,12 +632,12 @@ CONTAINS
             ENDIF
          ENDIF
 
-      ELSEIF (ldate(3) > 86400) THEN
+      ELSEIF (ldate(3) >= 86400) THEN
 
          ldate(3) = ldate(3) - 86400
          ldate(2) = idate(2) + 1
 
-         IF ( isleapyear(int(ldate(1))) ) THEN
+         IF ( isleapyear(idate(1)) ) THEN
             maxday = 366
          ELSE
             maxday = 365

@@ -226,8 +226,11 @@ CONTAINS
                   flake(u)    = (1.-froof(u)) * flake(u)/(flake(u)+fveg_urb(u))
                   fveg_urb(u) = 1. - froof(u) - flake(u)
                ENDIF
-               froof(u) = min(0.95, froof(u)/(1.-flake(u)))
             ENDIF
+            froof(u) = min(0.9, froof(u)/(1.-flake(u)))
+
+            ! to constrain the building side length >= 10 m
+            IF (hroof(u)/hlr(u) < 10) hlr(u) = hroof(u)/10
 
             IF (DEF_URBAN_TREE) THEN
                ! set tree fractional cover (<= 1.-froof)
