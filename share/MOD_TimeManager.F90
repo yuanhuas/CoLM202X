@@ -616,6 +616,7 @@ CONTAINS
       tdiff = nint(long/15.)*3600
 
       ldate(3) = idate(3) + tdiff
+      ldate(1) = idate(1)
 
       ldate(1) = idate(1)
       IF (ldate(3) < 0) THEN

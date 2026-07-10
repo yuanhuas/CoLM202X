@@ -304,8 +304,8 @@ SUBROUTINE Aggregation_SoilParameters ( &
                IF (L /= 0) THEN
                   CALL aggregation_request_data (landpatch, ipatch, gland, zip = USE_zip_for_aggregation, area = area_one, &
                      data_r8_2d_in1 = vf_quartz_mineral_s_grid, data_r8_2d_out1 = vf_quartz_mineral_s_one)
-                  !CALL fillnan (vf_quartz_mineral_s_one, L == WATERBODY, vf_quartz_mineral_fill_water(nsl))
-                  CALL fillnan (vf_quartz_mineral_s_one, .true., vf_quartz_mineral_fill_water(nsl))
+                  CALL fillnan (vf_quartz_mineral_s_one, L == WATERBODY, vf_quartz_mineral_fill_water(nsl))
+                  CALL fillnan (vf_quartz_mineral_s_one, L == GLACIERS , vf_quartz_mineral_fill_water(nsl))
                   vf_quartz_mineral_s_patches (ipatch) = sum (vf_quartz_mineral_s_one * (area_one/sum(area_one)))
                ELSE
                   vf_quartz_mineral_s_patches (ipatch) = -1.0e36_r8
@@ -396,6 +396,10 @@ SUBROUTINE Aggregation_SoilParameters ( &
                   CALL fillnan (vf_gravels_s_one, .true., vf_gravels_fill_water(nsl))
                   CALL fillnan (vf_sand_s_one   , .true., vf_sand_fill_water(nsl)   )
                   CALL fillnan (vf_om_s_one     , .true., vf_om_fill_water(nsl)     )
+
+                  CALL fillnan (vf_gravels_s_one, L == GLACIERS , vf_gravels_fill_water(nsl))
+                  CALL fillnan (vf_sand_s_one   , L == GLACIERS , vf_sand_fill_water(nsl)   )
+                  CALL fillnan (vf_om_s_one     , L == GLACIERS , vf_om_fill_water(nsl)     )
 
                   vf_gravels_s_patches (ipatch) = sum (vf_gravels_s_one * (area_one/sum(area_one)))
                   vf_sand_s_patches (ipatch) = sum (vf_sand_s_one * (area_one/sum(area_one)))
@@ -567,8 +571,8 @@ SUBROUTINE Aggregation_SoilParameters ( &
                IF (L /= 0) THEN
                   CALL aggregation_request_data (landpatch, ipatch, gland, zip = USE_zip_for_aggregation, area = area_one, &
                      data_r8_2d_in1 = wf_gravels_s_grid, data_r8_2d_out1 = wf_gravels_s_one)
-                  !CALL fillnan (wf_gravels_s_one, L == WATERBODY, wf_gravels_fill_water(nsl))
-                  CALL fillnan (wf_gravels_s_one, .true., wf_gravels_fill_water(nsl))
+                  CALL fillnan (wf_gravels_s_one, L == WATERBODY, wf_gravels_fill_water(nsl))
+                  CALL fillnan (wf_gravels_s_one, L == GLACIERS , wf_gravels_fill_water(nsl))
                   wf_gravels_s_patches (ipatch) = sum (wf_gravels_s_one * (area_one/sum(area_one)))
                ELSE
                   wf_gravels_s_patches (ipatch) = -1.0e36_r8
@@ -634,8 +638,8 @@ SUBROUTINE Aggregation_SoilParameters ( &
                IF (L /= 0) THEN
                   CALL aggregation_request_data (landpatch, ipatch, gland, zip = USE_zip_for_aggregation, area = area_one, &
                      data_r8_2d_in1 = wf_sand_s_grid, data_r8_2d_out1 = wf_sand_s_one)
-                  !CALL fillnan (wf_sand_s_one, L == WATERBODY, wf_sand_fill_water(nsl))
-                  CALL fillnan (wf_sand_s_one, .true., wf_sand_fill_water(nsl))
+                  CALL fillnan (wf_sand_s_one, L == WATERBODY, wf_sand_fill_water(nsl))
+                  CALL fillnan (wf_sand_s_one, L == GLACIERS , wf_sand_fill_water(nsl))
                   wf_sand_s_patches (ipatch) = sum (wf_sand_s_one * (area_one/sum(area_one)))
                ELSE
                   wf_sand_s_patches (ipatch) = -1.0e36_r8
@@ -757,6 +761,13 @@ SUBROUTINE Aggregation_SoilParameters ( &
                   CALL fillnan (theta_s_one  , .true., theta_s_fill_water(nsl)  )
                   CALL fillnan (k_s_one      , .true., k_s_fill_water(nsl)      )
                   CALL fillnan (L_vgm_one    , .true., L_vgm_fill_water(nsl)    )
+
+                  CALL fillnan (theta_r_one  , L == GLACIERS , theta_r_fill_water(nsl)  )
+                  CALL fillnan (alpha_vgm_one, L == GLACIERS , alpha_vgm_fill_water(nsl))
+                  CALL fillnan (n_vgm_one    , L == GLACIERS , n_vgm_fill_water(nsl)    )
+                  CALL fillnan (theta_s_one  , L == GLACIERS , theta_s_fill_water(nsl)  )
+                  CALL fillnan (k_s_one      , L == GLACIERS , k_s_fill_water(nsl)      )
+                  CALL fillnan (L_vgm_one    , L == GLACIERS , L_vgm_fill_water(nsl)    )
 
                   theta_r_patches (ipatch)   = sum (theta_r_one * (area_one/sum(area_one)))
                   alpha_vgm_patches (ipatch) = median (alpha_vgm_one, size(alpha_vgm_one), spval)
@@ -1016,6 +1027,11 @@ SUBROUTINE Aggregation_SoilParameters ( &
                   CALL fillnan (psi_s_one  , .true., psi_s_fill_water(nsl)  )
                   CALL fillnan (lambda_one , .true., lambda_fill_water(nsl) )
 
+                  CALL fillnan (theta_s_one, L == GLACIERS , theta_s_fill_water(nsl))
+                  CALL fillnan (k_s_one    , L == GLACIERS , k_s_fill_water(nsl))
+                  CALL fillnan (psi_s_one  , L == GLACIERS , psi_s_fill_water(nsl)  )
+                  CALL fillnan (lambda_one , L == GLACIERS , lambda_fill_water(nsl) )
+
                   theta_s_patches (ipatch) = sum (theta_s_one * (area_one/sum(area_one)))
                   k_s_patches (ipatch)     = product(k_s_one**(area_one/sum(area_one)))
                   psi_s_patches (ipatch)   = median (psi_s_one, size(psi_s_one), spval)
@@ -1190,8 +1206,8 @@ SUBROUTINE Aggregation_SoilParameters ( &
                IF (L /= 0) THEN
                   CALL aggregation_request_data (landpatch, ipatch, gland, zip = USE_zip_for_aggregation, area = area_one, &
                      data_r8_2d_in1 = csol_grid, data_r8_2d_out1 = csol_one)
-                  !CALL fillnan (csol_one, L == WATERBODY, csol_fill_water(nsl))
-                  CALL fillnan (csol_one, .true., csol_fill_water(nsl))
+                  CALL fillnan (csol_one, L == WATERBODY, csol_fill_water(nsl))
+                  CALL fillnan (csol_one, L == GLACIERS , csol_fill_water(nsl))
                   csol_patches (ipatch) = sum(csol_one*(area_one/sum(area_one)))
                ELSE
                   csol_patches (ipatch) = -1.0e36_r8
@@ -1256,8 +1272,8 @@ SUBROUTINE Aggregation_SoilParameters ( &
                IF (L /= 0) THEN
                   CALL aggregation_request_data (landpatch, ipatch, gland, zip = USE_zip_for_aggregation, area = area_one, &
                      data_r8_2d_in1 = tksatu_grid, data_r8_2d_out1 = tksatu_one)
-                  !CALL fillnan (tksatu_one, L == WATERBODY, tksatu_fill_water(nsl))
-                  CALL fillnan (tksatu_one, .true., tksatu_fill_water(nsl))
+                  CALL fillnan (tksatu_one, L == WATERBODY, tksatu_fill_water(nsl))
+                  CALL fillnan (tksatu_one, L == GLACIERS , tksatu_fill_water(nsl))
                   tksatu_patches (ipatch) = product(tksatu_one**(area_one/sum(area_one)))
                ELSE
                   tksatu_patches (ipatch) = -1.0e36_r8
@@ -1322,8 +1338,8 @@ SUBROUTINE Aggregation_SoilParameters ( &
                IF (L /= 0) THEN
                   CALL aggregation_request_data (landpatch, ipatch, gland, zip = USE_zip_for_aggregation, area = area_one, &
                      data_r8_2d_in1 = tksatf_grid, data_r8_2d_out1 = tksatf_one)
-                  !CALL fillnan (tksatf_one, L == WATERBODY, tksatf_fill_water(nsl))
-                  CALL fillnan (tksatf_one, .true., tksatf_fill_water(nsl))
+                  CALL fillnan (tksatf_one, L == WATERBODY, tksatf_fill_water(nsl))
+                  CALL fillnan (tksatf_one, L == GLACIERS , tksatf_fill_water(nsl))
                   tksatf_patches (ipatch) = product(tksatf_one**(area_one/sum(area_one)))
                ELSE
                   tksatf_patches (ipatch) = -1.0e36_r8
@@ -1388,8 +1404,8 @@ SUBROUTINE Aggregation_SoilParameters ( &
                IF (L /= 0) THEN
                   CALL aggregation_request_data (landpatch, ipatch, gland, zip = USE_zip_for_aggregation, area = area_one, &
                      data_r8_2d_in1 = tkdry_grid, data_r8_2d_out1 = tkdry_one)
-                  !CALL fillnan (tkdry_one, L == WATERBODY, tkdry_fill_water(nsl))
-                  CALL fillnan (tkdry_one, .true., tkdry_fill_water(nsl))
+                  CALL fillnan (tkdry_one, L == WATERBODY, tkdry_fill_water(nsl))
+                  CALL fillnan (tkdry_one, L == GLACIERS , tkdry_fill_water(nsl))
                   tkdry_patches (ipatch) = product(tkdry_one**(area_one/sum(area_one)))
                ELSE
                   tkdry_patches (ipatch) = -1.0e36_r8
@@ -1454,8 +1470,8 @@ SUBROUTINE Aggregation_SoilParameters ( &
                IF (L /= 0) THEN
                   CALL aggregation_request_data (landpatch, ipatch, gland, zip = USE_zip_for_aggregation, area = area_one, &
                      data_r8_2d_in1 = k_solids_grid, data_r8_2d_out1 = k_solids_one)
-                  !CALL fillnan (k_solids_one, L == WATERBODY, k_solids_fill_water(nsl))
-                  CALL fillnan (k_solids_one, .true., k_solids_fill_water(nsl))
+                  CALL fillnan (k_solids_one, L == WATERBODY, k_solids_fill_water(nsl))
+                  CALL fillnan (k_solids_one, L == GLACIERS , k_solids_fill_water(nsl))
                   k_solids_patches (ipatch) = product(k_solids_one**(area_one/sum(area_one)))
                ELSE
                   k_solids_patches (ipatch) = -1.0e36_r8
@@ -1521,8 +1537,8 @@ SUBROUTINE Aggregation_SoilParameters ( &
                IF (L /= 0) THEN
                   CALL aggregation_request_data (landpatch, ipatch, gland, zip = USE_zip_for_aggregation, area = area_one, &
                      data_r8_2d_in1 = OM_density_s_grid, data_r8_2d_out1 = OM_density_s_one)
-                  !CALL fillnan (OM_density_s_one, L == WATERBODY, OM_density_fill_water(nsl))
-                  CALL fillnan (OM_density_s_one, .true., OM_density_fill_water(nsl))
+                  CALL fillnan (OM_density_s_one, L == WATERBODY, OM_density_fill_water(nsl))
+                  CALL fillnan (OM_density_s_one, L == GLACIERS , OM_density_fill_water(nsl))
                   OM_density_s_patches (ipatch) = sum (OM_density_s_one * (area_one/sum(area_one)))
                ELSE
                   OM_density_s_patches (ipatch) = -1.0e36_r8
@@ -1589,8 +1605,8 @@ SUBROUTINE Aggregation_SoilParameters ( &
                IF (L /= 0) THEN
                   CALL aggregation_request_data (landpatch, ipatch, gland, zip = USE_zip_for_aggregation, area = area_one, &
                      data_r8_2d_in1 = BD_all_s_grid, data_r8_2d_out1 = BD_all_s_one)
-                  !CALL fillnan (BD_all_s_one, L == WATERBODY, BD_all_fill_water(nsl))
-                  CALL fillnan (BD_all_s_one, .true., BD_all_fill_water(nsl))
+                  CALL fillnan (BD_all_s_one, L == WATERBODY, BD_all_fill_water(nsl))
+                  CALL fillnan (BD_all_s_one, L == GLACIERS , BD_all_fill_water(nsl))
                   BD_all_s_patches (ipatch) = sum (BD_all_s_one * (area_one/sum(area_one)))
                ELSE
                   BD_all_s_patches (ipatch) = -1.0e36_r8
@@ -1656,8 +1672,8 @@ SUBROUTINE Aggregation_SoilParameters ( &
                IF (L /= 0) THEN
                   CALL aggregation_request_data (landpatch, ipatch, gland, zip = USE_zip_for_aggregation, area = area_one, &
                      data_r8_2d_in1 = vf_clay_s_grid, data_r8_2d_out1 = vf_clay_s_one)
-                  !CALL fillnan (vf_clay_s_one, L == WATERBODY, vf_clay_fill_water(nsl))
-                  CALL fillnan (vf_clay_s_one, .true., vf_clay_fill_water(nsl))
+                  CALL fillnan (vf_clay_s_one, L == WATERBODY, vf_clay_fill_water(nsl))
+                  CALL fillnan (vf_clay_s_one, L == GLACIERS , vf_clay_fill_water(nsl))
                   vf_clay_s_patches (ipatch) = sum (vf_clay_s_one * (area_one/sum(area_one)))
                ELSE
                   vf_clay_s_patches (ipatch) = -1.0e36_r8
@@ -1724,8 +1740,8 @@ SUBROUTINE Aggregation_SoilParameters ( &
                IF (L /= 0) THEN
                   CALL aggregation_request_data (landpatch, ipatch, gland, zip = USE_zip_for_aggregation, area = area_one, &
                      data_r8_2d_in1 = wf_om_s_grid, data_r8_2d_out1 = wf_om_s_one)
-                  !CALL fillnan (wf_om_s_one, L == WATERBODY, wf_om_fill_water(nsl))
-                  CALL fillnan (wf_om_s_one, .true., wf_om_fill_water(nsl))
+                  CALL fillnan (wf_om_s_one, L == WATERBODY, wf_om_fill_water(nsl))
+                  CALL fillnan (wf_om_s_one, L == GLACIERS , wf_om_fill_water(nsl))
                   wf_om_s_patches (ipatch) = sum (wf_om_s_one * (area_one/sum(area_one)))
                ELSE
                   wf_om_s_patches (ipatch) = -1.0e36_r8
@@ -1792,8 +1808,8 @@ SUBROUTINE Aggregation_SoilParameters ( &
                IF (L /= 0) THEN
                   CALL aggregation_request_data (landpatch, ipatch, gland, zip = USE_zip_for_aggregation, area = area_one, &
                      data_r8_2d_in1 = wf_clay_s_grid, data_r8_2d_out1 = wf_clay_s_one)
-                  !CALL fillnan (wf_clay_s_one, L == WATERBODY, wf_clay_fill_water(nsl))
-                  CALL fillnan (wf_clay_s_one, .true., wf_clay_fill_water(nsl))
+                  CALL fillnan (wf_clay_s_one, L == WATERBODY, wf_clay_fill_water(nsl))
+                  CALL fillnan (wf_clay_s_one, L == GLACIERS , wf_clay_fill_water(nsl))
                   wf_clay_s_patches (ipatch) = sum (wf_clay_s_one * (area_one/sum(area_one)))
                ELSE
                   wf_clay_s_patches (ipatch) = -1.0e36_r8
