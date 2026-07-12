@@ -67,7 +67,7 @@ CONTAINS
 
    integer, intent(in) :: lc_year
    ! Local Variables
-   character(len=256) :: fname, dir_5x5
+   character(len=256) :: fname, dir
    character(len=255) :: cyear
    type (block_data_int32_2d) :: patchdata
    integer :: iloc, npxl, ipxl, numset
@@ -91,16 +91,24 @@ CONTAINS
 
       IF (p_is_io) THEN
 
-         CALL allocate_block_data(grid_patch, patchdata)
+         CALL allocate_block_data (grid_patch, patchdata)
 
 #ifndef LULC_USGS
+         dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%landcover%dir)
+
          ! add parameter input for time year
-         dir_5x5= trim(DEF_dir_rawdata) // trim(DEF_rawdata%landcover%dir)
-         fname  = trim(DEF_rawdata%landcover%fname)//'.'//trim(cyear)
-         CALL read_5x5_data (dir_5x5, fname, grid_patch, 'LC', patchdata)
+         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+            fname = trim(dir)//&
+               trim(DEF_rawdata%landcover%fname)//'-'//trim(cyear)//'.nc'
+            CALL ncio_read_block (fname, 'landtype', grid_patch, patchdata)
+         ELSE
+            fname = trim(DEF_rawdata%landcover%fname)//'.'//trim(cyear)
+            CALL read_5x5_data (dir, fname, grid_patch, 'LC', patchdata)
+         ENDIF
 #else
          !TODO: need usgs land cover type data
-         fname = trim(DEF_dir_rawdata) //'/landtypes/landtype-usgs-update.nc'
+         fname = trim(DEF_dir_rawdata)//trim(DEF_rawdata%landcover%dir)//&
+                 '/landtype-usgs-update.nc'
          CALL ncio_read_block (fname, 'landtype', grid_patch, patchdata)
 #endif
 
@@ -143,9 +151,9 @@ CONTAINS
             allocate (types (ipxstt:ipxend))
 
 #ifdef CATCHMENT
-            CALL aggregation_request_data (landhru, iset, grid_patch, zip = .true., &
+            CALL aggregation_request_data (landhru, iset, grid_patch, zip = .false., &
 #else
-            CALL aggregation_request_data (landelm, iset, grid_patch, zip = .true., &
+            CALL aggregation_request_data (landelm, iset, grid_patch, zip = .false., &
 #endif
                data_i4_2d_in1 = patchdata, data_i4_2d_out1 = ibuff)
 
@@ -176,6 +184,7 @@ CONTAINS
                DO ipxl = ipxstt, ipxend
                   IF (types(ipxl) > 0) THEN
                      IF (patchtypes(types(ipxl)) == 0) THEN
+#ifndef CROP
                         ! Deal with cropland separately for fast PC
                         IF (DEF_FAST_PC .and. &
                            (types(ipxl)==CROPLAND .or. types(ipxl)==14)) THEN
@@ -183,6 +192,9 @@ CONTAINS
                         ELSE
                            types(ipxl) = 1
                         ENDIF
+#else
+                        types(ipxl) = 1
+#endif
                      ENDIF
                   ENDIF
                ENDDO

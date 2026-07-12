@@ -243,7 +243,7 @@ CONTAINS
                  '/diag/lccpct_matrix_' // trim(thisyr) // '.nc'
       DO ilc = 0, N_land_classification
          CALL srfdata_map_and_write (lccpct_matrix(:,ilc), landpatch%settyp, typindex, &
-            m_patch2diag, -1.0e36_r8, lndname, 'lccpct_matrix', compress = 0, &
+            m_patch2diag, -1.0e36_r8, lndname, 'lccpct_matrix', compress = 6, &
             write_mode = 'one', defval=0._r8, lastdimname = 'source_patch', lastdimvalue = ilc, &
             create_mode=first_call)
          IF ( first_call ) first_call = .false.

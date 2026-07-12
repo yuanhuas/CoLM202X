@@ -59,7 +59,7 @@ SUBROUTINE Aggregation_ForestHeight ( &
    real(r8), allocatable :: tree_height_patches(:), tree_height_one(:)
 
    ! for IGBP data
-   character(len=256) :: dir_5x5, fname
+   character(len=256) :: dir, fname
    type (block_data_real8_2d) :: htop
    type (block_data_real8_3d) :: pftPCT
    real(r8), allocatable :: htop_patches(:), htop_pfts(:), htop_pcs(:,:)
@@ -92,7 +92,10 @@ SUBROUTINE Aggregation_ForestHeight ( &
 #endif
 
 #ifdef LULC_USGS
-      lndname = trim(dir_rawdata)//'/Forest_Height.nc'
+      !TODO: add dir, file name and var name
+      ! to check if they can be combined. -done
+      lndname = trim(DEF_dir_rawdata) // trim(DEF_rawdata%htop%dir) &
+              // '/Forest_Height.nc'
 
       IF (p_is_io) THEN
          CALL allocate_block_data (gland, tree_height)
@@ -142,7 +145,7 @@ SUBROUTINE Aggregation_ForestHeight ( &
       typpatch = (/(ityp, ityp = 0, N_land_classification)/)
       lndname  = trim(dir_model_landdata) // '/diag/htop_patch_' // trim(cyear) // '.nc'
       CALL srfdata_map_and_write (tree_height_patches, landpatch%settyp, typpatch, m_patch2diag, &
-         -1.0e36_r8, lndname, 'htop', compress = 1, write_mode = 'one', defval=0._r8, create_mode=.true.)
+         -1.0e36_r8, lndname, 'htop', compress = 6, write_mode = 'one', defval=0._r8, create_mode=.true.)
 #endif
 
       IF (p_is_worker) THEN
@@ -158,9 +161,18 @@ SUBROUTINE Aggregation_ForestHeight ( &
 
       IF (p_is_io) THEN
 
-         dir_5x5 = trim(dir_rawdata) // trim(DEF_rawdata%htop%dir)
-         fname = trim(DEF_rawdata%htop%fname)
-         CALL read_5x5_data (dir_5x5, fname, gland, trim(DEF_rawdata%htop%vname), htop)
+         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+            dir   = trim(dir_rawdata) // trim(DEF_rawdata%pft%dir)
+            fname = trim(DEF_rawdata%pft%fname) //'.'// trim(cyear)
+
+            CALL read_5x5_data (dir, fname, gland, 'HTOP', htop)
+         ELSE
+            dir   = trim(dir_rawdata) // trim(DEF_rawdata%htop%dir)
+            fname = trim(DEF_rawdata%htop%fname) //'.'// trim(cyear)
+
+            CALL read_5x5_data (dir, fname, gland, trim(DEF_rawdata%htop%vname), htop)
+         ENDIF
+
 #ifdef USEMPI
          CALL aggregation_data_daemon (gland, data_r8_2d_in1 = htop)
 #endif
@@ -206,7 +218,7 @@ SUBROUTINE Aggregation_ForestHeight ( &
       typpatch = (/(ityp, ityp = 0, N_land_classification)/)
       lndname  = trim(dir_model_landdata) // '/diag/htop_patch_' // trim(cyear) // '.nc'
       CALL srfdata_map_and_write (htop_patches, landpatch%settyp, typpatch, m_patch2diag, &
-         -1.0e36_r8, lndname, 'htop', compress = 1, write_mode = 'one', defval=0._r8, create_mode=.true.)
+         -1.0e36_r8, lndname, 'htop', compress = 6, write_mode = 'one', defval=0._r8, create_mode=.true.)
 #endif
 
       IF (p_is_worker) THEN
@@ -224,13 +236,19 @@ SUBROUTINE Aggregation_ForestHeight ( &
 
       IF (p_is_io) THEN
 
-         dir_5x5 = trim(DEF_dir_rawdata) // trim(DEF_rawdata%htop%dir)
-         fname = trim(DEF_rawdata%htop%fname)
-         CALL read_5x5_data     (dir_5x5, fname, gland   , trim(DEF_rawdata%htop%vname), htop)
+         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+            dir   = trim(DEF_dir_rawdata) // trim(DEF_rawdata%pft%dir)
+            fname = trim(DEF_rawdata%pft%fname) //'.'// trim(cyear)
+            CALL read_5x5_data (dir, fname, gland, 'HTOP', htop)
+         ELSE
+            dir   = trim(DEF_dir_rawdata) // trim(DEF_rawdata%htop%dir)
+            fname = trim(DEF_rawdata%htop%fname)
+            CALL read_5x5_data (dir, fname, gland, trim(DEF_rawdata%htop%vname), htop)
+         ENDIF
 
-         dir_5x5= trim(DEF_dir_rawdata) // trim(DEF_rawdata%pft%dir)
-         fname = trim(DEF_rawdata%pft%fname)//trim(cyear)
-         CALL read_5x5_data_pft (dir_5x5, fname, grid_pft, 'PCT_PFT', pftPCT)
+         dir   = trim(DEF_dir_rawdata) // trim(DEF_rawdata%pft%dir)
+         fname = trim(DEF_rawdata%pft%fname) //'.'// trim(cyear)
+         CALL read_5x5_data_pft (dir, fname, grid_pft, 'PCT_PFT', pftPCT)
 
 #ifdef USEMPI
          CALL aggregation_data_daemon_multigrid (grid_in1 = grid_pft, data_r8_3d_in1 = pftPCT, n1_r8_3d_in1 = 16, &
@@ -313,7 +331,7 @@ SUBROUTINE Aggregation_ForestHeight ( &
       typpatch = (/(ityp, ityp = 0, N_land_classification)/)
       lndname  = trim(dir_model_landdata) // '/diag/htop_patch_' // trim(cyear) // '.nc'
       CALL srfdata_map_and_write (htop_patches, landpatch%settyp, typpatch, m_patch2diag, &
-         -1.0e36_r8, lndname, 'htop', compress = 1, write_mode = 'one', defval=0._r8, create_mode=.true.)
+         -1.0e36_r8, lndname, 'htop', compress = 6, write_mode = 'one', defval=0._r8, create_mode=.true.)
 #endif
 
       lndname = trim(landdir)//'/htop_pfts.nc'
@@ -329,7 +347,7 @@ SUBROUTINE Aggregation_ForestHeight ( &
 #endif
       lndname = trim(dir_model_landdata) // '/diag/htop_pft_' // trim(cyear) // '.nc'
       CALL srfdata_map_and_write (htop_pfts, landpft%settyp, typpft, m_pft2diag, &
-         -1.0e36_r8, lndname, 'htop_pft', compress = 1, write_mode = 'one', defval=0._r8, create_mode=.true.)
+         -1.0e36_r8, lndname, 'htop_pft', compress = 6, write_mode = 'one', defval=0._r8, create_mode=.true.)
 #endif
 
       IF (p_is_worker) THEN

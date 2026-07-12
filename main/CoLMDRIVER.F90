@@ -74,7 +74,7 @@ SUBROUTINE CoLMDRIVER (idate,deltim,dolai,doalb,dosst,oro)
          steps_in_one_deltim = 1
          ! deltim need to be within 1800s for water body with snow in order to avoid large
          ! temperature fluctuations due to rapid snow heat conductance
-         IF(m == WATERBODY .and. snowdp(i) > 0.0) steps_in_one_deltim = ceiling(deltim/1800.)
+         IF(m == WATERBODY) steps_in_one_deltim = ceiling(deltim/1800.)
          deltim_phy = deltim/steps_in_one_deltim
 
          ! For non urban patch or slab urban
@@ -239,7 +239,7 @@ SUBROUTINE CoLMDRIVER (idate,deltim,dolai,doalb,dosst,oro)
 
           ! VEGETATION INFORMATION
             htop(i)         ,hbot(i)         ,sqrtdi(m)       ,chil(m)         ,&
-            effcon(m)       ,vmax25(m)       ,c3c4(m)         ,slti(m)         ,hlti(m)         ,&
+            effcon(m)       ,vmax25(m)       ,slti(m)         ,hlti(m)         ,&
             shti(m)         ,hhti(m)         ,trda(m)         ,trdm(m)         ,&
             trop(m)         ,g1(m)           ,g0(m)           ,gradm(m)        ,&
             binter(m)       ,extkn(m)        ,rho(1:,1:,m)    ,tau(1:,1:,m)    ,&

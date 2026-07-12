@@ -559,7 +559,7 @@ SUBROUTINE CoLMMAIN ( &
    real(r8) dz_soisno_   (maxsnl+1:1)  !layer thickness (m)
    real(r8) sabg_snow_lyr(maxsnl+1:1)  !snow layer absorption [W/m-2]
    !----------------------------------------------------------------------
-   !  For irrigation 
+   !  For irrigation
    !----------------------------------------------------------------------
    real(r8) :: qflx_irrig_drip         ! drip irrigation rate [mm/s]
    real(r8) :: qflx_irrig_sprinkler    ! sprinkler irrigation rate [mm/s]
@@ -663,7 +663,7 @@ SUBROUTINE CoLMMAIN ( &
          ENDDO
 
          totwb = ldew + scv + sum(wice_soisno(1:)+wliq_soisno(1:)) + wa
-#ifdef CROP      
+#ifdef CROP
          if(DEF_USE_IRRIGATION) totwb = totwb + waterstorage(ipatch)
 #endif
          totwb = totwb + wdsrf
@@ -679,7 +679,7 @@ SUBROUTINE CoLMMAIN ( &
          ENDIF
 
 !----------------------------------------------------------------------
-! [2] Irrigation 
+! [2] Irrigation
 !----------------------------------------------------------------------
          qflx_irrig_drip = 0._r8
          qflx_irrig_sprinkler = 0._r8
@@ -688,7 +688,7 @@ SUBROUTINE CoLMMAIN ( &
 #ifdef CROP
          IF (DEF_USE_IRRIGATION) THEN
             IF (patchtype == 0) THEN
-               CALL CalIrrigationApplicationFluxes(ipatch,deltim,qflx_irrig_drip,qflx_irrig_sprinkler,qflx_irrig_flood,qflx_irrig_paddy)   
+               CALL CalIrrigationApplicationFluxes(ipatch,deltim,qflx_irrig_drip,qflx_irrig_sprinkler,qflx_irrig_flood,qflx_irrig_paddy)
             ENDIF
          ENDIF
 #endif
@@ -699,23 +699,26 @@ SUBROUTINE CoLMMAIN ( &
 
 #if (defined LULC_USGS || defined LULC_IGBP)
             CALL LEAF_interception_wrap (deltim,dewmx,forc_us,forc_vs,chil,sigf,lai,sai,forc_t,&
-                      tleaf,prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,bifall,&
+                      tleaf,prc_rain,prc_snow,prl_rain,prl_snow,bifall,&
                       ldew,ldew_rain,ldew_snow,z0m,forc_hgt_u,pg_rain,&
-                      pg_snow,qintr,qintr_rain,qintr_snow)
+                      pg_snow,qintr,qintr_rain,qintr_snow,&
+                      qflx_irrig_sprinkler=qflx_irrig_sprinkler)
 #endif
 
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
             CALL LEAF_interception_pftwrap (ipatch,deltim,dewmx,forc_us,forc_vs,forc_t,&
-                      prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,bifall,&
+                      prc_rain,prc_snow,prl_rain,prl_snow,bifall,&
                       ldew,ldew_rain,ldew_snow,z0m,forc_hgt_u,pg_rain,&
-                      pg_snow,qintr,qintr_rain,qintr_snow)
+                      pg_snow,qintr,qintr_rain,qintr_snow,&
+                      qflx_irrig_sprinkler=qflx_irrig_sprinkler)
 #endif
 
          ELSE
             CALL LEAF_interception_wrap (deltim,dewmx,forc_us,forc_vs,chil,sigf,lai,sai,forc_t,&
-                      tleaf,prc_rain,prc_snow,prl_rain,prl_snow,qflx_irrig_sprinkler,bifall,&
+                      tleaf,prc_rain,prc_snow,prl_rain,prl_snow,bifall,&
                       ldew,ldew_rain,ldew_snow,z0m,forc_hgt_u,pg_rain,&
-                      pg_snow,qintr,qintr_rain,qintr_snow)
+                      pg_snow,qintr,qintr_rain,qintr_snow,&
+                      qflx_irrig_sprinkler=qflx_irrig_sprinkler)
          ENDIF
 
          qdrip = pg_rain + pg_snow
@@ -818,7 +821,8 @@ SUBROUTINE CoLMMAIN ( &
                  mss_bcpho(lbsn:0) ,mss_bcphi(lbsn:0) ,mss_ocpho(lbsn:0) ,mss_ocphi(lbsn:0) ,&
                  mss_dst1(lbsn:0)  ,mss_dst2(lbsn:0)  ,mss_dst3(lbsn:0)  ,mss_dst4(lbsn:0)  ,&
 !  irrigation variables
-                 qflx_irrig_drip   ,qflx_irrig_flood  ,qflx_irrig_paddy)
+                 qflx_irrig_drip=qflx_irrig_drip      ,qflx_irrig_flood=qflx_irrig_flood    ,&
+                 qflx_irrig_paddy=qflx_irrig_paddy                                           )
          ELSE
 
             CALL WATER_VSF (ipatch ,patchtype,is_dry_lake,   lb          ,nl_soil           ,&
@@ -851,7 +855,8 @@ SUBROUTINE CoLMMAIN ( &
                  mss_bcpho(lbsn:0) ,mss_bcphi(lbsn:0) ,mss_ocpho(lbsn:0) ,mss_ocphi(lbsn:0) ,&
                  mss_dst1(lbsn:0)  ,mss_dst2(lbsn:0)  ,mss_dst3(lbsn:0)  ,mss_dst4(lbsn:0)  ,&
 !  irrigation variables
-                 qflx_irrig_drip   ,qflx_irrig_flood  ,qflx_irrig_paddy)
+                 qflx_irrig_drip   =qflx_irrig_drip   ,qflx_irrig_flood  =qflx_irrig_drip   ,&
+                 qflx_irrig_paddy  =qflx_irrig_paddy                                         )
          ENDIF
 
          IF (snl < 0) THEN

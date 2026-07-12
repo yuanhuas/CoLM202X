@@ -7,7 +7,7 @@ MODULE MOD_SoilSnowHydrology
    USE MOD_Namelist, only: DEF_USE_PLANTHYDRAULICS, DEF_USE_SNICAR,     &
                            DEF_URBAN_RUN,           DEF_USE_IRRIGATION, &
                            DEF_SPLIT_SOILSNOW,      DEF_Runoff_SCHEME,  &
-                           DEF_DA_GRACE
+                           DEF_DA_TWS_GRACE
 #if (defined CaMa_Flood)
    USE YOS_CMF_INPUT,      only: LWINFILT
 #endif
@@ -55,7 +55,7 @@ CONTAINS
               forc_aer                                                        ,&
               mss_bcpho   ,mss_bcphi   ,mss_ocpho   ,mss_ocphi                ,&
               mss_dst1    ,mss_dst2    ,mss_dst3    ,mss_dst4                 ,&
-              qflx_irrig_drip  ,qflx_irrig_flood ,qflx_irrig_paddy               )
+              qflx_irrig_drip  ,qflx_irrig_flood ,qflx_irrig_paddy             )
 
 !=======================================================================
 !  this is the main SUBROUTINE to execute the calculation of
@@ -176,11 +176,11 @@ CONTAINS
 ! Aerosol Fluxes (Jan. 07, 2023)
 ! END SNICAR model variables
 
-!  irrigation variable 
-   real(r8), intent(in) :: &
-        qflx_irrig_drip  , &! irrigation flux from drip irrigation [mm/s]
-        qflx_irrig_flood , &! irrigation flux from flood irrigation [mm/s]
-        qflx_irrig_paddy    ! irrigation flux from paddy irrigation [mm/s]
+!  irrigation variable
+   real(r8), intent(in), optional :: &
+        qflx_irrig_drip         ,&! irrigation flux from drip irrigation [mm/s]
+        qflx_irrig_flood        ,&! irrigation flux from flood irrigation [mm/s]
+        qflx_irrig_paddy          ! irrigation flux from paddy irrigation [mm/s]
 
 !-------------------------- Local Variables ----------------------------
 
@@ -520,8 +520,8 @@ ENDIF
               forc_aer                                                        ,&
               mss_bcpho   ,mss_bcphi   ,mss_ocpho   ,mss_ocphi                ,&
               mss_dst1    ,mss_dst2    ,mss_dst3    ,mss_dst4                 ,&
-!  irrigation variable 
-              qflx_irrig_drip  ,qflx_irrig_flood ,qflx_irrig_paddy               )  
+!  irrigation variable
+              qflx_irrig_drip  ,qflx_irrig_flood ,qflx_irrig_paddy             )
 
 !===================================================================================
 !  this is the main SUBROUTINE to execute the calculation of soil water processes
@@ -544,7 +544,7 @@ ENDIF
    USE MOD_Vars_TimeInvariants, only: vic_b_infilt, vic_Dsmax, vic_Ds, vic_Ws, vic_c
    USE MOD_Vars_1DFluxes,       only: fevpg
 #ifdef DataAssimilation
-   USE MOD_DA_GRACE, only: fslp_k
+   USE MOD_DA_TWS, only: fslp_k
 #endif
 #ifdef CROP
    USE MOD_Vars_Global, only : irrig_method_paddy, pondmxc
@@ -659,7 +659,7 @@ ENDIF
 ! Aerosol Fluxes (Jan. 07, 2023)
 ! END SNICAR model variables
 
-!  irrigation variable 
+!  irrigation variable
    real(r8), intent(in) :: &
         qflx_irrig_drip  , &! irrigation flux from drip irrigation [mm/s]
         qflx_irrig_flood , &! irrigation flux from flood irrigation [mm/s]
@@ -848,7 +848,7 @@ IF((patchtype<=1) .or. is_dry_lake)THEN   ! soil ground only
          ENDIF
 
 #ifdef DataAssimilation
-         IF (DEF_DA_GRACE) THEN
+         IF (DEF_DA_TWS_GRACE) THEN
             rsur = max(min(rsur * fslp_k(ipatch), gwat), 0.)
             rsubst = rsubst * fslp_k(ipatch)
          ENDIF
@@ -1073,7 +1073,7 @@ ENDIF
          ENDIF
          ! total runoff (mm/s)
          rnof = rsubst + rsur
-      ELSE  
+      ELSE
          IF (.not. is_dry_lake) THEN
             IF (wdsrf > pondmx) THEN
                rsur = rsur + (wdsrf - pondmx) / deltim

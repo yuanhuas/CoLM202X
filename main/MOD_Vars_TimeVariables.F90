@@ -396,11 +396,17 @@ MODULE MOD_Vars_TimeVariables
 #ifdef CatchLateralFlow
    USE MOD_Catch_Vars_TimeVariables
 #endif
+#ifdef GridRiverLakeFlow
+   USE MOD_Grid_RiverLakeTimeVars
+#endif
 #ifdef URBAN_MODEL
    USE MOD_Urban_Vars_TimeVariables
 #endif
 #ifdef EXTERNAL_LAKE
    USE MOD_Lake_TimeVars
+#endif
+#ifdef DataAssimilation
+   USE MOD_DA_Vars_TimeVariables
 #endif
 
    IMPLICIT NONE
@@ -460,6 +466,23 @@ MODULE MOD_Vars_TimeVariables
    real(r8), allocatable :: laisha        (:) ! leaf area index for shaded leaf
    real(r8), allocatable :: tsai          (:) ! stem area index
    real(r8), allocatable :: sai           (:) ! stem area index
+#if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
+   real(r8), allocatable :: lai_enftemp   (:) ! lai for needleleaf evergreen temperate tree (m2 m-2)
+   real(r8), allocatable :: lai_enfboreal (:) ! lai for needleleaf evergreen boreal tree (m2 m-2)
+   real(r8), allocatable :: lai_dnfboreal (:) ! lai for needleleaf deciduous boreal tree (m2 m-2)
+   real(r8), allocatable :: lai_ebftrop   (:) ! lai for broadleaf evergreen tropical tree (m2 m-2)
+   real(r8), allocatable :: lai_ebftemp   (:) ! lai for broadleaf evergreen temperate tree (m2 m-2)
+   real(r8), allocatable :: lai_dbftrop   (:) ! lai for broadleaf deciduous tropical tree (m2 m-2)
+   real(r8), allocatable :: lai_dbftemp   (:) ! lai for broadleaf deciduous temperate tree (m2 m-2)
+   real(r8), allocatable :: lai_dbfboreal (:) ! lai for broadleaf deciduous boreal tree (m2 m-2)
+   real(r8), allocatable :: lai_ebstemp   (:) ! lai for broadleaf evergreen temperate shrub (m2 m-2)
+   real(r8), allocatable :: lai_dbstemp   (:) ! lai for broadleaf deciduous temperate shrub (m2 m-2)
+   real(r8), allocatable :: lai_dbsboreal (:) ! lai for broadleaf deciduous boreal shrub (m2 m-2)
+   real(r8), allocatable :: lai_c3arcgrass(:) ! lai for c3 arctic grass (m2 m-2)
+   real(r8), allocatable :: lai_c3grass   (:) ! lai for c3 grass (m2 m-2)
+   real(r8), allocatable :: lai_c4grass   (:) ! lai for c4 grass (m2 m-2)
+#endif
+
    real(r8), allocatable :: coszen        (:) ! cosine of solar zenith angle
    real(r8), allocatable :: alb       (:,:,:) ! averaged albedo [-]
    real(r8), allocatable :: ssun      (:,:,:) ! sunlit canopy absorption for solar radiation (0-1)
@@ -586,7 +609,7 @@ CONTAINS
             allocate (hk                (1:nl_soil,numpatch)); hk          (:,:) = spval
             allocate (h2osoi            (1:nl_soil,numpatch)); h2osoi      (:,:) = spval
             allocate (rootr             (1:nl_soil,numpatch)); rootr       (:,:) = spval
-            allocate (rootflux          (1:nl_soil,numpatch)); rootflux    (:,:) = spval  
+            allocate (rootflux          (1:nl_soil,numpatch)); rootflux    (:,:) = spval
 !Plant Hydraulic variables
             allocate (vegwp             (1:nvegwcs,numpatch)); vegwp       (:,:) = spval
             allocate (gs0sun                      (numpatch)); gs0sun        (:) = spval
@@ -630,6 +653,23 @@ CONTAINS
             allocate (laisha                      (numpatch)); laisha        (:) = spval
             allocate (tsai                        (numpatch)); tsai          (:) = spval
             allocate (sai                         (numpatch)); sai           (:) = spval
+
+#if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
+            allocate (lai_enftemp                 (numpatch)); lai_enftemp   (:) = spval
+            allocate (lai_enfboreal               (numpatch)); lai_enfboreal (:) = spval
+            allocate (lai_dnfboreal               (numpatch)); lai_dnfboreal (:) = spval
+            allocate (lai_ebftrop                 (numpatch)); lai_ebftrop   (:) = spval
+            allocate (lai_ebftemp                 (numpatch)); lai_ebftemp   (:) = spval
+            allocate (lai_dbftrop                 (numpatch)); lai_dbftrop   (:) = spval
+            allocate (lai_dbftemp                 (numpatch)); lai_dbftemp   (:) = spval
+            allocate (lai_dbfboreal               (numpatch)); lai_dbfboreal (:) = spval
+            allocate (lai_ebstemp                 (numpatch)); lai_ebstemp   (:) = spval
+            allocate (lai_dbstemp                 (numpatch)); lai_dbstemp   (:) = spval
+            allocate (lai_dbsboreal               (numpatch)); lai_dbsboreal (:) = spval
+            allocate (lai_c3arcgrass              (numpatch)); lai_c3arcgrass(:) = spval
+            allocate (lai_c3grass                 (numpatch)); lai_c3grass   (:) = spval
+            allocate (lai_c4grass                 (numpatch)); lai_c4grass   (:) = spval
+#endif
             allocate (coszen                      (numpatch)); coszen        (:) = spval
             allocate (alb                     (2,2,numpatch)); alb       (:,:,:) = spval
             allocate (ssun                    (2,2,numpatch)); ssun      (:,:,:) = spval
@@ -709,7 +749,7 @@ CONTAINS
             allocate ( irrig_method_rice1         (numpatch)); irrig_method_rice1     (:) = spval_i4
             allocate ( irrig_method_rice2         (numpatch)); irrig_method_rice2     (:) = spval_i4
             allocate ( irrig_method_sugarcane     (numpatch)); irrig_method_sugarcane (:) = spval_i4
-            
+
             allocate ( irrig_gw_alloc             (numpatch)); irrig_gw_alloc         (:) = spval
             allocate ( irrig_sw_alloc             (numpatch)); irrig_sw_alloc         (:) = spval
             allocate ( zwt_stand                  (numpatch)); zwt_stand              (:) = spval
@@ -728,12 +768,20 @@ CONTAINS
       CALL allocate_CatchTimeVariables
 #endif
 
+#ifdef GridRiverLakeFlow
+      CALL allocate_GridRiverLakeTimeVars
+#endif
+
 #ifdef URBAN_MODEL
       CALL allocate_UrbanTimeVariables
 #endif
 
 #ifdef EXTERNAL_LAKE
       CALL allocate_LakeTimeVars
+#endif
+
+#ifdef DataAssimilation
+      CALL allocate_DATimeVariables
 #endif
 
    END SUBROUTINE allocate_TimeVariables
@@ -806,6 +854,22 @@ CONTAINS
             deallocate (laisha                 )
             deallocate (tsai                   )
             deallocate (sai                    )
+#if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
+            deallocate (lai_enftemp            )
+            deallocate (lai_enfboreal          )
+            deallocate (lai_dnfboreal          )
+            deallocate (lai_ebftrop            )
+            deallocate (lai_ebftemp            )
+            deallocate (lai_dbftrop            )
+            deallocate (lai_dbftemp            )
+            deallocate (lai_dbfboreal          )
+            deallocate (lai_ebstemp            )
+            deallocate (lai_dbstemp            )
+            deallocate (lai_dbsboreal          )
+            deallocate (lai_c3arcgrass         )
+            deallocate (lai_c3grass            )
+            deallocate (lai_c4grass            )
+#endif
             deallocate (coszen                 )
             deallocate (alb                    )
             deallocate (ssun                   )
@@ -906,12 +970,20 @@ CONTAINS
       CALL deallocate_CatchTimeVariables
 #endif
 
+#ifdef GridRiverLakeFlow
+      CALL deallocate_GridRiverLakeTimeVars
+#endif
+
 #if (defined URBAN_MODEL)
       CALL deallocate_UrbanTimeVariables
 #endif
 
 #ifdef EXTERNAL_LAKE
       CALL deallocate_LakeTimeVars
+#endif
+
+#ifdef DataAssimilation
+      CALL deallocate_DATimeVariables
 #endif
 
    END SUBROUTINE deallocate_TimeVariables
@@ -1141,6 +1213,11 @@ ENDIF
       CALL WRITE_CatchTimeVariables (file_restart)
 #endif
 
+#ifdef GridRiverLakeFlow
+      file_restart = trim(dir_restart)// '/'//trim(cdate)//'/' // trim(site) //'_restart_gridriver_'//trim(cdate)//'_lc'//trim(cyear)//'.nc'
+      CALL WRITE_GridRiverLakeTimeVars (file_restart)
+#endif
+
 #if (defined URBAN_MODEL)
       file_restart = trim(dir_restart)// '/'//trim(cdate)//'/' // trim(site) //'_restart_urban_'//trim(cdate)//'_lc'//trim(cyear)//'.nc'
       CALL WRITE_UrbanTimeVariables (file_restart)
@@ -1148,6 +1225,10 @@ ENDIF
 
 #ifdef EXTERNAL_LAKE
       CALL WRITE_LakeTimeVars (idate, lc_year, site, dir_restart)
+#endif
+
+#ifdef DataAssimilation
+      CALL WRITE_DATimeVariables (idate, lc_year, site, dir_restart)
 #endif
 
    END SUBROUTINE WRITE_TimeVariables
@@ -1321,6 +1402,11 @@ ENDIF
       CALL READ_CatchTimeVariables (file_restart)
 #endif
 
+#ifdef GridRiverLakeFlow
+      file_restart = trim(dir_restart)// '/'//trim(cdate)//'/' // trim(site) //'_restart_gridriver_'//trim(cdate)//'_lc'//trim(cyear)//'.nc'
+      CALL READ_GridRiverLakeTimeVars (file_restart)
+#endif
+
 #if (defined URBAN_MODEL)
       file_restart = trim(dir_restart)// '/'//trim(cdate)//'/' // trim(site) //'_restart_urban_'//trim(cdate)//'_lc'//trim(cyear)//'.nc'
       CALL READ_UrbanTimeVariables (file_restart)
@@ -1328,6 +1414,10 @@ ENDIF
 
 #ifdef EXTERNAL_LAKE
       CALL READ_LakeTimeVars(idate, lc_year, site, dir_restart)
+#endif
+
+#ifdef DataAssimilation
+      CALL READ_DATimeVariables (idate, lc_year, site, dir_restart)
 #endif
 
 #ifdef RangeCheck
@@ -1468,6 +1558,10 @@ ENDIF
 
 #ifdef EXTERNAL_LAKE
       CALL CHECK_LakeTimeVars
+#endif
+
+#ifdef DataAssimilation
+      IF (DEF_DA_ENS_NUM > 1) CALL check_DATimeVariables
 #endif
 
 #ifdef USEMPI
