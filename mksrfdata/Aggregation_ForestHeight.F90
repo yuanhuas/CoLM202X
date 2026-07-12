@@ -242,7 +242,7 @@ SUBROUTINE Aggregation_ForestHeight ( &
             CALL read_5x5_data (dir, fname, gland, 'HTOP', htop)
          ELSE
             dir   = trim(DEF_dir_rawdata) // trim(DEF_rawdata%htop%dir)
-            fname = trim(DEF_rawdata%htop%fname) //'.'// trim(cyear)
+            fname = trim(DEF_rawdata%htop%fname)
             CALL read_5x5_data (dir, fname, gland, trim(DEF_rawdata%htop%vname), htop)
          ENDIF
 
