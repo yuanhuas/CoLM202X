@@ -644,7 +644,7 @@ CONTAINS
 
    ! Local variables
    integer :: u, ipth, urb_s, urb_e, numpth
-   integer :: numset, totalnumset, iset, istt, iend, iwork, mesg(2), isrc, ndata, compress
+   integer :: numset, totalnumset, iset, iwork, mesg(2), isrc, ndata, compress
    logical,  allocatable :: mask(:)
    integer , allocatable :: locpth(:)
    real(r8), allocatable :: frac(:)
@@ -672,13 +672,7 @@ CONTAINS
             acc_vec(:) = spval
 
             DO iset = 1, numset
-#ifdef CATCHMENT
-               istt = hru_patch%substt(iset)
-               iend = hru_patch%subend(iset)
-#else
-               istt = elm_patch%substt(iset)
-               iend = elm_patch%subend(iset)
-#endif
+
                numpth = count(landurban%eindex==landelm%eindex(iset))
                IF (allocated(locpth)) deallocate(locpth)
                allocate(locpth(numpth))
