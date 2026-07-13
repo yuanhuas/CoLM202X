@@ -4873,7 +4873,7 @@ ENDIF
 #if (defined UNSTRUCTURED || defined CATCHMENT)
       CASE ('Vector')
          !TODO: currently, it is not applicable to urban variables
-         CALL aggregate_to_vector_and_write_2d ( &
+         CALL aggregate_to_vector_and_write_urb_2d ( &
             acc_vec, file_hist, varname, itime_in_file, filter, longname, units)
 #endif
 #ifdef SinglePoint
