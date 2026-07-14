@@ -917,8 +917,7 @@ SUBROUTINE CoLMMAIN ( &
 !  irrigation variables
                  qflx_irrig_drip=qflx_irrig_drip      ,qflx_irrig_flood=qflx_irrig_flood    ,&
                  qflx_irrig_paddy=qflx_irrig_paddy                                           )
-
-            rsub = rnof - rsur
+                 rsub = rnof - rsur
          ELSE
 
             CALL WATER_VSF (ipatch ,patchtype,is_dry_lake,   lb          ,nl_soil           ,&
