@@ -14,6 +14,10 @@
   !   2: MODIS IGBP 500m
   !   3: ESA-CCI 500m
   !   4: GLC30 30m
+  !
+  ! NOTE: if #define LULC_USGS, opt(1) is automatically chosen.
+  ! opt(2-3) are for LULC_IGBP_PC, LULC_IGBP_PFT, LULC_IGBP subgrid schemes.
+
   DEF_rawdata_nml%landcover%idx = 4
 
   DEF_rawdata_nml%landcover%opt(1)%dir   = '/landcover/usgs/'
@@ -41,6 +45,9 @@
   !   1: c2022 500m
   !   2: c2025 500m
   !   3: c2025 30m
+  !
+  ! NOTE: only applied for LULC_IGBP_PC, LULC_IGBP_PFT subgrid schemes.
+
   DEF_rawdata_nml%pft%idx = 3
 
   DEF_rawdata_nml%pft%opt(1)%dir   = '/vegetation_pft/c2022/'
@@ -60,6 +67,9 @@
   !   1: c2022 500m
   !   2: c2025 500m
   !   3: c2025_snowfree 500m
+  !
+  ! NOTE: only applied for using monthly LAI and SAI (DEF_LAI_MONTHLY=.true.)
+
   DEF_rawdata_nml%lai_sai%idx = 3
 
   DEF_rawdata_nml%lai_sai%opt(1)%dir   = '/vegetation_lai_sai/c2022/'
