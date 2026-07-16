@@ -472,8 +472,7 @@ CONTAINS
             SITE_lon_location, SITE_lat_location, SITE_htop)
 #else
 ! reading accroding to colm500m.nml
-         CALL gridhtop%define_by_name ('colm_500m')
-
+         CALL gridhtop%define_by_name (trim(DEF_rawdata%htop%gname))
          write(cyear,'(i4.4)') DEF_LC_YEAR
          dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%htop%dir)
          fname = trim(DEF_rawdata%htop%fname)

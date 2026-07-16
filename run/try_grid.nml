@@ -3,11 +3,11 @@
 ! Author: Jiayi Xiang
 ! case for test running
 
-   DEF_CASE_NAME = 'tryGrid'
-   DEF_domain%edges = 53.
-   DEF_domain%edgen = 54.
-   DEF_domain%edgew = -107.
-   DEF_domain%edgee = -106.
+   DEF_CASE_NAME = 'Grid'
+   DEF_domain%edges = 22.
+   DEF_domain%edgen = 23.
+   DEF_domain%edgew = 112.
+   DEF_domain%edgee = 113.
 
    DEF_nx_blocks = 1
    DEF_ny_blocks = 1
@@ -33,7 +33,7 @@
    DEF_dir_rawdata  = '/tera12/yuanhua/data/CoLMrawdata/'
    DEF_dir_runtime  = '/tera12/yuanhua/data/CoLMruntime/'
    DEF_dir_output   = '/tera10/yuanhua/xiangjy/apply/new/region/test/'
-   DEF_rawdata_namelist = '/tera10/yuanhua/xiangjy/apply/new/colm30_3HbAR/run/rawdata/colm500m.nml'
+   DEF_rawdata_namelist = '/tera10/yuanhua/xiangjy/apply/new/region/test/colm30_AR/run/rawdata/colm500m.nml'
 
    ! ----- land units and land sets -----
    ! for GRIDBASED

@@ -2240,6 +2240,8 @@ ENDIF
       DEF_rawdata%landcover     = DEF_rawdata_nml%landcover%opt     ( DEF_rawdata_nml%landcover%idx     )
       DEF_rawdata%pft           = DEF_rawdata_nml%pft%opt           ( DEF_rawdata_nml%pft%idx           )
       DEF_rawdata%htop          = DEF_rawdata_nml%htop%opt          ( DEF_rawdata_nml%htop%idx          )
+      DEF_rawdata%cdepth        = DEF_rawdata_nml%cdepth%opt        ( DEF_rawdata_nml%cdepth%idx          )
+      DEF_rawdata%cratio        = DEF_rawdata_nml%cratio%opt        ( DEF_rawdata_nml%cratio%idx          )
       DEF_rawdata%lai_sai       = DEF_rawdata_nml%lai_sai%opt       ( DEF_rawdata_nml%lai_sai%idx       )
       DEF_rawdata%soil_property = DEF_rawdata_nml%soil_property%opt ( DEF_rawdata_nml%soil_property%idx )
       DEF_rawdata%soil_th       = DEF_rawdata_nml%soil_th%opt       ( DEF_rawdata_nml%soil_th%idx       )

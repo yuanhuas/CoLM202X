@@ -14,7 +14,7 @@
   !   2: MODIS IGBP 500m
   !   3: ESA-CCI 500m
   !   4: GLC30 30m
-  DEF_rawdata_nml%landcover%idx = 2
+  DEF_rawdata_nml%landcover%idx = 4
 
   DEF_rawdata_nml%landcover%opt(1)%dir   = '/landcover/usgs/'
   DEF_rawdata_nml%landcover%opt(1)%gname = 'colm_1km'
@@ -81,12 +81,12 @@
   !   3: ETH 30m
   !   4: Tolan 500m
   !   5: Tolan 30m
-  DEF_rawdata_nml%htop%idx = 1
+  DEF_rawdata_nml%htop%idx = 2
 
   DEF_rawdata_nml%htop%opt(1)%dir   = '/vegetation_morphology/tree_height_Simard/'
   DEF_rawdata_nml%htop%opt(1)%gname = 'colm_1km'
-  DEF_rawdata_nml%htop%opt(1)%fname = 'Forest_Height'
-  DEF_rawdata_nml%htop%opt(1)%vname = 'forest_height'
+  DEF_rawdata_nml%htop%opt(1)%fname = 'Htop1km.Simard'
+  DEF_rawdata_nml%htop%opt(1)%vname = 'HTOP'
 
   DEF_rawdata_nml%htop%opt(2)%dir   = '/vegetation_morphology/tree_height_ETH/'
   DEF_rawdata_nml%htop%opt(2)%gname = 'colm_500m'

@@ -1,6 +1,6 @@
 &nl_colm
 
- DEF_CASE_NAME = 'Oas_case3'
+ DEF_CASE_NAME = 'Oas_case'
 
  ! surface data from SITE, only offering lat, lon, IGBP/USGS type.
  SITE_fsitedata = '/home/shijh21/share/snowsite/snowsite_srf/oas_Srf.nc'
@@ -39,7 +39,7 @@
  DEF_dir_rawdata = '/tera12/yuanhua/data/CoLMrawdata/'
  DEF_dir_runtime = '/tera12/yuanhua/data/CoLMruntime/'
  DEF_dir_output   = '/tera10/yuanhua/xiangjy/apply/new/region/test/'
- DEF_rawdata_namelist = '/tera10/yuanhua/xiangjy/apply/new/colm30_3HbAR/run/rawdata/colm500m.nml'
+ DEF_rawdata_namelist = '/tera10/yuanhua/xiangjy/apply/new/region/test/colm30_AR/run/rawdata/colm500m.nml'
 
  DEF_LC_YEAR = 2005
  DEF_LAI_CHANGE_YEARLY = .false.
