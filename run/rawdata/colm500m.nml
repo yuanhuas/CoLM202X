@@ -107,7 +107,22 @@
   DEF_rawdata_nml%htop%opt(5)%gname = 'colm_30m'
   DEF_rawdata_nml%htop%opt(5)%fname = 'Htop30m.Tolan'
   DEF_rawdata_nml%htop%opt(5)%vname = 'HTOP'
+  
+  ! ----- tree crown depth and aspect ratio data -----
+  ! Options:
+  !   1: Tolan 500m
+  DEF_rawdata_nml%cdepth%idx = 1
+  DEF_rawdata_nml%cratio%idx = 1
 
+  DEF_rawdata_nml%cdepth%opt(1)%dir          = '/vegetation_morphology/tree_crown/'
+  DEF_rawdata_nml%cdepth%opt(1)%gname        = 'colm_500m'
+  DEF_rawdata_nml%cdepth%opt(1)%fname        = 'CrownStructure500m_CH90'
+  DEF_rawdata_nml%cdepth%opt(1)%vname        = 'CROWN_DEPTH'
+
+  DEF_rawdata_nml%cratio%opt(1)%dir          = '/vegetation_morphology/tree_crown/'
+  DEF_rawdata_nml%cratio%opt(1)%gname        = 'colm_500m'
+  DEF_rawdata_nml%cratio%opt(1)%fname        = 'CrownStructure500m_CH90'
+  DEF_rawdata_nml%cratio%opt(1)%vname        = 'ASPECT_RATIO'
   !--------------------------------------------------------------------------!
   ! 3. Soil data
   !--------------------------------------------------------------------------!

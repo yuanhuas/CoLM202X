@@ -15,6 +15,9 @@ SUBROUTINE Aggregation_ForestHeight ( &
 ! !REVISIONS:
 !  Hua Yuan,      ?/2020 : for land cover land use classifications
 !  Shupeng Zhang, 01/2022: porting codes to MPI parallel version
+!  Jiayi Xiang,   12/2025: add reading of canopy bottom height and
+!                 crown aspect ratio from crown structure data 
+!                 for tree PFTs under LULC_IGBP_PC.
 !-----------------------------------------------------------------------
 
    USE MOD_Precision
@@ -61,11 +64,15 @@ SUBROUTINE Aggregation_ForestHeight ( &
    ! for IGBP data
    character(len=256) :: dir, fname
    type (block_data_real8_2d) :: htop
-   type (block_data_real8_3d) :: pftPCT
+   type (block_data_real8_3d) :: pftPCT,cdepth,hbot,cratio
    real(r8), allocatable :: htop_patches(:), htop_pfts(:), htop_pcs(:,:)
+   real(r8), allocatable :: hbot_pfts(:) 
+   real(r8), allocatable :: cratio_pfts(:) 
    real(r8), allocatable :: htop_one(:), area_one(:), pct_one(:,:)
+   real(r8), allocatable :: cdepth_one(:,:), hbot_one(:,:), cratio_one(:,:)
+   ! logical, allocatable :: pft_has_area(:)
    integer  :: ip, ipft
-   real(r8) :: sumarea
+   real(r8) :: sumarea, patch_weight_sum, patch_bot_sum
 
 #ifdef SrfdataDiag
    integer :: typpatch(N_land_classification+1), ityp
@@ -79,6 +86,7 @@ SUBROUTINE Aggregation_ForestHeight ( &
 
       write(cyear,'(i4.4)') lc_year
       landdir = trim(dir_model_landdata) // '/htop/' //trim(cyear)
+      ! print*,'landdir: ', trim(landdir)
 
 #ifdef USEMPI
       CALL mpi_barrier (p_comm_glb, p_err)
@@ -228,9 +236,13 @@ SUBROUTINE Aggregation_ForestHeight ( &
       ENDIF
 #endif
 
+! ================PFT/PC htop
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
       IF (p_is_io) THEN
          CALL allocate_block_data (grid_pft, pftPCT, N_PFT_modis, lb1 = 0)
+         CALL allocate_block_data (grid_pft, cdepth, N_PFT_modis, lb1 = 0)
+         CALL allocate_block_data (grid_pft, hbot  , N_PFT_modis, lb1 = 0)
+         CALL allocate_block_data (grid_pft, cratio, N_PFT_modis, lb1 = 0)
          CALL allocate_block_data (gland   , htop)
       ENDIF
 
@@ -250,17 +262,30 @@ SUBROUTINE Aggregation_ForestHeight ( &
          fname = trim(DEF_rawdata%pft%fname) //'.'// trim(cyear)
          CALL read_5x5_data_pft (dir, fname, grid_pft, 'PCT_PFT', pftPCT)
 
+         ! read crown depth from crown structure dataset, hbot = htop - cdepth
+         dir= trim(DEF_dir_rawdata) // trim(DEF_rawdata%cdepth%dir)
+         fname = trim(DEF_rawdata%cdepth%fname)
+         CALL read_5x5_data_pft (dir, fname, grid_pft, trim(DEF_rawdata%cdepth%vname), cdepth, lb=1, ub=8) ! consider the lower and upper bound of dataset for 8 tree PFTs
+
+         ! read crown aspect ratio from crown structure dataset
+         dir= trim(DEF_dir_rawdata) // trim(DEF_rawdata%cratio%dir)
+         fname = trim(DEF_rawdata%cratio%fname)
+         CALL read_5x5_data_pft (dir, fname, grid_pft, trim(DEF_rawdata%cratio%vname), cratio, lb=1, ub=8)
+
 #ifdef USEMPI
          CALL aggregation_data_daemon_multigrid (grid_in1 = grid_pft, data_r8_3d_in1 = pftPCT, n1_r8_3d_in1 = 16, &
-            grid_in2 = gland, data_r8_2d_in2 = htop )
+            grid_in2 = gland, data_r8_2d_in2 = htop, grid_in3 = grid_pft, data_r8_3d_in3 = cdepth, n1_r8_3d_in3 = 16, &
+            grid_in4 = grid_pft, data_r8_3d_in4 = cratio, n1_r8_3d_in4 = 16 )
 #endif
       ENDIF
 
       IF (p_is_worker) THEN
 
-         allocate (htop_patches (numpatch))
-         allocate (htop_pfts    (numpft  ))
-
+         allocate (htop_patches   (numpatch))
+         allocate (htop_pfts      (numpft  ))
+         allocate (hbot_pfts      (numpft  ))
+         allocate (cratio_pfts    (numpft  ))
+         
          DO ipatch = 1, numpatch
 
             IF (ipatch == wmo_patch(landpatch%ielm(ipatch))) THEN
@@ -268,23 +293,25 @@ SUBROUTINE Aggregation_ForestHeight ( &
 
                ! set patch htop
                htop_patches(ipatch) = htop_patches(wmo_src)
-
                ! set pft htop at the same time
                ip = patch_pft_s(ipatch)
                htop_pfts(ip) = htop_patches(ipatch)
 
                CYCLE
             ENDIF
-
             CALL aggregation_request_data_multigrid(landpatch, ipatch, &
-               grid_in1 = grid_pft, area = area_one, data_r8_3d_in1 = pftPCT, data_r8_3d_out1 = pct_one, &
-               n1_r8_3d_in1 = 16, lb1_r8_3d_in1 = 0, &
-               grid_in2 = gland, data_r8_2d_in2 = htop, data_r8_2d_out2 = htop_one)
-
+               grid_in1 = grid_pft, area = area_one, & 
+               data_r8_3d_in1 = pftPCT, data_r8_3d_out1 = pct_one, n1_r8_3d_in1 = 16, lb1_r8_3d_in1 = 0, &
+               grid_in2 = gland, data_r8_2d_in2 = htop, data_r8_2d_out2 = htop_one, &
+               grid_in3 = grid_pft, data_r8_3d_in3 = cdepth, data_r8_3d_out3 = cdepth_one, n1_r8_3d_in3 = 16, lb1_r8_3d_in3 = 0, &
+               grid_in4 = grid_pft, data_r8_3d_in4 = cratio, data_r8_3d_out4 = cratio_one, n1_r8_3d_in4 = 16, lb1_r8_3d_in4 = 0)
             where (htop_one < 0.) htop_one = 0.
 
             htop_patches(ipatch) = sum(htop_one * area_one) / sum(area_one)
             pct_one = max(pct_one , 0.0)
+            hbot_one = spread(htop_one, dim=1, ncopies=16) - cdepth_one
+            where (cdepth_one <= 0.) hbot_one = 0.
+            where (cratio_one <= 0.) cratio_one = 0.
 
 #ifndef CROP
             IF (patchtypes(landpatch%settyp(ipatch)) == 0) THEN
@@ -295,15 +322,21 @@ SUBROUTINE Aggregation_ForestHeight ( &
                   p = landpft%settyp(ip)
                   sumarea = sum(pct_one(p,:) * area_one)
                   IF (sumarea > 0) THEN
-                     htop_pfts(ip) = sum(htop_one * pct_one(p,:) * area_one) / sumarea
+                     htop_pfts(ip) = sum(htop_one * pct_one(p,:) * area_one) / sumarea 
+                     hbot_pfts(ip) = sum(hbot_one(p+1,:) * pct_one(p,:) * area_one) / sumarea
+                     cratio_pfts(ip) = sum(cratio_one(p,:) * pct_one(p,:) * area_one) / sumarea
                   ELSE
                      htop_pfts(ip) = htop_patches(ipatch)
+                     hbot_pfts(ip) = 0.
+                     cratio_pfts(ip) = 1.
                   ENDIF
                ENDDO
 #ifdef CROP
             ELSEIF (landpatch%settyp(ipatch) == CROPLAND) THEN
                ip = patch_pft_s(ipatch)
                htop_pfts(ip) = htop_patches(ipatch)
+               hbot_pfts(ip) = 0.
+               cratio_pfts(ip) = 1.
 #endif
             ENDIF
          ENDDO
@@ -320,6 +353,8 @@ SUBROUTINE Aggregation_ForestHeight ( &
 #ifdef RangeCheck
       CALL check_vector_data ('HTOP_patches ', htop_patches)
       CALL check_vector_data ('HTOP_pfts    ', htop_pfts   )
+      CALL check_vector_data ('HBOT_pfts    ', hbot_pfts   )
+      CALL check_vector_data ('CRATIO_pfts  ', cratio_pfts )
 #endif
 
       lndname = trim(landdir)//'/htop_patches.nc'
@@ -339,6 +374,15 @@ SUBROUTINE Aggregation_ForestHeight ( &
       CALL ncio_define_dimension_vector (lndname, landpft, 'pft')
       CALL ncio_write_vector (lndname, 'htop_pfts', 'pft', landpft, htop_pfts, DEF_Srfdata_CompressLevel)
 
+      lndname = trim(landdir)//'/hbot_pfts.nc'
+      CALL ncio_create_file_vector (lndname, landpft)
+      CALL ncio_define_dimension_vector (lndname, landpft, 'pft')
+      CALL ncio_write_vector (lndname, 'hbot_pfts', 'pft', landpft, hbot_pfts, DEF_Srfdata_CompressLevel)
+
+      lndname = trim(landdir)//'/cratio_pfts.nc'
+      CALL ncio_create_file_vector (lndname, landpft)
+      CALL ncio_define_dimension_vector (lndname, landpft, 'pft')
+      CALL ncio_write_vector (lndname, 'cratio_pfts', 'pft', landpft, cratio_pfts, DEF_Srfdata_CompressLevel)
 #ifdef SrfdataDiag
 #ifndef CROP
       typpft  = (/(ityp, ityp = 0, N_PFT-1)/)
@@ -348,6 +392,12 @@ SUBROUTINE Aggregation_ForestHeight ( &
       lndname = trim(dir_model_landdata) // '/diag/htop_pft_' // trim(cyear) // '.nc'
       CALL srfdata_map_and_write (htop_pfts, landpft%settyp, typpft, m_pft2diag, &
          -1.0e36_r8, lndname, 'htop_pft', compress = 6, write_mode = 'one', defval=0._r8, create_mode=.true.)
+      lndname = trim(dir_model_landdata) // '/diag/hbot_pft_' // trim(cyear) // '.nc'
+      CALL srfdata_map_and_write (hbot_pfts, landpft%settyp, typpft, m_pft2diag, &
+         -1.0e36_r8, lndname, 'hbot_pft', compress = 6, write_mode = 'one', defval=0._r8, create_mode=.true.)
+      lndname = trim(dir_model_landdata) // '/diag/cratio_pft_' // trim(cyear) // '.nc'
+      CALL srfdata_map_and_write (cratio_pfts, landpft%settyp, typpft, m_pft2diag, &
+         -1.0e36_r8, lndname, 'cratio_pft', compress = 6, write_mode = 'one', defval=0._r8, create_mode=.true.)
 #endif
 
       IF (p_is_worker) THEN
@@ -356,6 +406,11 @@ SUBROUTINE Aggregation_ForestHeight ( &
          IF (allocated(htop_one    )) deallocate (htop_one    )
          IF (allocated(pct_one     )) deallocate (pct_one     )
          IF (allocated(area_one    )) deallocate (area_one    )
+         IF (allocated(hbot_pfts   )) deallocate (hbot_pfts   )
+         IF (allocated(cdepth_one  )) deallocate (cdepth_one  )
+         IF (allocated(hbot_one    )) deallocate (hbot_one    )
+         IF (allocated(cratio_pfts )) deallocate (cratio_pfts )
+         IF (allocated(cratio_one  )) deallocate (cratio_one  )
       ENDIF
 #endif
 
