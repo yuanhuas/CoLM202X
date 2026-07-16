@@ -97,7 +97,7 @@ CONTAINS
          dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%landcover%dir)
 
          ! add parameter input for time year
-         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+         IF (DEF_rawdata%landcover%fname == "landtype-igbp-modis") THEN
             fname = trim(dir)//&
                trim(DEF_rawdata%landcover%fname)//'-'//trim(cyear)//'.nc'
             CALL ncio_read_block (fname, 'landtype', grid_patch, patchdata)
