@@ -525,9 +525,9 @@ CONTAINS
       c3 = 0.
 
       IF ( present(c3c4) ) THEN
-         IF ( c3c4.eq.1 ) c3 = 1.
+         IF (c3c4 .eq. 1) c3 = 1.
       ELSE
-         IF ( effcon .gt. 0.07 ) c3 = 1.
+         IF (effcon .gt. 0.07) c3 = 1.
       ENDIF
 
       c4 = 1. - c3
