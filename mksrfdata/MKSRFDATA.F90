@@ -395,7 +395,7 @@ PROGRAM MKSRFDATA
 #ifndef LULC_USGS
          write(cyear,'(i4.4)') lc_year
 
-         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+         IF (DEF_rawdata%landcover%fname == 'landtype-igbp-modis') THEN
             dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%landcover%dir)
             lndname = trim(dir)//&
                trim(DEF_rawdata%landcover%fname)//'-'//trim(cyear)//'.nc'
