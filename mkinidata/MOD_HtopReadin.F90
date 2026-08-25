@@ -25,6 +25,7 @@ CONTAINS
    USE MOD_Vars_Global
    USE MOD_Const_LC
    USE MOD_Const_PFT
+   USE MOD_Namelist, only: DEF_RS_CROWN_STRUCTURE
    USE MOD_Vars_TimeInvariants
    USE MOD_LandPatch
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
@@ -105,20 +106,28 @@ CONTAINS
 #ifdef SinglePoint
       IF (numpft > 0) THEN
          allocate(htoppft(numpft))
-         allocate(hbotpft(numpft))
-         allocate(cratio_pft(numpft))
          fsrfdata = trim(DEF_dir_landdata) // '/srfdata.nc'
          CAll ncio_read_serial (fsrfdata, 'canopy_height_pfts', htoppft)
-         CAll ncio_read_serial (fsrfdata, 'canopy_bottom_height_pfts', hbotpft)
-         CAll ncio_read_serial (fsrfdata, 'crown_aspect_ratio_pfts', cratio_pft)
+         IF (DEF_RS_CROWN_STRUCTURE) THEN
+            allocate(hbotpft(numpft))
+            CAll ncio_read_serial (fsrfdata, 'canopy_bottom_height_pfts', hbotpft)
+#ifdef LULC_IGBP_PC
+            allocate(cratio_pft(numpft))
+            CAll ncio_read_serial (fsrfdata, 'crown_aspect_ratio_pfts', cratio_pft)
+#endif
+         ENDIF
       ENDIF
 #else
       lndname = trim(landdir)//'/htop_pfts.nc'
       CALL ncio_read_vector (lndname, 'htop_pfts', landpft,   htoppft)
-      lndname = trim(landdir)//'/hbot_pfts.nc'
-      CALL ncio_read_vector (lndname, 'hbot_pfts', landpft,   hbotpft)
-      lndname = trim(landdir)//'/cratio_pfts.nc'
-      CALL ncio_read_vector (lndname, 'cratio_pfts', landpft,   cratio_pft)
+      IF (DEF_RS_CROWN_STRUCTURE) THEN
+         lndname = trim(landdir)//'/hbot_pfts.nc'
+         CALL ncio_read_vector (lndname, 'hbot_pfts', landpft, hbotpft)
+#ifdef LULC_IGBP_PC
+         lndname = trim(landdir)//'/cratio_pfts.nc'
+         CALL ncio_read_vector (lndname, 'cratio_pfts', landpft, cratio_pft)
+#endif
+      ENDIF
 #endif
 
       IF (p_is_worker) THEN
@@ -135,7 +144,9 @@ CONTAINS
 
                   htop_p(p) = htop0_p(n) ! for non-tree, use the default height
                   hbot_p(p) = hbot0_p(n)
+#ifdef LULC_IGBP_PC
                   cratio_p(p) = 1.
+#endif
 
                   ! for trees
                   ! 01/06/2020, yuan: adjust htop reading
@@ -144,27 +155,34 @@ CONTAINS
                   IF ( n>0 .and. n<9 ) THEN ! pft is tree
                      htop_p(p) = max(2., htoppft(p))
 
-                     !! Read crown bottom height from crown structure dataset.
-                     ! hbot_p(p) = max(1., hbotpft(p))
-                     !! diagnose hbot_p from the default hbot/htop ratio
+                     ! Default crown bottom height diagnosed from the standard
+                     ! PFT crown-bottom to crown-top ratio.
                      hbot_p(p) = htoppft(p)*hbot0_p(n)/htop0_p(n)
                      hbot_p(p) = max(1., hbot_p(p))
-                     
-                     !! Read crown depth to width from crown structure dataset.
-                     cratio_p(p) = max(0., cratio_pft(p))
-                     !! the default spherical crown assumption
-                     ! cratio_p(p) = 1. 
+
+                     IF (DEF_RS_CROWN_STRUCTURE) THEN
+                        ! Missing values remain missing in surface data. Only
+                        ! values attached to an active land PFT are read here.
+                        hbot_p(p) = hbotpft(p)
+#ifdef LULC_IGBP_PC
+                        cratio_p(p) = cratio_pft(p)
+#endif
+                     ENDIF
 
                   ENDIF
                ENDDO
 
                htop(npatch) = sum(htop_p(ps:pe)*pftfrac(ps:pe)) ! weighted average
                hbot(npatch) = sum(hbot_p(ps:pe)*pftfrac(ps:pe)) ! but in fact, only htop_p & hbot_p used in 3DCanopyRadiation
+#ifdef LULC_IGBP_PC
                cratio(npatch) = sum(cratio_p(ps:pe)*pftfrac(ps:pe))
+#endif
             ELSE ! if land cover type is not soil, use the default height
                htop(npatch) = htop0(m)
                hbot(npatch) = hbot0(m)
+#ifdef LULC_IGBP_PC
                cratio(npatch) = 1.
+#endif
             ENDIF
 
          ENDDO

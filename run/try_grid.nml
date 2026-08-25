@@ -34,6 +34,7 @@
    DEF_dir_runtime  = '/tera12/yuanhua/data/CoLMruntime/'
    DEF_dir_output   = '/tera10/yuanhua/xiangjy/apply/new/region/test/'
    DEF_rawdata_namelist = '/tera10/yuanhua/xiangjy/apply/new/region/test/colm30_AR/run/rawdata/colm500m.nml'
+   DEF_RS_CROWN_STRUCTURE = .true.
 
    ! ----- land units and land sets -----
    ! for GRIDBASED

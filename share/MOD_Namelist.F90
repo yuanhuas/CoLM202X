@@ -249,6 +249,8 @@ MODULE MOD_Namelist
    logical :: DEF_SOLO_PFT = .false.
    logical :: DEF_FAST_PC  = .true.
    logical :: DEF_PC_CROP_SPLIT = .true.
+   ! Use remotely sensed crown depth and crown aspect ratio data.
+   logical :: DEF_RS_CROWN_STRUCTURE = .false.
    character(len=256) :: DEF_SUBGRID_SCHEME = 'LCT'
 
    logical :: DEF_LANDONLY                  = .true.
@@ -1185,6 +1187,7 @@ CONTAINS
       DEF_USE_PC,                             &
       DEF_FAST_PC,                            &
       DEF_PC_CROP_SPLIT,                      &
+      DEF_RS_CROWN_STRUCTURE,                 &
       DEF_SOLO_PFT,                           &
       DEF_SUBGRID_SCHEME,                     &
 
@@ -1478,6 +1481,12 @@ CONTAINS
          DEF_USE_PC   = .true.
          DEF_SOLO_PFT = .false.
 #endif
+
+         IF (DEF_RS_CROWN_STRUCTURE .and. .not. (DEF_USE_PFT .or. DEF_USE_PC)) THEN
+            write(*,*) 'WARNING: DEF_RS_CROWN_STRUCTURE is only available for the PFT or PC subgrid scheme.'
+            write(*,*) '         The default crown structure parameterization will be used instead.'
+            DEF_RS_CROWN_STRUCTURE = .false.
+         ENDIF
 
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
          IF (.not.DEF_LAI_MONTHLY) THEN
@@ -1814,6 +1823,7 @@ ENDIF
       CALL mpi_bcast (DEF_Srfdata_CompressLevel              ,1   ,mpi_integer   ,p_address_master ,p_comm_glb ,p_err)
 
       CALL mpi_bcast (DEF_rawdata_namelist                   ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
+      CALL mpi_bcast (DEF_RS_CROWN_STRUCTURE                 ,1   ,mpi_logical   ,p_address_master ,p_comm_glb ,p_err)
 
       ! 09/2025, added by yuan: rawdata info
       CALL mpi_bcast (DEF_rawdata%landcover%dir              ,256 ,mpi_character ,p_address_master ,p_comm_glb ,p_err)
