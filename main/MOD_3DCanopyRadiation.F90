@@ -59,9 +59,7 @@ CONTAINS
 !  27, 1168-1192, https://doi.org/10.1175/JCLI-D-13-00155.1.
 !
 ! !REVISIONS:
-!  12/2025, Jiayi Xiang: Apply canopy structure data in ThreeDCanopy_wrap.
-!           add crown aspect ratio (cratio) input and pass it to
-!           ThreeDCanopy for radiation calculation.
+!  12/2025, Jiayi Xiang & Yuan: pass crown structure data to ThreeDCanopy.
 !-----------------------------------------------------------------------
 
    USE MOD_Precision
@@ -313,10 +311,7 @@ CONTAINS
 !  27, 1168-1192, https://doi.org/10.1175/JCLI-D-13-00155.1.
 !
 ! !REVISIONS:
-!  12/2025, Jiayi Xiang: Apply canopy structure data to the 3D canopy
-!           radiation calculation. refine the reading, passing, and
-!           calculation of crown aspect ratio (cratio), and use it in
-!           crown geometry adjustment for radiation transfer.
+!  12/2025, Jiayi Xiang & Yuan: use crown aspect ratio in 3D canopy radiation.
 !-----------------------------------------------------------------------
 
    IMPLICIT NONE

@@ -23,6 +23,7 @@ MODULE MOD_5x5DataReadin
 !       to (pft,lon,lat) in variables.
 !
 !  Created by Shupeng Zhang, May 2023
+!  Jiayi Xiang, Dec 2025: added optional PFT bounds to read_5x5_data_pft.
 !-----------------------------------------------------------------------
 
    USE MOD_NetCDFSerial, only: nccheck

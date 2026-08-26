@@ -10,9 +10,7 @@ MODULE MOD_SingleSrfdata
 !
 !  Created by Shupeng Zhang, May 2023
 !  Revisions:
-!  Jiayi Xiang,   12/2025: add reading of canopy bottom height and
-!                 crown aspect ratio from crown structure data 
-!                 for tree PFTs under LULC_IGBP_PC.
+!  Jiayi Xiang & Yuan, 12/2025: add crown structure data for tree PFTs.
 !-----------------------------------------------------------------------
 
    USE MOD_Precision, only: r8
@@ -494,8 +492,7 @@ CONTAINS
                allocate (SITE_cdepth_pfts (numpft))
                CALL gridpft%define_by_name ('colm_500m')
 
-               ! Keep missing values unchanged. PACK only selects PFTs that
-               ! actually occur at this site; it does not fill absent PFTs.
+               ! read crown depth
                dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%cdepth%dir)
                fname = trim(DEF_rawdata%cdepth%fname)
                CALL read_point_5x5_var_3d_real8 (gridpft, dir, fname, trim(DEF_rawdata%cdepth%vname), &
@@ -508,6 +505,7 @@ CONTAINS
 
 #ifdef LULC_IGBP_PC
                allocate (SITE_cratio_pfts (numpft))
+               ! read crown aspect ratio
                dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%cratio%dir)
                fname = trim(DEF_rawdata%cratio%fname)
                CALL read_point_5x5_var_3d_real8 (gridpft, dir, fname, trim(DEF_rawdata%cratio%vname), &
@@ -2965,12 +2963,18 @@ ENDIF
 
          IF (DEF_RS_CROWN_STRUCTURE) THEN
             CALL ncio_write_serial (fsrfdata, 'canopy_bottom_height_pfts', SITE_hbot_pfts, 'pft')
-            CALL ncio_put_attr     (fsrfdata, 'canopy_bottom_height_pfts', 'source', trim(datasource(u_site_htop)))
+            CALL ncio_put_attr     (fsrfdata, 'canopy_bottom_height_pfts', 'source', &
+               'Derived from canopy height and crown depth')
+            CALL ncio_put_attr     (fsrfdata, 'canopy_bottom_height_pfts', 'references', &
+               'Crown depth: https://doi.org/10.1016/j.jag.2026.105401')
             CALL ncio_put_attr     (fsrfdata, 'canopy_bottom_height_pfts', 'long_name', 'canopy bottom height')
             CALL ncio_put_attr     (fsrfdata, 'canopy_bottom_height_pfts', 'units', 'm')
 #ifdef LULC_IGBP_PC
             CALL ncio_write_serial (fsrfdata, 'crown_aspect_ratio_pfts', SITE_cratio_pfts, 'pft')
-            CALL ncio_put_attr     (fsrfdata, 'crown_aspect_ratio_pfts', 'source', trim(datasource(u_site_htop)))
+            CALL ncio_put_attr     (fsrfdata, 'crown_aspect_ratio_pfts', 'source', &
+               'Remote-sensing crown structure data')
+            CALL ncio_put_attr     (fsrfdata, 'crown_aspect_ratio_pfts', 'references', &
+               'https://doi.org/10.1016/j.jag.2026.105401')
             CALL ncio_put_attr     (fsrfdata, 'crown_aspect_ratio_pfts', 'long_name', 'crown aspect ratio')
             CALL ncio_put_attr     (fsrfdata, 'crown_aspect_ratio_pfts', 'units', '1')
 #endif

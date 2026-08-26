@@ -16,8 +16,7 @@ CONTAINS
 ! ===========================================================
 ! Read in the canopy tree top height
 ! Revisions:
-!  12/2025, Jiayi Xiang: add crown bottom height and crown aspect ratio
-!           from crown structure data for tree PFTs under LULC_IGBP_PC.
+!  12/2025, Jiayi Xiang & Yuan: add crown structure data for tree PFTs.
 ! ===========================================================
 
    USE MOD_Precision
@@ -155,14 +154,11 @@ CONTAINS
                   IF ( n>0 .and. n<9 ) THEN ! pft is tree
                      htop_p(p) = max(2., htoppft(p))
 
-                     ! Default crown bottom height diagnosed from the standard
-                     ! PFT crown-bottom to crown-top ratio.
+                     ! Diagnose default hbot from the PFT hbot/htop ratio.
                      hbot_p(p) = htoppft(p)*hbot0_p(n)/htop0_p(n)
                      hbot_p(p) = max(1., hbot_p(p))
 
                      IF (DEF_RS_CROWN_STRUCTURE) THEN
-                        ! Missing values remain missing in surface data. Only
-                        ! values attached to an active land PFT are read here.
                         hbot_p(p) = hbotpft(p)
 #ifdef LULC_IGBP_PC
                         cratio_p(p) = cratio_pft(p)

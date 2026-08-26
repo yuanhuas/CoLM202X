@@ -15,9 +15,7 @@ SUBROUTINE Aggregation_ForestHeight ( &
 ! !REVISIONS:
 !  Hua Yuan,      ?/2020 : for land cover land use classifications
 !  Shupeng Zhang, 01/2022: porting codes to MPI parallel version
-!  Jiayi Xiang,   12/2025: add reading of canopy bottom height and
-!                 crown aspect ratio from crown structure data 
-!                 for tree PFTs under LULC_IGBP_PC.
+!  Jiayi Xiang & Yuan, 12/2025: add crown structure data for tree PFTs.
 !-----------------------------------------------------------------------
 
    USE MOD_Precision
@@ -27,8 +25,10 @@ SUBROUTINE Aggregation_ForestHeight ( &
    USE MOD_Grid
    USE MOD_LandPatch
    USE MOD_Land2mWMO
+   USE MOD_Block, only: get_filename_block
    USE MOD_NetCDFVector
    USE MOD_NetCDFBlock
+   USE MOD_NetCDFSerial, only: ncio_put_attr
 #ifdef RangeCheck
    USE MOD_RangeCheck
 #endif
@@ -79,8 +79,9 @@ SUBROUTINE Aggregation_ForestHeight ( &
 #ifdef LULC_IGBP_PC
    real(r8), allocatable :: cratio_one(:,:)
 #endif
-   integer  :: ip, ipft
+   integer  :: ip, ipft, iblkgrp, iblk, jblk
    real(r8) :: sumarea
+   character(len=256) :: fileblock
 
 #ifdef SrfdataDiag
    integer :: typpatch(N_land_classification+1), ityp
@@ -274,13 +275,13 @@ SUBROUTINE Aggregation_ForestHeight ( &
          CALL read_5x5_data_pft (dir, fname, grid_pft, 'PCT_PFT', pftPCT)
 
          IF (DEF_RS_CROWN_STRUCTURE) THEN
-            ! Read crown depth for the eight tree PFTs. Missing PFT values are
-            ! retained and excluded later with an explicit validity mask.
+            ! read crown depth from crown structure dataset, hbot = htop - cdepth
             dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%cdepth%dir)
             fname = trim(DEF_rawdata%cdepth%fname)
             CALL read_5x5_data_pft (dir, fname, grid_pft, trim(DEF_rawdata%cdepth%vname), &
                cdepth, lb=1, ub=8)
 #ifdef LULC_IGBP_PC
+            ! read crown aspect ratio from crown structure dataset
             dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%cratio%dir)
             fname = trim(DEF_rawdata%cratio%fname)
             CALL read_5x5_data_pft (dir, fname, grid_pft, trim(DEF_rawdata%cratio%vname), &
@@ -368,7 +369,6 @@ SUBROUTINE Aggregation_ForestHeight ( &
                      htop_pfts(ip) = htop_patches(ipatch)
                   ENDIF
                   IF (DEF_RS_CROWN_STRUCTURE) THEN
-                     ! Area-weight valid remote-sensing samples for this PFT.
                      sumarea = sum(area_one, &
                         mask=cdepth_one(p,:) > 0._r8 .and. cdepth_one(p,:) < htop_one)
                      IF (sumarea > 0._r8) THEN
@@ -434,11 +434,31 @@ SUBROUTINE Aggregation_ForestHeight ( &
          CALL ncio_create_file_vector (lndname, landpft)
          CALL ncio_define_dimension_vector (lndname, landpft, 'pft')
          CALL ncio_write_vector (lndname, 'hbot_pfts', 'pft', landpft, hbot_pfts, DEF_Srfdata_CompressLevel)
+         IF (p_is_io) THEN
+            DO iblkgrp = 1, landpft%nblkgrp
+               iblk = landpft%xblkgrp(iblkgrp)
+               jblk = landpft%yblkgrp(iblkgrp)
+               CALL get_filename_block (lndname, iblk, jblk, fileblock)
+               CALL ncio_put_attr (fileblock, 'hbot_pfts', 'source', 'Derived from canopy height and crown depth')
+               CALL ncio_put_attr (fileblock, 'hbot_pfts', 'references', &
+                  'Crown depth: https://doi.org/10.1016/j.jag.2026.105401')
+            ENDDO
+         ENDIF
 #ifdef LULC_IGBP_PC
          lndname = trim(landdir)//'/cratio_pfts.nc'
          CALL ncio_create_file_vector (lndname, landpft)
          CALL ncio_define_dimension_vector (lndname, landpft, 'pft')
          CALL ncio_write_vector (lndname, 'cratio_pfts', 'pft', landpft, cratio_pfts, DEF_Srfdata_CompressLevel)
+         IF (p_is_io) THEN
+            DO iblkgrp = 1, landpft%nblkgrp
+               iblk = landpft%xblkgrp(iblkgrp)
+               jblk = landpft%yblkgrp(iblkgrp)
+               CALL get_filename_block (lndname, iblk, jblk, fileblock)
+               CALL ncio_put_attr (fileblock, 'cratio_pfts', 'source', 'Remote-sensing crown structure data')
+               CALL ncio_put_attr (fileblock, 'cratio_pfts', 'references', &
+                  'https://doi.org/10.1016/j.jag.2026.105401')
+            ENDDO
+         ENDIF
 #endif
       ENDIF
 #ifdef SrfdataDiag
@@ -454,10 +474,20 @@ SUBROUTINE Aggregation_ForestHeight ( &
          lndname = trim(dir_model_landdata) // '/diag/hbot_pft_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (hbot_pfts, landpft%settyp, typpft, m_pft2diag, &
             spval, lndname, 'hbot_pft', compress=6, write_mode='one', defval=spval, create_mode=.true.)
+         IF (p_is_master) THEN
+            CALL ncio_put_attr (lndname, 'hbot_pft', 'source', 'Derived from canopy height and crown depth')
+            CALL ncio_put_attr (lndname, 'hbot_pft', 'references', &
+               'Crown depth: https://doi.org/10.1016/j.jag.2026.105401')
+         ENDIF
 #ifdef LULC_IGBP_PC
          lndname = trim(dir_model_landdata) // '/diag/cratio_pft_' // trim(cyear) // '.nc'
          CALL srfdata_map_and_write (cratio_pfts, landpft%settyp, typpft, m_pft2diag, &
             spval, lndname, 'cratio_pft', compress=6, write_mode='one', defval=spval, create_mode=.true.)
+         IF (p_is_master) THEN
+            CALL ncio_put_attr (lndname, 'cratio_pft', 'source', 'Remote-sensing crown structure data')
+            CALL ncio_put_attr (lndname, 'cratio_pft', 'references', &
+               'https://doi.org/10.1016/j.jag.2026.105401')
+         ENDIF
 #endif
       ENDIF
 #endif
