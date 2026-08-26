@@ -36,6 +36,7 @@ SUBROUTINE Aggregation_ForestHeight ( &
    USE MOD_Utils
 
    USE MOD_Const_LC
+   USE MOD_Const_PFT, only: htop0_p, hbot0_p
    USE MOD_5x5DataReadin
 #if (defined LULC_IGBP_PFT || defined LULC_IGBP_PC)
    USE MOD_LandPFT
@@ -374,6 +375,10 @@ SUBROUTINE Aggregation_ForestHeight ( &
                      IF (sumarea > 0._r8) THEN
                         hbot_pfts(ip) = sum((htop_one-cdepth_one(p,:)) * area_one, &
                            mask=cdepth_one(p,:) > 0._r8 .and. cdepth_one(p,:) < htop_one) / sumarea
+                     ELSEIF (any(cdepth_one(p,:) > 0._r8 .and. htop_one > 0._r8 .and. &
+                        cdepth_one(p,:) >= htop_one)) THEN
+                        hbot_pfts(ip) = htop_pfts(ip) * hbot0_p(p) / htop0_p(p)
+                        hbot_pfts(ip) = max(1._r8, hbot_pfts(ip))
                      ENDIF
 #ifdef LULC_IGBP_PC
                      sumarea = sum(area_one, mask=cratio_one(p,:) > 0._r8)

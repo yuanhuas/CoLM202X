@@ -499,9 +499,18 @@ CONTAINS
                   SITE_lon_location, SITE_lat_location, N_PFT_modis, cdepth, lb=1, ub=8)
                SITE_cdepth_pfts = pack(cdepth, pctpfts > 0.)
                SITE_hbot_pfts = spval
-               where (SITE_cdepth_pfts > 0._r8 .and. SITE_cdepth_pfts < SITE_htop_pfts)
-                  SITE_hbot_pfts = SITE_htop_pfts - SITE_cdepth_pfts
-               end where
+               DO i = 1, numpft
+                  IF (SITE_cdepth_pfts(i) > 0._r8 .and. &
+                     SITE_cdepth_pfts(i) < SITE_htop_pfts(i)) THEN
+                     SITE_hbot_pfts(i) = SITE_htop_pfts(i) - SITE_cdepth_pfts(i)
+                  ELSEIF (SITE_cdepth_pfts(i) > 0._r8) THEN
+                     typ = SITE_pfttyp(i)
+                     SITE_hbot_pfts(i) = SITE_htop_pfts(i) * hbot0_p(typ) / htop0_p(typ)
+                     SITE_hbot_pfts(i) = max(1._r8, SITE_hbot_pfts(i))
+                     write(*,'(A,3F10.2)') 'WARNING: cdepth >= htop; use default hbot (htop, cdepth, hbot): ', &
+                        SITE_htop_pfts(i), SITE_cdepth_pfts(i), SITE_hbot_pfts(i)
+                  ENDIF
+               ENDDO
 
 #ifdef LULC_IGBP_PC
                allocate (SITE_cratio_pfts (numpft))
