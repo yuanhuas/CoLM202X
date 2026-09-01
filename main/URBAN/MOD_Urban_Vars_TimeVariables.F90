@@ -501,6 +501,28 @@ CONTAINS
 
    END SUBROUTINE deallocate_UrbanTimeVariables
 
+#ifdef RangeCheck
+   SUBROUTINE check_UrbanTimeVariables
+
+   USE MOD_RangeCheck
+
+   IMPLICIT NONE
+
+      CALL check_vector_data ('        t_room', t_room         )
+      CALL check_vector_data ('        t_roof', t_roof         )
+      CALL check_vector_data ('        t_wall', t_wall         )
+      CALL check_vector_data ('          tafu', tafu           )
+      CALL check_vector_data ('          Fahe', Fahe           )
+      CALL check_vector_data ('          Fach', Fach           )
+      CALL check_vector_data ('          Fhac', Fhac           )
+      CALL check_vector_data ('          Fhah', Fhah           )
+      CALL check_vector_data ('          Fwst', Fwst           )
+      CALL check_vector_data ('         Fvehc', vehc           )
+      CALL check_vector_data ('         Fmeta', meta           )
+
+   END SUBROUTINE check_UrbanTimeVariables
+#endif
+
 END MODULE MOD_Urban_Vars_TimeVariables
 #endif
 ! ---------- EOP ------------
