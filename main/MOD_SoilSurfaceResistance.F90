@@ -37,7 +37,7 @@ MODULE MOD_SoilSurfaceResistance
 CONTAINS
 !-----------------------------------------------------------------------
 
-   SUBROUTINE SoilSurfaceResistance (nl_soil,forc_rhoair,hksati,porsl,psi0, &
+   SUBROUTINE SoilSurfaceResistance (nl_soil,forc_rhoair,hksati,porsl,psi0,vf_sand,&
 #ifdef Campbell_SOIL_MODEL
                               bsw, &
 #endif
@@ -74,6 +74,7 @@ CONTAINS
         hksati      (1:nl_soil),     &! hydraulic conductivity at saturation [mm h2o/s]
         porsl       (1:nl_soil),     &! soil porosity [-]
         psi0        (1:nl_soil),     &! saturated soil suction [mm] (NEGATIVE)
+        vf_sand     (1:nl_soil),     &! sand volume fraction
 #ifdef Campbell_SOIL_MODEL
         bsw         (1:nl_soil),     &! clapp and hornberger "b" parameter [-]
 #endif
@@ -119,6 +120,10 @@ CONTAINS
         rg_1,             &! inverse of vapor diffusion resistance [m/s]
         rw_1,             &! inverse of volatilization resistance [m/s]
         rss_1,            &! inverse of soil surface resistance [m/s]
+        f_sigmoid,        &! factor
+        f_transition,     &! factor
+        rss_basic,        &! factor
+        rss_adjusted,     &! factor
         tao,              &! tortuosity of the vapor flow paths through the soil matrix
         eps100,           &! air-filled porosity at −1000 mm of water matric potential
         fac,              &! temporal variable for calculating wx/porsl
@@ -291,8 +296,19 @@ CONTAINS
         !rss = exp(8.206-4.255*fac)   !original Sellers (1992)
          rss = exp(8.206-6.0*fac)     !adjusted Sellers (1992) to decrease rss
                                       !for wet soil according to Noah-MP v5
-      ENDSELECT
+        
+      CASE (6)
+         wx  = (max(wliq_soisno(1),1.e-6)/denh2o+wice_soisno(1)/denice)/dz_soisno(1)
+         fac = min(1._r8, wx/porsl(1))
+         fac = max(fac , 0.001_r8)
+         f_transition = 1._r8 / (1._r8 + exp(-50.0_r8 * (fac - 0.35)))
+         f_sigmoid = 1._r8 / (1._r8 + exp(25.0_r8 * (fac - 0.7)))
 
+         rss_basic = exp(8.206 - 6.0 * fac)
+         rss_adjusted = exp(8.206 - log(1.+exp(20.45 * vf_sand(1) - 4.12)) * fac)
+         rss = (1.0_r8 - f_transition) * rss_basic + f_transition * rss_adjusted * f_sigmoid
+        
+      ENDSELECT
 !-----------------------------------------------------------------------
       ! account for snow fractional cover for rss
       IF (DEF_RSS_SCHEME .ne. 4) THEN

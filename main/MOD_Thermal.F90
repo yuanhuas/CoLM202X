@@ -606,7 +606,7 @@ ENDIF
 
          !NOTE: If the beta scheme is used, the rss is not soil resistance,
          !but soil beta factor (soil wetness relative to field capacity [0-1]).
-         CALL SoilSurfaceResistance (nl_soil,forc_rhoair,hksati,porsl,psi0, &
+         CALL SoilSurfaceResistance (nl_soil,forc_rhoair,hksati,porsl,psi0,vf_sand, &
 #ifdef Campbell_SOIL_MODEL
                             bsw, &
 #endif
