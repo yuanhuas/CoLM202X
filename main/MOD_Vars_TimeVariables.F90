@@ -1624,6 +1624,10 @@ ENDIF
       CALL check_BGCTimeVariables
 #endif
 
+#ifdef URBAN_MODEL
+      CALL check_UrbanTimeVariables
+#endif
+
 #ifdef EXTERNAL_LAKE
       CALL CHECK_LakeTimeVars
 #endif
