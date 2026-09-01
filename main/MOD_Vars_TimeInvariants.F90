@@ -92,7 +92,7 @@ CONTAINS
       CALL ncio_read_vector (file_restart, 'htop_p  ', landpft, htop_p  ) !
       CALL ncio_read_vector (file_restart, 'hbot_p  ', landpft, hbot_p  ) !
 #ifdef LULC_IGBP_PC
-      CALL ncio_read_vector (file_restart, 'cratio_p', landpft, cratio_p  ) !
+      CALL ncio_read_vector (file_restart, 'cratio_p', landpft, cratio_p) !
 #endif
 #ifdef CROP
       CALL ncio_read_vector (file_restart, 'cropfrac ', landpatch, cropfrac) !
@@ -147,7 +147,7 @@ CONTAINS
             deallocate (htop_p  )
             deallocate (hbot_p  )
 #ifdef LULC_IGBP_PC
-            deallocate (cratio_p )
+            deallocate (cratio_p)
 #endif
 #ifdef CROP
             deallocate (cropfrac)
@@ -167,7 +167,7 @@ CONTAINS
       CALL check_vector_data ('htop_p ', htop_p ) !
       CALL check_vector_data ('hbot_p ', hbot_p ) !
 #ifdef LULC_IGBP_PC
-      CALL check_vector_data ('cratio_p ', cratio_p )
+      CALL check_vector_data ('cratio_p', cratio_p) !
 #endif
 #ifdef CROP
       CALL check_vector_data ('cropfrac', cropfrac) !
@@ -561,7 +561,7 @@ CONTAINS
       CALL ncio_read_vector (file_restart, 'htop'    ,     landpatch, htop)                !
       CALL ncio_read_vector (file_restart, 'hbot'    ,     landpatch, hbot)                !
 #ifdef LULC_IGBP_PC
-      CALL ncio_read_vector (file_restart, 'cratio'  ,     landpatch, cratio)                !
+      CALL ncio_read_vector (file_restart, 'cratio'  ,     landpatch, cratio)              !
 #endif
 
       IF(DEF_USE_BEDROCK)THEN
@@ -772,10 +772,10 @@ CONTAINS
       CALL ncio_write_vector (file_restart, 'BA_alpha ' , 'soil', nl_soil, 'patch', landpatch, BA_alpha  , compress) ! alpha in Balland and Arp(2005) thermal conductivity scheme
       CALL ncio_write_vector (file_restart, 'BA_beta  ' , 'soil', nl_soil, 'patch', landpatch, BA_beta   , compress) ! beta in Balland and Arp(2005) thermal conductivity scheme
 
-      CALL ncio_write_vector (file_restart, 'htop'  , 'patch', landpatch, htop  )                                       !
-      CALL ncio_write_vector (file_restart, 'hbot'  , 'patch', landpatch, hbot  )                                       !
+      CALL ncio_write_vector (file_restart, 'htop'  , 'patch', landpatch, htop  )                                    !
+      CALL ncio_write_vector (file_restart, 'hbot'  , 'patch', landpatch, hbot  )                                    !
 #ifdef LULC_IGBP_PC
-      CALL ncio_write_vector (file_restart, 'cratio', 'patch', landpatch, cratio)                                       !
+      CALL ncio_write_vector (file_restart, 'cratio', 'patch', landpatch, cratio)                                    !
 #endif
 
       IF(DEF_USE_BEDROCK)THEN
@@ -804,7 +804,7 @@ CONTAINS
          CALL ncio_write_vector (file_restart, 'cur_patches', 'patch', landpatch, cur_patches)
          CALL ncio_write_vector (file_restart, 'slp_type_patches',  'type_a', num_aspect_type, 'patch', landpatch, slp_type_patches)
          CALL ncio_write_vector (file_restart, 'asp_type_patches',  'type_a', num_aspect_type, 'patch', landpatch, asp_type_patches)
-      ENDIF   
+      ENDIF
 
 
 #ifdef USEMPI
