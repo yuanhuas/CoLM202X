@@ -358,6 +358,7 @@ MODULE MOD_Namelist
    ! 3: TR13, Tang and Riley (2013)
    ! 4: LP92, Lee and Pielke (1992)
    ! 5: S92,  Sellers et al (1992)
+   ! 6: S92_sand, Liu et al (2026)
    integer :: DEF_RSS_SCHEME = 1
 
    ! ----- Options for runoff parameterization schemes -----
