@@ -131,15 +131,16 @@ CONTAINS
 
       IF (p_is_worker) THEN
          DO npatch = 1, numpatch
-            t = patchtype(npatch) ! land cover type, 0: soil, 1: urban, 2: wetland, 3: ice, 4: lake
-            m = patchclass(npatch) ! index of land cover type
+            t = patchtype(npatch)        ! land cover type
+                                         ! 0: soil, 1: urban, 2: wetland, 3: ice, 4: lake
+            m = patchclass(npatch)       ! index of land cover type
 
-            IF (t == 0) THEN ! land cover type is soil, growing with vegetation
+            IF (t == 0) THEN             ! land cover type is soil, growing with vegetation
                ps = patch_pft_s(npatch)
                pe = patch_pft_e(npatch)
 
                DO p = ps, pe
-                  n = pftclass(p) ! pft index
+                  n = pftclass(p)        ! pft index
 
                   htop_p(p) = htop0_p(n) ! for non-tree, use the default height
                   hbot_p(p) = hbot0_p(n)
@@ -184,8 +185,8 @@ CONTAINS
          ENDDO
       ENDIF
 
-      IF (allocated(htoppft)) deallocate(htoppft)
-      IF (allocated(hbotpft)) deallocate(hbotpft)
+      IF (allocated(htoppft   )) deallocate(htoppft   )
+      IF (allocated(hbotpft   )) deallocate(hbotpft   )
       IF (allocated(cratio_pft)) deallocate(cratio_pft)
 #endif
 
