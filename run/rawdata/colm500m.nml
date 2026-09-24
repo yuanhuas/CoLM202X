@@ -355,21 +355,31 @@
   ! ----- Urban population -----
   ! Options:
   !   1: LandScan 1km
-  !   2: GlobPOP 1km
-  !   3: c2022 500m (The data is LandScan, but it is an early version.)
+  !   2: GHSL-POP 100m
+  !   3: GHSL-POP 500m
+  !   4: GlobPOP 1km
+  !   5: c2022 500m (The data is LandScan, but it is an early version.)
   DEF_rawdata_nml%urban_pop%idx = 1
 
   DEF_rawdata_nml%urban_pop%opt(1)%dir   = '/urban_human/population_density_LandScan/'
   DEF_rawdata_nml%urban_pop%opt(1)%gname = 'colm_1km'
   DEF_rawdata_nml%urban_pop%opt(1)%fname = 'POP1km.LandScan'
 
-  DEF_rawdata_nml%urban_pop%opt(2)%dir   = '/urban_human/population_density_GlobPOP/'
-  DEF_rawdata_nml%urban_pop%opt(2)%gname = 'colm_1km'
-  DEF_rawdata_nml%urban_pop%opt(2)%fname = 'POP1km.GlobPOP'
+  DEF_rawdata_nml%urban_pop%opt(2)%dir   = '/urban_human/population_density_GHSL/'
+  DEF_rawdata_nml%urban_pop%opt(2)%gname = 'colm_100m'
+  DEF_rawdata_nml%urban_pop%opt(2)%fname = 'POP100m.GHSL'
 
-  DEF_rawdata_nml%urban_pop%opt(2)%dir   = '/urban_morphology/c2022/'
-  DEF_rawdata_nml%urban_pop%opt(2)%gname = 'colm_500m'
-  DEF_rawdata_nml%urban_pop%opt(2)%fname = 'URBSRF'
+  DEF_rawdata_nml%urban_pop%opt(3)%dir   = '/urban_human/population_density_GHSL/'
+  DEF_rawdata_nml%urban_pop%opt(3)%gname = 'colm_500m'
+  DEF_rawdata_nml%urban_pop%opt(3)%fname = 'POP500m.GHSL'
+
+  DEF_rawdata_nml%urban_pop%opt(4)%dir   = '/urban_human/population_density_GlobPOP/'
+  DEF_rawdata_nml%urban_pop%opt(4)%gname = 'colm_1km'
+  DEF_rawdata_nml%urban_pop%opt(4)%fname = 'POP1km.GlobPOP'
+
+  DEF_rawdata_nml%urban_pop%opt(5)%dir   = '/urban_morphology/c2022/'
+  DEF_rawdata_nml%urban_pop%opt(5)%gname = 'colm_500m'
+  DEF_rawdata_nml%urban_pop%opt(5)%fname = 'URBSRF'
 
   ! ----- Urban lucy -----
   ! Options:
