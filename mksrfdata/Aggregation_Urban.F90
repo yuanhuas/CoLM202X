@@ -238,7 +238,7 @@ ENDIF
 
          dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_roof%dir)
 
-         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+         IF (index(DEF_rawdata_namelist, '2024')>0) THEN
             fname = trim(DEF_rawdata%urban_roof%fname)//trim(c5year)
 
             IF (index(DEF_rawdata%urban_roof%vname, 'GHSL')>0) THEN
@@ -454,7 +454,7 @@ ENDIF
 
          dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_fveg%dir)
 
-         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+         IF (index(DEF_rawdata_namelist, '2024')>0) THEN
             fname = trim(DEF_rawdata%urban_fveg%fname)//trim(c5year)
          ELSE
             fname = trim(DEF_rawdata%urban_fveg%fname)//'.'//trim(c5year)
@@ -465,7 +465,7 @@ ENDIF
 
          dir = trim(DEF_dir_rawdata) // trim(DEF_rawdata%urban_htop%dir)
 
-         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+         IF (index(DEF_rawdata_namelist, '2024')>0) THEN
             fname = trim(DEF_rawdata%urban_fveg%fname)//trim(c5year)
          ELSE
             fname = trim(DEF_rawdata%urban_htop%fname)
@@ -756,7 +756,7 @@ ENDIF
 
          dir = trim(dir_rawdata) // trim(DEF_rawdata%urban_flake%dir)
 
-         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+         IF (index(DEF_rawdata_namelist, '2024')>0) THEN
             fname = trim(DEF_rawdata%urban_flake%fname)//trim(c5year)
          ELSE
             fname = trim(DEF_rawdata%urban_flake%fname)//'.'//trim(c5year)
@@ -889,7 +889,7 @@ ENDIF
 
          dir = TRIM(dir_rawdata) // trim(DEF_rawdata%urban_pop%dir)
 
-         IF (DEF_rawdata_namelist == "colm2024.nml") THEN
+         IF (index(DEF_rawdata_namelist, '2024')>0) THEN
             write(c5year, '(i4.4)') int(lc_year/5)*5
             fname = trim(DEF_rawdata%urban_pop%fname)//trim(c5year)
 
